@@ -97,6 +97,9 @@ public class TenantServicesService {
               config.setProviderId(null);
               config.setPricingId(null);
               config.setPolicyId(null);
+              ServiceCatalog catalog = requireService(serviceCode);
+              config.setHumanHandoffEnabled(catalog.isHumanHandoffEnabled());
+              config.setFileStorageEnabled(catalog.isFileStorageEnabled());
               config.setCreatedAt(LocalDateTime.now());
               config.setUpdatedAt(LocalDateTime.now());
               return configRepository.save(config);
@@ -105,6 +108,16 @@ public class TenantServicesService {
 
   private String normalizeServiceCode(String value) {
     return value == null ? "" : value.trim();
+  }
+
+  private boolean resolveCapability(Boolean override, boolean catalogEnabled) {
+    if (!catalogEnabled) {
+      return false;
+    }
+    if (override == null) {
+      return true;
+    }
+    return override;
   }
 
   private ServiceCatalog requireService(String serviceCode) {
@@ -119,6 +132,28 @@ public class TenantServicesService {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Service does not support endpoints");
     }
+  }
+
+  public boolean resolveFileStorageEnabled(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    return resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled());
+  }
+
+  public void requireFileStorageEnabled(String tenantId, String serviceCode) {
+    if (!resolveFileStorageEnabled(tenantId, serviceCode)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "File storage not enabled for this service");
+    }
+  }
+
+  public boolean resolveHumanHandoffEnabled(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    return resolveCapability(config.getHumanHandoffEnabled(), catalog.isHumanHandoffEnabled());
   }
 
   public List<TenantServiceSummary> listServices(String tenantId) {
@@ -163,6 +198,14 @@ public class TenantServicesService {
       summary.priceMonthlyEur = service.getPriceMonthlyEur();
       summary.priceAnnualEur = service.getPriceAnnualEur();
       summary.endpointsEnabled = service.isEndpointsEnabled();
+      Boolean tenantHandoff = config != null ? config.getHumanHandoffEnabled() : null;
+      Boolean tenantStorage = config != null ? config.getFileStorageEnabled() : null;
+      summary.catalogHumanHandoffEnabled = service.isHumanHandoffEnabled();
+      summary.catalogFileStorageEnabled = service.isFileStorageEnabled();
+      summary.tenantHumanHandoffEnabled = tenantHandoff;
+      summary.tenantFileStorageEnabled = tenantStorage;
+      summary.humanHandoffEnabled = resolveCapability(tenantHandoff, service.isHumanHandoffEnabled());
+      summary.fileStorageEnabled = resolveCapability(tenantStorage, service.isFileStorageEnabled());
       summary.subscriptionStatus = subscription != null ? subscription.getStatus() : "disabled";
       summary.activateAt = subscription != null ? subscription.getActivateAt() : null;
       summary.deactivateAt = subscription != null ? subscription.getDeactivateAt() : null;
@@ -188,7 +231,9 @@ public class TenantServicesService {
       String apiBaseUrl,
       String providerId,
       String pricingId,
-      String policyId) {
+      String policyId,
+      Boolean humanHandoffEnabled,
+      Boolean fileStorageEnabled) {
     ensureTenant(tenantId);
     String normalized = normalizeServiceCode(serviceCode);
     TenantServiceConfig config = ensureConfig(tenantId, normalized);
@@ -214,6 +259,21 @@ public class TenantServicesService {
     if (policyId != null) {
       String trimmed = policyId.trim();
       config.setPolicyId(trimmed.isEmpty() ? null : trimmed);
+    }
+    ServiceCatalog catalog = requireService(normalized);
+    if (humanHandoffEnabled != null) {
+      if (!catalog.isHumanHandoffEnabled()) {
+        config.setHumanHandoffEnabled(false);
+      } else {
+        config.setHumanHandoffEnabled(humanHandoffEnabled);
+      }
+    }
+    if (fileStorageEnabled != null) {
+      if (!catalog.isFileStorageEnabled()) {
+        config.setFileStorageEnabled(false);
+      } else {
+        config.setFileStorageEnabled(fileStorageEnabled);
+      }
     }
     config.setUpdatedAt(LocalDateTime.now());
     return configRepository.save(config);
@@ -444,6 +504,12 @@ public class TenantServicesService {
               view.activateAt = subscription != null ? subscription.getActivateAt() : null;
               view.deactivateAt = subscription != null ? subscription.getDeactivateAt() : null;
               view.status = operationalStatus;
+              if (catalogItem != null) {
+                Boolean tenantHandoff = config != null ? config.getHumanHandoffEnabled() : null;
+                Boolean tenantStorage = config != null ? config.getFileStorageEnabled() : null;
+                view.humanHandoffEnabled = resolveCapability(tenantHandoff, catalogItem.isHumanHandoffEnabled());
+                view.fileStorageEnabled = resolveCapability(tenantStorage, catalogItem.isFileStorageEnabled());
+              }
               return view;
             })
         .toList();
@@ -452,6 +518,7 @@ public class TenantServicesService {
   public ServiceAccess requireServiceAccess(String tenantId, String serviceCode, String userId) {
     ensureTenant(tenantId);
     String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
     List<SubscriptionService> subscriptionServices = getSubscriptionServices(tenantId);
     SubscriptionService subscription =
         subscriptionServices.stream()
@@ -484,6 +551,11 @@ public class TenantServicesService {
     ServiceAccess access = new ServiceAccess();
     access.config = config;
     access.subscription = subscription;
+    access.catalog = catalog;
+    access.humanHandoffEnabled =
+        resolveCapability(config.getHumanHandoffEnabled(), catalog.isHumanHandoffEnabled());
+    access.fileStorageEnabled =
+        resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled());
     return access;
   }
 
@@ -534,6 +606,12 @@ public class TenantServicesService {
     public java.math.BigDecimal priceMonthlyEur;
     public java.math.BigDecimal priceAnnualEur;
     public boolean endpointsEnabled;
+    public boolean catalogHumanHandoffEnabled;
+    public boolean catalogFileStorageEnabled;
+    public Boolean tenantHumanHandoffEnabled;
+    public Boolean tenantFileStorageEnabled;
+    public boolean humanHandoffEnabled;
+    public boolean fileStorageEnabled;
     public String subscriptionStatus;
     public LocalDateTime activateAt;
     public LocalDateTime deactivateAt;
@@ -597,11 +675,16 @@ public class TenantServicesService {
     public LocalDateTime activateAt;
     public LocalDateTime deactivateAt;
     public String status;
+    public boolean humanHandoffEnabled;
+    public boolean fileStorageEnabled;
   }
 
   public static class ServiceAccess {
     public TenantServiceConfig config;
     public SubscriptionService subscription;
+    public ServiceCatalog catalog;
+    public boolean humanHandoffEnabled;
+    public boolean fileStorageEnabled;
   }
 
   public static class CreateEndpointRequest {

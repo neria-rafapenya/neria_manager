@@ -1,6 +1,8 @@
 // src/infrastructure/repositories/UploadRepository.ts
 
+import { API_ENDPOINTS } from "../../core/domain/constants/apiEndpoints";
 import { fetchWithAuth, ApiError } from "../api/api";
+import { getServiceCode } from "../config/env";
 import type { ChatAttachment } from "../../interfaces";
 
 // ⬆️ Límite aumentado a 5 MB
@@ -19,6 +21,15 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "text/csv",
 ];
+
+type UploadResponse = {
+  provider?: string;
+  url?: string;
+  storageKey?: string;
+  originalName?: string;
+  contentType?: string;
+  size?: number;
+};
 
 export class UploadRepository {
   /**
@@ -74,26 +85,40 @@ export class UploadRepository {
     return validFiles;
   }
 
-  /**
-   * SINGLE:
-   *  - Endpoint: POST /uploads
-   *  - Body: form-data con key "file"
-   *  - Respuesta esperada:
-   *    { ok: true, attachment: {...} }  ó  { ok: true, attachments: [ {...} ] }
-   */
-  async uploadSingle(file: File): Promise<ChatAttachment> {
+  private mapAttachment(data: UploadResponse): ChatAttachment {
+    const url = data.url ?? "";
+    const storageKey = data.storageKey ?? url;
+    const name = data.originalName ?? storageKey ?? "archivo";
+    const contentType = data.contentType ?? "";
+    const size = data.size ?? 0;
+    return {
+      url,
+      key: storageKey,
+      filename: name,
+      mimeType: contentType,
+      sizeBytes: size,
+      provider: data.provider,
+      storageKey,
+      name,
+      contentType,
+      size,
+    };
+  }
+
+  private async uploadSingle(file: File): Promise<ChatAttachment> {
     const [validFile] = this.validateFiles([file]);
+    const serviceCode = getServiceCode();
+    if (!serviceCode) {
+      throw new Error("No se ha definido el serviceCode del chatbot.");
+    }
 
     const formData = new FormData();
-    formData.append("file", validFile); // 👈 single → "file"
+    formData.append("file", validFile);
+    formData.append("serviceCode", serviceCode);
 
-    let data: {
-      ok: boolean;
-      attachment?: ChatAttachment;
-      attachments?: ChatAttachment[];
-    };
+    let data: UploadResponse;
     try {
-      data = await fetchWithAuth("/uploads", {
+      data = await fetchWithAuth<UploadResponse>(API_ENDPOINTS.CHAT_UPLOADS, {
         method: "POST",
         body: formData,
       });
@@ -106,74 +131,24 @@ export class UploadRepository {
       throw new Error(message);
     }
 
-    if (!data.ok) {
-      throw new Error("El servidor ha devuelto ok=false al subir el archivo.");
+    if (!data || !data.url) {
+      throw new Error("Respuesta inesperada del servidor al subir el archivo.");
     }
 
-    if (data.attachment) return data.attachment;
-
-    if (Array.isArray(data.attachments) && data.attachments[0]) {
-      return data.attachments[0];
-    }
-
-    throw new Error("Respuesta inesperada del servidor al subir el archivo.");
+    return this.mapAttachment(data);
   }
 
-  /**
-   * MULTIPLE:
-   *  - Endpoint: POST /uploads/multiple
-   *  - Body: form-data con varias keys "files"
-   *  - Respuesta esperada:
-   *    { ok: true, attachments: [ {...}, {...}, ... ] }
-   */
-  async uploadMultiple(files: File[]): Promise<ChatAttachment[]> {
-    const validFiles = this.validateFiles(files);
-
-    const formData = new FormData();
-    validFiles.forEach((file) => formData.append("files", file)); // 👈 multiple → "files"
-
-    let data: { ok: boolean; attachments?: ChatAttachment[] };
-    try {
-      data = await fetchWithAuth("/uploads/multiple", {
-        method: "POST",
-        body: formData,
-      });
-    } catch (err: unknown) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "No se han podido subir los archivos.";
-      console.error("[UploadRepository.uploadMultiple] Error:", err);
-      throw new Error(message);
-    }
-
-    if (!data.ok) {
-      throw new Error(
-        "El servidor ha devuelto ok=false al subir los archivos."
-      );
-    }
-
-    if (!Array.isArray(data.attachments)) {
-      throw new Error("Respuesta inesperada del servidor (sin attachments).");
-    }
-
-    return data.attachments;
-  }
-
-  /**
-   * Método unificado por si quieres llamarlo desde nuevos sitios:
-   *  - 0 ficheros → []
-   *  - 1 fichero → [uploadSingle(...)]
-   *  - >1 fichero → uploadMultiple(...)
-   */
   async uploadFiles(files: File[]): Promise<ChatAttachment[]> {
     if (!files.length) return [];
 
-    if (files.length === 1) {
-      const one = await this.uploadSingle(files[0]);
-      return [one];
+    const validFiles = this.validateFiles(files);
+    const results: ChatAttachment[] = [];
+
+    for (const file of validFiles) {
+      const uploaded = await this.uploadSingle(file);
+      results.push(uploaded);
     }
 
-    return this.uploadMultiple(files);
+    return results;
   }
 }

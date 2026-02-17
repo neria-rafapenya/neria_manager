@@ -28,6 +28,19 @@ export interface SendMessagePayload {
  *  - texto plano en una sola respuesta
  */
 export class ChatRepository {
+
+  private mapAttachmentsForApi(attachments?: ChatAttachment[]) {
+    if (!attachments || attachments.length == 0) return [];
+    return attachments.map((att) => ({
+      url: att.url,
+      name: att.filename || att.name || att.key,
+      contentType: att.mimeType || att.contentType || "",
+      size: att.sizeBytes || att.size || 0,
+      provider: att.provider,
+      storageKey: att.storageKey || att.key,
+    }));
+  }
+
   async sendMessageStream(
     payload: SendMessagePayload,
     onDelta: (delta: string, newConversationId: string | null) => void
@@ -75,7 +88,7 @@ export class ChatRepository {
       API_ENDPOINTS.CONVERSATION_MESSAGES_STREAM(conversationId),
       {
         method: "POST",
-        body: JSON.stringify({ content: payload.message }),
+        body: JSON.stringify({ content: payload.message, attachments: this.mapAttachmentsForApi(payload.attachments) }),
         rawResponse: true,
       }
     );
@@ -150,5 +163,12 @@ export class ChatRepository {
     }
 
     return { conversationId: resolvedConversationId };
+  }
+
+  async requestHandoff(conversationId: string, reason?: string): Promise<void> {
+    await fetchWithAuth(API_ENDPOINTS.CONVERSATION_HANDOFF(conversationId), {
+      method: "POST",
+      body: JSON.stringify({ reason: reason ?? "" }),
+    });
   }
 }

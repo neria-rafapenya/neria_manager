@@ -35,5 +35,8 @@
     "chat_attachments_uploading": "Pujant fitxers...",
     "chat_attachments_ready_label": "Fitxers preparats per enviar:",
     "chat_attachments_remove_aria": "Treure {{filename}}",
-    "common_close": "Tancar"
+    "common_close": "Tancar",
+    "chat_handoff_button": "Parlar amb un humà",
+    "chat_handoff_requested": "Hem sol·licitat assistència humana. Un agent respondrà aviat.",
+    "chat_handoff_active": "Un agent humà està atenent aquesta conversa."
 }

@@ -28,6 +28,8 @@ export function ServiceEditorPage() {
     priceAnnualEur: "",
     enabled: true,
     endpointsEnabled: true,
+    humanHandoffEnabled: true,
+    fileStorageEnabled: true,
   });
   const codeValue = form.code.trim();
   const codeValid = codeValue.length > 0 && CODE_REGEX.test(codeValue);
@@ -62,6 +64,8 @@ export function ServiceEditorPage() {
           priceAnnualEur: String(match.priceAnnualEur ?? ""),
           enabled: match.enabled,
           endpointsEnabled: normalizeBool(match.endpointsEnabled),
+          humanHandoffEnabled: normalizeBool(match.humanHandoffEnabled),
+          fileStorageEnabled: normalizeBool(match.fileStorageEnabled),
         });
         setError(null);
       } catch (err: any) {
@@ -99,6 +103,8 @@ export function ServiceEditorPage() {
         priceAnnualEur: priceAnnual,
         enabled: form.enabled,
         endpointsEnabled: form.endpointsEnabled,
+        humanHandoffEnabled: form.humanHandoffEnabled,
+        fileStorageEnabled: form.fileStorageEnabled,
       };
       if (isNew) {
         await api.createServiceCatalog(payload);
@@ -234,6 +240,36 @@ export function ServiceEditorPage() {
                   }
                 />
                 {t("Permite endpoints configurables")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceHumanHandoffEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.humanHandoffEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      humanHandoffEnabled: event.target.checked,
+                    })
+                  }
+                />
+                {t("Permite atención humana")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceFileStorageEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.fileStorageEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      fileStorageEnabled: event.target.checked,
+                    })
+                  }
+                />
+                {t("Permite adjuntos y almacenamiento")}
               </label>
             </FieldWithHelp>
             <FieldWithHelp help="serviceEnabled">

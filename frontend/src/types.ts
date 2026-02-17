@@ -140,6 +140,12 @@ export type TenantServiceOverview = {
   priceMonthlyEur: number;
   priceAnnualEur: number;
   endpointsEnabled: boolean;
+  catalogHumanHandoffEnabled?: boolean;
+  catalogFileStorageEnabled?: boolean;
+  tenantHumanHandoffEnabled?: boolean | null;
+  tenantFileStorageEnabled?: boolean | null;
+  humanHandoffEnabled?: boolean;
+  fileStorageEnabled?: boolean;
   subscriptionStatus: 'active' | 'pending' | 'pending_removal' | 'disabled';
   activateAt: string | null;
   deactivateAt?: string | null;
@@ -185,6 +191,12 @@ export type ServiceCatalogItem = {
   priceAnnualEur: number;
   enabled: boolean;
   endpointsEnabled: boolean;
+  catalogHumanHandoffEnabled?: boolean;
+  catalogFileStorageEnabled?: boolean;
+  tenantHumanHandoffEnabled?: boolean | null;
+  tenantFileStorageEnabled?: boolean | null;
+  humanHandoffEnabled?: boolean;
+  fileStorageEnabled?: boolean;
 };
 
 export type Subscription = {
@@ -321,8 +333,24 @@ export type ChatConversation = {
   serviceCode: string;
   title?: string | null;
   apiKeyId?: string | null;
+  handoffStatus?: 'none' | 'requested' | 'active' | 'resolved' | null;
+  handoffReason?: string | null;
+  handoffRequestedAt?: string | null;
+  handoffAcceptedAt?: string | null;
+  handoffResolvedAt?: string | null;
+  assignedAgentId?: string | null;
+  assignedAgentName?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ChatAttachment = {
+  url?: string;
+  name?: string;
+  contentType?: string;
+  size?: number;
+  provider?: string;
+  storageKey?: string;
 };
 
 export type ChatMessage = {
@@ -330,9 +358,19 @@ export type ChatMessage = {
   conversationId: string;
   tenantId: string;
   userId: string;
-  role: 'system' | 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant' | 'human';
   content: string;
+  attachments?: ChatAttachment[] | string | null;
+  operatorId?: string | null;
+  operatorName?: string | null;
   tokensIn: number;
   tokensOut: number;
   createdAt: string;
+};
+
+export type TenantServiceStorage = {
+  provider: string;
+  enabled: boolean;
+  usingDefault: boolean;
+  config: Record<string, unknown> | null;
 };

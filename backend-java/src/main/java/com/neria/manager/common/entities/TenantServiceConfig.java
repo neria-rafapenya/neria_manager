@@ -41,6 +41,12 @@ public class TenantServiceConfig {
   @Column(name = "policyId", length = 36)
   private String policyId;
 
+  @Column(name = "humanHandoffEnabled")
+  private Boolean humanHandoffEnabled;
+
+  @Column(name = "fileStorageEnabled")
+  private Boolean fileStorageEnabled;
+
   @Column(name = "createdAt")
   private LocalDateTime createdAt;
 

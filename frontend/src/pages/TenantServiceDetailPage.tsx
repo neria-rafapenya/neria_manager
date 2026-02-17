@@ -22,6 +22,7 @@ import type {
   PricingEntry,
   TenantServiceEndpoint,
   TenantServiceOverview,
+  TenantServiceStorage,
   TenantServiceUser,
 } from "../types";
 
@@ -70,7 +71,19 @@ export function TenantServiceDetailPage() {
     providerId: "",
     pricingId: "",
     policyId: "",
+    humanHandoffEnabled: true,
+    fileStorageEnabled: true,
   });
+  const [storageConfig, setStorageConfig] = useState<TenantServiceStorage | null>(
+    null,
+  );
+  const [storageDraft, setStorageDraft] = useState({
+    provider: "cloudinary",
+    enabled: true,
+    configText: "",
+    usingDefault: true,
+  });
+  const [storageBusy, setStorageBusy] = useState(false);
   const [serviceRuntimeForm, setServiceRuntimeForm] = useState({
     providerId: "",
     model: "",
@@ -111,6 +124,14 @@ export function TenantServiceDetailPage() {
     }
     return resolved;
   })();
+  const storageProviders = [
+    { value: "cloudinary", label: "Cloudinary" },
+    { value: "s3", label: "Amazon S3" },
+    { value: "minio", label: "MinIO" },
+    { value: "azure", label: "Azure Blob" },
+    { value: "google", label: "Google Cloud Storage" },
+    { value: "ibm", label: "IBM Cloud Object Storage" },
+  ];
 
   const assignedServiceUserIds = useMemo(
     () => new Set(serviceUsers.map((item) => item.userId)),
@@ -167,6 +188,13 @@ export function TenantServiceDetailPage() {
     ],
   );
 
+  const catalogHandoffEnabled = service?.catalogHumanHandoffEnabled !== false;
+  const catalogStorageEnabled = service?.catalogFileStorageEnabled !== false;
+  const effectiveHandoffEnabled =
+    catalogHandoffEnabled && serviceConfigDraft.humanHandoffEnabled;
+  const effectiveStorageEnabled =
+    catalogStorageEnabled && serviceConfigDraft.fileStorageEnabled;
+
   useEffect(() => {
     if (!serviceCode) {
       return;
@@ -216,6 +244,7 @@ export function TenantServiceDetailPage() {
           api.listChatConversations(tenantId),
           api.listApiKeys(),
           canManagePolicies ? api.listPolicies() : api.getPolicy(tenantId),
+          api.getTenantServiceStorage(tenantId, serviceCode),
         ]);
 
         const [
@@ -226,6 +255,7 @@ export function TenantServiceDetailPage() {
           chatConversationsList,
           apiKeyList,
           policyData,
+          storageData,
         ] = results.map((result) =>
           result.status === "fulfilled" ? result.value : null,
         );
@@ -280,7 +310,39 @@ export function TenantServiceDetailPage() {
           providerId: match.providerId || "",
           pricingId: match.pricingId || "",
           policyId: match.policyId || "",
+          humanHandoffEnabled:
+            match.catalogHumanHandoffEnabled === false
+              ? false
+              : match.tenantHumanHandoffEnabled ??
+                match.humanHandoffEnabled ??
+                true,
+          fileStorageEnabled:
+            match.catalogFileStorageEnabled === false
+              ? false
+              : match.tenantFileStorageEnabled ??
+                match.fileStorageEnabled ??
+                true,
         });
+        if (storageData) {
+          const resolved = storageData as TenantServiceStorage;
+          setStorageConfig(resolved);
+          setStorageDraft({
+            provider: resolved.provider || "cloudinary",
+            enabled: resolved.enabled ?? true,
+            configText: resolved.config
+              ? JSON.stringify(resolved.config, null, 2)
+              : "",
+            usingDefault: Boolean(resolved.usingDefault),
+          });
+        } else {
+          setStorageConfig(null);
+          setStorageDraft({
+            provider: "cloudinary",
+            enabled: true,
+            configText: "",
+            usingDefault: true,
+          });
+        }
         const fallbackProviderId =
           match.providerId ||
           (providerList as Provider[])?.find((item) => item.enabled)?.id ||
@@ -300,6 +362,7 @@ export function TenantServiceDetailPage() {
           path: "",
           baseUrl: "",
           headers: "",
+          responsePath: "",
           enabled: true,
         });
         setServiceEndpointMode("create");
@@ -361,6 +424,8 @@ export function TenantServiceDetailPage() {
         providerId: serviceConfigDraft.providerId,
         pricingId: serviceConfigDraft.pricingId,
         policyId: serviceConfigDraft.policyId,
+        humanHandoffEnabled: serviceConfigDraft.humanHandoffEnabled,
+        fileStorageEnabled: serviceConfigDraft.fileStorageEnabled,
       });
       await refreshServiceSummary();
       emitToast(t("Configuración del servicio guardada."));
@@ -368,6 +433,90 @@ export function TenantServiceDetailPage() {
       emitToast(err.message || t("No se pudo guardar el servicio"), "error");
     } finally {
       setServiceBusy(false);
+    }
+  };
+
+  const applyStorageResponse = (data: TenantServiceStorage | null) => {
+    if (!data) {
+      setStorageConfig(null);
+      setStorageDraft({
+        provider: "cloudinary",
+        enabled: true,
+        configText: "",
+        usingDefault: true,
+      });
+      return;
+    }
+    setStorageConfig(data);
+    setStorageDraft({
+      provider: data.provider || "cloudinary",
+      enabled: data.enabled ?? true,
+      configText: data.config ? JSON.stringify(data.config, null, 2) : "",
+      usingDefault: Boolean(data.usingDefault),
+    });
+  };
+
+  const handleResetStorage = async () => {
+    if (!tenantId || !serviceCode || !canManageServices) {
+      return;
+    }
+    setStorageBusy(true);
+    try {
+      await api.deleteTenantServiceStorage(tenantId, serviceCode);
+      applyStorageResponse({
+        provider: "cloudinary",
+        enabled: true,
+        usingDefault: true,
+        config: null,
+      });
+      emitToast(t("Almacenamiento restablecido"));
+    } catch (err: any) {
+      setError(err.message || t("Error restableciendo almacenamiento"));
+    } finally {
+      setStorageBusy(false);
+    }
+  };
+
+  const handleSaveStorage = async () => {
+    if (!tenantId || !serviceCode || !canManageServices) {
+      return;
+    }
+    setStorageBusy(true);
+    try {
+      const trimmed = storageDraft.configText.trim();
+      if (!trimmed) {
+        await api.deleteTenantServiceStorage(tenantId, serviceCode);
+        applyStorageResponse({
+          provider: "cloudinary",
+          enabled: true,
+          usingDefault: true,
+          config: null,
+        });
+        emitToast(t("Almacenamiento restablecido"));
+        return;
+      }
+      let config = null;
+      try {
+        config = JSON.parse(trimmed);
+      } catch (error) {
+        throw new Error(t("JSON inválido en la configuración de almacenamiento."));
+      }
+      const payload = {
+        provider: storageDraft.provider,
+        enabled: storageDraft.enabled,
+        config,
+      };
+      const updated = (await api.updateTenantServiceStorage(
+        tenantId,
+        serviceCode,
+        payload,
+      )) as TenantServiceStorage;
+      applyStorageResponse(updated);
+      emitToast(t("Almacenamiento actualizado"));
+    } catch (err: any) {
+      setError(err.message || t("Error guardando almacenamiento"));
+    } finally {
+      setStorageBusy(false);
     }
   };
 
@@ -914,6 +1063,52 @@ export function TenantServiceDetailPage() {
                       </select>
                     </label>
                   </div>
+                  {!catalogHandoffEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Atención humana no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.humanHandoffEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            humanHandoffEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogHandoffEnabled}
+                      />
+                      {t("Permite atención humana")}
+                    </label>
+                  </div>
+                  {!catalogStorageEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Almacenamiento no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.fileStorageEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            fileStorageEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogStorageEnabled}
+                      />
+                      {t("Permite adjuntos y almacenamiento")}
+                    </label>
+                  </div>
                 </div>
                 <div className="form-actions">
                   <button
@@ -972,10 +1167,149 @@ export function TenantServiceDetailPage() {
                         : "—"}
                     </span>
                   </div>
+                  <div className="mini-row">
+                    <span>{t("Atención humana")}</span>
+                    <span>
+                      {effectiveHandoffEnabled ? t("Activo") : t("Inactivo")}
+                    </span>
+                  </div>
+                  <div className="mini-row">
+                    <span>{t("Almacenamiento de archivos")}</span>
+                    <span>
+                      {effectiveStorageEnabled ? t("Activo") : t("Inactivo")}
+                    </span>
+                  </div>
                 </div>
                 <div className="code-block">
                   <pre>{serviceConfigDraft.systemPrompt || t("Sin prompt.")}</pre>
                 </div>
+              </>
+            )}
+
+            <div className="section-divider" />
+
+            {!catalogStorageEnabled ? (
+              <div className="info-banner">
+                {t("Almacenamiento no disponible para este servicio.")}
+              </div>
+            ) : (
+              <>
+                <h4>{t("Almacenamiento de archivos")}</h4>
+                <p className="muted mb-3">
+                  {t(
+                    "Define el storage usado para adjuntar archivos e imágenes en el chatbot. Si no se configura, se usa Cloudinary por defecto.",
+                  )}
+                </p>
+                {storageDraft.usingDefault && !storageDraft.configText.trim() && (
+                  <div className="info-banner">
+                    {t("Usando Cloudinary por defecto para este servicio.")}
+                  </div>
+                )}
+                {canManageServices ? (
+                  <>
+                    <div className="row g-3 form-grid-13">
+                      <div className="col-12 col-md-4">
+                        <label>
+                          {t("Proveedor de storage")}
+                          <select
+                            className="form-select"
+                            value={storageDraft.provider}
+                            onChange={(event) =>
+                              setStorageDraft((prev) => ({
+                                ...prev,
+                                provider: event.target.value,
+                              }))
+                            }
+                          >
+                            {storageProviders.map((provider) => (
+                              <option key={provider.value} value={provider.value}>
+                                {provider.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-4">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={storageDraft.enabled}
+                            onChange={(event) =>
+                              setStorageDraft((prev) => ({
+                                ...prev,
+                                enabled: event.target.checked,
+                              }))
+                            }
+                          />{" "}
+                          {t("Activo")}
+                        </label>
+                      </div>
+                      <div className="col-12">
+                        <label>
+                          <span className="label-with-tooltip">
+                            {t("Configuración JSON")}
+                            <InfoTooltip
+                              text={t(
+                                "Cloudinary: {cloudName, apiKey, apiSecret, uploadPreset, folder}. S3/MinIO/IBM/GCS: {accessKey, secretKey, bucket, region, endpoint}. Azure: {account, container, sasToken, endpoint}.",
+                              )}
+                            />
+                          </span>
+                          <textarea
+                            className="form-control"
+                            value={storageDraft.configText}
+                            onChange={(event) =>
+                              setStorageDraft((prev) => ({
+                                ...prev,
+                                configText: event.target.value,
+                              }))
+                            }
+                            rows={6}
+                            placeholder={t(
+                              '{"cloudName":"...","apiKey":"...","apiSecret":"...","uploadPreset":"..."}',
+                            )}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="form-actions">
+                      <button
+                        className="btn primary"
+                        onClick={handleSaveStorage}
+                        disabled={storageBusy}
+                      >
+                        {t("Guardar almacenamiento")}
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={handleResetStorage}
+                        disabled={storageBusy}
+                      >
+                        {t("Restablecer Cloudinary")}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mini-list">
+                    <div className="mini-row">
+                      <span>{t("Proveedor de storage")}</span>
+                      <span>{storageConfig?.provider || "cloudinary"}</span>
+                    </div>
+                    <div className="mini-row">
+                      <span>{t("Estado")}</span>
+                      <span>
+                        {storageConfig?.enabled ? t("Activo") : t("Inactivo")}
+                      </span>
+                    </div>
+                    <div className="mini-row">
+                      <span>{t("Credenciales")}</span>
+                      <span>
+                        {storageConfig?.usingDefault
+                          ? t("Cloudinary por defecto")
+                          : t("Configuración personalizada")}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -1201,6 +1535,52 @@ export function TenantServiceDetailPage() {
                         placeholder={t('{"Authorization": "Bearer ..."}')}
                         disabled={!canManageServices}
                       />
+                    </label>
+                  </div>
+                  {!catalogHandoffEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Atención humana no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.humanHandoffEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            humanHandoffEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogHandoffEnabled}
+                      />
+                      {t("Permite atención humana")}
+                    </label>
+                  </div>
+                  {!catalogStorageEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Almacenamiento no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.fileStorageEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            fileStorageEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogStorageEnabled}
+                      />
+                      {t("Permite adjuntos y almacenamiento")}
                     </label>
                   </div>
                 </div>

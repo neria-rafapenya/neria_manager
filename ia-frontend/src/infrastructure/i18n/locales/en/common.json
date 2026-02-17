@@ -35,5 +35,8 @@
     "chat_attachments_uploading": "Uploading files...",
     "chat_attachments_ready_label": "Files ready to send:",
     "chat_attachments_remove_aria": "Remove {{filename}}",
-    "common_close": "Close"
+    "common_close": "Close",
+    "chat_handoff_button": "Talk to a human",
+    "chat_handoff_requested": "We have requested human assistance. An agent will reply shortly.",
+    "chat_handoff_active": "A human agent is handling this conversation."
 }

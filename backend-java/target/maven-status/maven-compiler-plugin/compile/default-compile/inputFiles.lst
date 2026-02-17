@@ -58,6 +58,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceApiKey.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceConfig.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEndpoint.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceStorage.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceUser.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/UsageEvent.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/Webhook.java
@@ -89,6 +90,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceApiKeyRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceConfigRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEndpointRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceStorageRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceUserRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/UsageEventRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/WebhookRepository.java
@@ -127,6 +129,9 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/servicecatalog/ServiceCatalogService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/settings/SettingsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/settings/SettingsService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/storage/StorageUploadService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/storage/TenantServiceStorageController.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/storage/TenantServiceStorageService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/subscriptions/AdminSubscriptionsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/subscriptions/BillingController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/subscriptions/SubscriptionsController.java

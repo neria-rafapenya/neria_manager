@@ -6,4 +6,9 @@ export interface ChatAttachment {
   filename: string;
   mimeType: string;
   sizeBytes: number;
+  provider?: string;
+  storageKey?: string;
+  name?: string;
+  contentType?: string;
+  size?: number;
 }

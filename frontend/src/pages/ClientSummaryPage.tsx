@@ -325,6 +325,10 @@ export function ClientSummaryPage() {
       new Map(tenantServices.map((service) => [service.serviceCode, service])),
     [tenantServices],
   );
+  const hasHandoffServices = useMemo(
+    () => tenantServices.some((service) => service.humanHandoffEnabled),
+    [tenantServices],
+  );
   const assignedServiceUserIds = useMemo(
     () => new Set(serviceUsers.map((item) => item.userId)),
     [serviceUsers],
@@ -2999,6 +3003,18 @@ export function ClientSummaryPage() {
                 {t("Ver observability")}
               </a>
             </div>
+
+            {hasHandoffServices && (
+              <div className="card">
+                <h2>{t("Atención humana")}</h2>
+                <p className="muted tight">
+                  {t("Solicitudes en curso para responder como agente humano.")}
+                </p>
+                <a className="btn primary" href={`/clients/${tenantId}/support`}>
+                  {t("Ver soporte")}
+                </a>
+              </div>
+            )}
           </section>
         </div>
       </div>

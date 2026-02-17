@@ -21,6 +21,7 @@ import { WebhooksPage } from "./pages/WebhooksPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ObservabilityPage } from "./pages/ObservabilityPage";
+import { TenantSupportPage } from "./pages/TenantSupportPage";
 import { DocumentationPage } from "./pages/DocumentationPage";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
 import { ClientSummaryPage } from "./pages/ClientSummaryPage";
@@ -78,6 +79,10 @@ function App() {
                   <Route
                     path="clients/:tenantId/usage"
                     element={<TenantUsagePage />}
+                  />
+                  <Route
+                    path="clients/:tenantId/support"
+                    element={<TenantSupportPage />}
                   />
                   <Route path="docs" element={<DocumentationPage />} />
                   <Route path="profile" element={<ProfilePage />} />

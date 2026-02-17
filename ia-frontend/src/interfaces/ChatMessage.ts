@@ -2,7 +2,7 @@
 
 import type { ChatAttachment } from "./Attachment";
 
-export type ChatMessageRole = "user" | "assistant" | "system";
+export type ChatMessageRole = "user" | "assistant" | "system" | "human";
 
 export interface ChatMessage {
   id: string;

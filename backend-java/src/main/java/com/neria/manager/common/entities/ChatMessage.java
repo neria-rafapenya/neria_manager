@@ -32,6 +32,15 @@ public class ChatMessage {
   @Column(columnDefinition = "text", nullable = false)
   private String content;
 
+  @Column(name = "attachments", columnDefinition = "text")
+  private String attachments;
+
+  @Column(name = "operatorId", length = 64)
+  private String operatorId;
+
+  @Column(name = "operatorName", length = 255)
+  private String operatorName;
+
   @Column(name = "tokensIn", nullable = false)
   private int tokensIn;
 

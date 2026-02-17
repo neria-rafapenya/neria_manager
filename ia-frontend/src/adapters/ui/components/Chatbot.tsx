@@ -31,11 +31,23 @@ export const Chatbot = () => {
     sendMessage,
     createConversation,
     deleteConversation,
+    requestHandoff,
   } = useChatContext();
 
   const [input, setInput] = useState<string>("");
 
   // Gestión de adjuntos
+
+  const activeConversation = conversations.find(
+    (conversation) => conversation.id === selectedConversationId,
+  );
+  const handoffStatus = activeConversation?.handoffStatus ?? "none";
+  const isHandoffActive =
+    handoffStatus === "requested" || handoffStatus === "active";
+
+  const handoffAllowed = serviceInfo.humanHandoffEnabled !== false;
+  const attachmentsAllowed = serviceInfo.fileStorageEnabled !== false;
+
   const {
     attachments,
     isUploading,
@@ -51,6 +63,10 @@ export const Chatbot = () => {
   // Ancla para el scroll automático
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  const handleRequestHandoff = async () => {
+    await requestHandoff();
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
@@ -58,7 +74,7 @@ export const Chatbot = () => {
 
     setInput("");
 
-    await sendMessage(text, attachments as ChatAttachment[]);
+    await sendMessage(text, attachmentsAllowed ? (attachments as ChatAttachment[]) : []);
 
     // Una vez enviado el mensaje, limpiamos adjuntos pendientes
     clearAttachments();
@@ -149,6 +165,25 @@ export const Chatbot = () => {
         <div className="ia-chatbot-error">{uploadError}</div>
       )}
 
+      {isHandoffActive && (
+        <div className="ia-chatbot-handoff-banner">
+          {handoffStatus === "requested"
+            ? t("chat_handoff_requested")
+            : t("chat_handoff_active")}
+        </div>
+      )}
+
+      {!isHandoffActive && handoffAllowed && (
+        <button
+          type="button"
+          className="ia-chatbot-handoff-button"
+          onClick={handleRequestHandoff}
+          disabled={isStreaming || isUploading}
+        >
+          {t("chat_handoff_button")}
+        </button>
+      )}
+
       {/* Input + chips de adjuntos pendientes */}
       <ChatInputArea
         value={input}
@@ -156,6 +191,7 @@ export const Chatbot = () => {
         onSend={handleSend}
         disabled={isStreaming || isUploading}
         attachments={attachments}
+        attachmentsEnabled={attachmentsAllowed}
         onOpenAttachmentsModal={openModal}
         onRemoveAttachment={removeAttachment}
         isUploadingAttachments={isUploading}

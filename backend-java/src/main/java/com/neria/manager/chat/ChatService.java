@@ -11,6 +11,7 @@ import com.neria.manager.runtime.ExecuteRequest;
 import com.neria.manager.runtime.RuntimeService;
 import com.neria.manager.tenantservices.TenantServicesService;
 import com.neria.manager.tenantservices.TenantServicesService.TenantServiceEndpointResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -67,6 +68,10 @@ public class ChatService {
     return conversationsRepository.findByTenantIdAndUserIdOrderByUpdatedAtDesc(tenantId, userId);
   }
 
+  public TenantServicesService.ServiceAccess requireServiceAccess(String tenantId, String serviceCode, String userId) {
+    return tenantServicesService.requireServiceAccess(tenantId, serviceCode, userId);
+  }
+
   public List<TenantServicesService.TenantServiceUserService> listUserServices(
       String tenantId, String userId) {
     return tenantServicesService.listServicesForUser(tenantId, userId);
@@ -80,7 +85,7 @@ public class ChatService {
   public ChatConversation createConversation(
       String tenantId, String userId, String apiKeyId, CreateConversationRequest dto) {
     String serviceCode = dto.serviceCode.trim();
-    tenantServicesService.requireServiceAccess(tenantId, serviceCode, userId);
+    var access = tenantServicesService.requireServiceAccess(tenantId, serviceCode, userId);
 
     ChatConversation conversation = new ChatConversation();
     conversation.setId(UUID.randomUUID().toString());
@@ -91,13 +96,13 @@ public class ChatService {
     conversation.setModel(dto.model);
     conversation.setTitle(dto.title != null ? dto.title.trim() : null);
     conversation.setApiKeyId(apiKeyId);
+    conversation.setHandoffStatus("none");
     conversation.setCreatedAt(LocalDateTime.now());
     conversation.setUpdatedAt(LocalDateTime.now());
     ChatConversation saved = conversationsRepository.save(conversation);
 
     String prompt =
         dto.systemPrompt != null ? dto.systemPrompt.trim() : "";
-    var access = tenantServicesService.requireServiceAccess(tenantId, serviceCode, userId);
     if (access != null && access.config != null && access.config.getSystemPrompt() != null) {
       prompt = access.config.getSystemPrompt().trim();
     }
@@ -123,6 +128,14 @@ public class ChatService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
   }
 
+  public ChatConversation getConversationForUser(String tenantId, String userId, String id) {
+    ChatConversation conversation = getConversation(tenantId, id);
+    if (!conversation.getUserId().equals(userId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation does not belong to user");
+    }
+    return conversation;
+  }
+
   public List<ChatMessage> listMessages(String tenantId, String conversationId) {
     return messagesRepository.findByTenantIdAndConversationIdOrderByCreatedAtAsc(tenantId, conversationId);
   }
@@ -141,11 +154,8 @@ public class ChatService {
       String apiKeyId,
       String conversationId,
       CreateMessageRequest dto) {
-    ChatConversation conversation = getConversation(tenantId, conversationId);
-    if (!conversation.getUserId().equals(userId)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation does not belong to user");
-    }
-    tenantServicesService.requireServiceAccess(tenantId, conversation.getServiceCode(), userId);
+    ChatConversation conversation = getConversationForUser(tenantId, userId, conversationId);
+    var access = tenantServicesService.requireServiceAccess(tenantId, conversation.getServiceCode(), userId);
 
     ChatUser user =
         usersRepository
@@ -161,7 +171,13 @@ public class ChatService {
     userMessage.setConversationId(conversationId);
     userMessage.setUserId(userId);
     userMessage.setRole("user");
-    userMessage.setContent(dto.content);
+    userMessage.setContent(dto.content != null ? dto.content : "");
+    if (dto.attachments != null && !dto.attachments.isEmpty()) {
+      if (access != null && !access.fileStorageEnabled) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "File storage not enabled for this service");
+      }
+      userMessage.setAttachments(toJson(dto.attachments));
+    }
     userMessage.setTokensIn(0);
     userMessage.setTokensOut(0);
     userMessage.setCreatedAt(LocalDateTime.now());
@@ -170,7 +186,7 @@ public class ChatService {
     List<ChatMessage> history =
         messagesRepository.findTop20ByTenantIdAndConversationIdOrderByCreatedAtDesc(tenantId, conversationId);
     history = history.stream().sorted(Comparator.comparing(ChatMessage::getCreatedAt)).toList();
-    String searchMessage = dto.content;
+    String searchMessage = dto.content != null ? dto.content : "";
     String previousUserMessage = null;
     for (int i = history.size() - 1; i >= 0; i--) {
       ChatMessage message = history.get(i);
@@ -189,6 +205,21 @@ public class ChatService {
       if (!hasYear || currentKeywords.size() <= 1) {
         searchMessage = previousUserMessage + " " + searchMessage;
       }
+    }
+
+    String handoffStatus = conversation.getHandoffStatus();
+    if ("requested".equalsIgnoreCase(handoffStatus) || "active".equalsIgnoreCase(handoffStatus)) {
+      conversation.setUpdatedAt(LocalDateTime.now());
+      if (conversation.getApiKeyId() == null && apiKeyId != null) {
+        conversation.setApiKeyId(apiKeyId);
+      }
+      conversationsRepository.save(conversation);
+
+      AddMessageResult result = new AddMessageResult();
+      result.conversationId = conversationId;
+      result.message = null;
+      result.output = Map.of("handoff", true, "status", handoffStatus);
+      return result;
     }
     TenantServiceConfig serviceConfig =
         tenantServicesService.getConfig(tenantId, conversation.getServiceCode());
@@ -303,7 +334,11 @@ public class ChatService {
     payloadMessages.addAll(
         history.stream()
             .filter(item -> !injectSystem || !"system".equalsIgnoreCase(item.getRole()))
-            .map(item -> Map.of("role", item.getRole(), "content", item.getContent()))
+            .map(
+                item ->
+                    Map.of(
+                        "role", normalizeRole(item.getRole()),
+                        "content", decorateContent(item)))
             .toList());
 
     ExecuteRequest runtimeRequest = new ExecuteRequest();
@@ -523,6 +558,21 @@ public class ChatService {
 
   public static class CreateMessageRequest {
     public String content;
+    public List<AttachmentPayload> attachments;
+  }
+
+  public static class CreateHumanMessageRequest {
+    public String content;
+    public List<AttachmentPayload> attachments;
+  }
+
+  public static class AttachmentPayload {
+    public String url;
+    public String name;
+    public String contentType;
+    public Long size;
+    public String provider;
+    public String storageKey;
   }
 
   public static class CreateChatUserRequest {
@@ -542,6 +592,101 @@ public class ChatService {
     public String conversationId;
     public ChatMessage message;
     public Object output;
+  }
+
+  public List<ChatConversation> adminListHandoffs(String tenantId) {
+    return conversationsRepository.findByTenantIdAndHandoffStatusInOrderByUpdatedAtDesc(
+        tenantId, List.of("requested", "active"));
+  }
+
+  public ChatConversation requestHandoff(
+      String tenantId, String userId, String conversationId, String reason) {
+    ChatConversation conversation = getConversationForUser(tenantId, userId, conversationId);
+    var access = tenantServicesService.requireServiceAccess(tenantId, conversation.getServiceCode(), userId);
+    if (access != null && !access.humanHandoffEnabled) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Human handoff not enabled for this service");
+    }
+    if (!"active".equalsIgnoreCase(conversation.getHandoffStatus())) {
+      conversation.setHandoffStatus("requested");
+      conversation.setHandoffReason(reason != null ? reason.trim() : null);
+      conversation.setHandoffRequestedAt(LocalDateTime.now());
+      conversation.setUpdatedAt(LocalDateTime.now());
+      conversationsRepository.save(conversation);
+
+      ChatMessage assistantMessage = new ChatMessage();
+      assistantMessage.setId(UUID.randomUUID().toString());
+      assistantMessage.setTenantId(tenantId);
+      assistantMessage.setConversationId(conversationId);
+      assistantMessage.setUserId(userId);
+      assistantMessage.setRole("assistant");
+      assistantMessage.setContent(
+          "Hemos solicitado asistencia humana. Un agente responderá en breve.");
+      assistantMessage.setTokensIn(0);
+      assistantMessage.setTokensOut(0);
+      assistantMessage.setCreatedAt(LocalDateTime.now());
+      messagesRepository.save(assistantMessage);
+    }
+    return conversation;
+  }
+
+  public ChatConversation adminAcceptHandoff(
+      String tenantId, String conversationId, String operatorId, String operatorName) {
+    ChatConversation conversation = getConversation(tenantId, conversationId);
+    conversation.setHandoffStatus("active");
+    conversation.setHandoffAcceptedAt(LocalDateTime.now());
+    conversation.setAssignedAgentId(operatorId);
+    conversation.setAssignedAgentName(operatorName);
+    conversation.setUpdatedAt(LocalDateTime.now());
+    return conversationsRepository.save(conversation);
+  }
+
+  public ChatConversation adminResolveHandoff(String tenantId, String conversationId) {
+    ChatConversation conversation = getConversation(tenantId, conversationId);
+    conversation.setHandoffStatus("resolved");
+    conversation.setHandoffResolvedAt(LocalDateTime.now());
+    conversation.setUpdatedAt(LocalDateTime.now());
+    return conversationsRepository.save(conversation);
+  }
+
+  public ChatMessage adminAddHumanMessage(
+      String tenantId,
+      String conversationId,
+      String operatorId,
+      String operatorName,
+      CreateHumanMessageRequest dto) {
+    ChatConversation conversation = getConversation(tenantId, conversationId);
+    boolean storageEnabled =
+        tenantServicesService.resolveFileStorageEnabled(tenantId, conversation.getServiceCode());
+    if ("requested".equalsIgnoreCase(conversation.getHandoffStatus())) {
+      conversation.setHandoffStatus("active");
+      conversation.setHandoffAcceptedAt(LocalDateTime.now());
+    }
+    conversation.setAssignedAgentId(operatorId);
+    conversation.setAssignedAgentName(operatorName);
+    conversation.setUpdatedAt(LocalDateTime.now());
+    conversationsRepository.save(conversation);
+
+    ChatMessage message = new ChatMessage();
+    message.setId(UUID.randomUUID().toString());
+    message.setTenantId(tenantId);
+    message.setConversationId(conversationId);
+    message.setUserId(conversation.getUserId());
+    message.setRole("human");
+    message.setContent(dto.content != null ? dto.content : "");
+    if (dto.attachments != null && !dto.attachments.isEmpty()) {
+      if (!storageEnabled) {
+        throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN, "File storage not enabled for this service");
+      }
+      message.setAttachments(toJson(dto.attachments));
+    }
+    message.setOperatorId(operatorId);
+    message.setOperatorName(operatorName);
+    message.setTokensIn(0);
+    message.setTokensOut(0);
+    message.setCreatedAt(LocalDateTime.now());
+    messagesRepository.save(message);
+    return message;
   }
 
   private String buildSystemPrompt(
@@ -598,6 +743,53 @@ public class ChatService {
     sb.append(
         "Si no hay datos suficientes, responde exactamente: \"No tengo información para responder a esa pregunta.\"");
     return sb.toString().trim();
+  }
+
+  private String decorateContent(ChatMessage message) {
+    if (message == null) {
+      return "";
+    }
+    String base = message.getContent() != null ? message.getContent() : "";
+    String attachmentsJson = message.getAttachments();
+    if (attachmentsJson == null || attachmentsJson.isBlank()) {
+      return base;
+    }
+    List<Map<String, Object>> attachments = parseAttachments(attachmentsJson);
+    if (attachments.isEmpty()) {
+      return base;
+    }
+    String summary =
+        attachments.stream()
+            .limit(5)
+            .map(
+                attachment -> {
+                  String name = asString(attachment.get("name"));
+                  String url = asString(attachment.get("url"));
+                  if (name != null && !name.isBlank()) {
+                    return url != null && !url.isBlank() ? name + " (" + url + ")" : name;
+                  }
+                  return url != null ? url : "";
+                })
+            .filter(item -> !item.isBlank())
+            .collect(Collectors.joining(", "));
+    if (summary.isBlank()) {
+      return base;
+    }
+    return base + "\n\nAdjuntos: " + summary;
+  }
+
+  private String normalizeRole(String role) {
+    if (role == null || role.isBlank()) {
+      return "user";
+    }
+    String normalized = role.trim().toLowerCase(Locale.ROOT);
+    if ("human".equals(normalized)) {
+      return "assistant";
+    }
+    if ("assistant".equals(normalized) || "user".equals(normalized) || "system".equals(normalized)) {
+      return normalized;
+    }
+    return "user";
   }
 
   private EndpointContext buildEndpointContext(
@@ -1290,5 +1482,28 @@ public class ChatService {
     String lower = value.toLowerCase(Locale.ROOT).trim();
     String normalized = Normalizer.normalize(lower, Normalizer.Form.NFD);
     return normalized.replaceAll("\\p{M}+", "");
+  }
+
+  private String toJson(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (Exception ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid attachments payload");
+    }
+  }
+
+  private List<Map<String, Object>> parseAttachments(String json) {
+    if (json == null || json.isBlank()) {
+      return List.of();
+    }
+    try {
+      return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+    } catch (Exception ex) {
+      return List.of();
+    }
+  }
+
+  private String asString(Object value) {
+    return value != null ? String.valueOf(value) : null;
   }
 }

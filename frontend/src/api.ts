@@ -73,16 +73,6 @@ const showSessionExpiredModal = async () => {
     return authModalPromise;
   }
   authModalPromise = (async () => {
-    const Swal = (await import("sweetalert2")).default;
-    await Swal.fire({
-      title: t("Sesión expirada"),
-      text: t("Tu sesión ha caducado. Debes iniciar sesión de nuevo."),
-      icon: "warning",
-      confirmButtonText: t("Ir al login"),
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      backdrop: true,
-    });
     clearCookie("pm_auth_user");
     clearStoredToken();
     fetch(`${baseUrl}/auth/logout`, {
@@ -146,18 +136,16 @@ async function requestJson<T>(
   });
 
   if (response.status === 401) {
-    // debugger;
     if (retry && canRefresh) {
       const refreshed = await refreshToken();
       if (refreshed) {
         return requestJson<T>(path, init, false);
       }
     }
-    const shouldRedirect = path === "/auth/session";
-    if (typeof window !== "undefined" && shouldRedirect) {
+    if (typeof window !== "undefined" && authToken) {
       await showSessionExpiredModal();
     }
-    throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+    throw new Error(t("Sesión expirada. Vuelve a iniciar sesión."));
   }
 
   if (!response.ok) {
@@ -427,6 +415,21 @@ export const api = {
         method: "DELETE",
       },
     ),
+  getTenantServiceStorage: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/storage`),
+  updateTenantServiceStorage: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/storage`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteTenantServiceStorage: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/storage`, {
+      method: "DELETE",
+    }),
   getTenantPricing: (tenantId: string) =>
     requestJson<any>(`/tenants/${tenantId}/pricing`),
   updateTenantPricing: (tenantId: string, payload?: any) =>
@@ -455,6 +458,30 @@ export const api = {
   listChatMessages: (tenantId: string, conversationId: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/chat/conversations/${conversationId}/messages`,
+    ),
+  listChatHandoffs: (tenantId: string) =>
+    requestJson<any[]>(`/tenants/${tenantId}/chat/handoffs`),
+  acceptChatHandoff: (tenantId: string, conversationId: string) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/chat/conversations/${conversationId}/handoff/accept`,
+      { method: "POST" },
+    ),
+  resolveChatHandoff: (tenantId: string, conversationId: string) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/chat/conversations/${conversationId}/handoff/resolve`,
+      { method: "POST" },
+    ),
+  addHumanChatMessage: (
+    tenantId: string,
+    conversationId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/chat/conversations/${conversationId}/messages/human`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
     ),
   deleteChatConversation: (tenantId: string, conversationId: string) =>
     requestJson<any>(

@@ -33,6 +33,12 @@ public class ServiceCatalog {
   @Column(name = "endpointsEnabled", nullable = false)
   private boolean endpointsEnabled;
 
+  @Column(name = "humanHandoffEnabled", nullable = false)
+  private boolean humanHandoffEnabled;
+
+  @Column(name = "fileStorageEnabled", nullable = false)
+  private boolean fileStorageEnabled;
+
   @Column(name = "priceMonthlyEur", precision = 10, scale = 2, nullable = false)
   private BigDecimal priceMonthlyEur;
 

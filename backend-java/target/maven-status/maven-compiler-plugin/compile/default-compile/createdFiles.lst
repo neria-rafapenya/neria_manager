@@ -22,18 +22,23 @@ com/neria/manager/providers/ProvidersService.class
 com/neria/manager/docs/DocsService.class
 com/neria/manager/common/repos/ServiceCatalogRepository.class
 com/neria/manager/common/entities/AuditEvent.class
+com/neria/manager/config/AppProperties$Storage.class
 com/neria/manager/auth/AuthController.class
 com/neria/manager/servicecatalog/ServiceCatalogService$UpdateServiceCatalogRequest.class
 com/neria/manager/subscriptions/SubscriptionsService.class
 com/neria/manager/config/SecurityConfig.class
 com/neria/manager/adapters/OpenAIAdapter.class
 com/neria/manager/subscriptions/SubscriptionsService$ServiceSummary.class
+com/neria/manager/chat/ChatService$1.class
 com/neria/manager/auth/AdminPasswordResetService$ResetResult.class
 com/neria/manager/providers/ProvidersService$CreateProviderRequest.class
+com/neria/manager/common/entities/TenantServiceStorage.class
 com/neria/manager/common/entities/SubscriptionService.class
 com/neria/manager/policies/PoliciesService$UpdatePolicyRequest.class
 com/neria/manager/audit/AuditController.class
 com/neria/manager/pricing/PricingService$CreatePricingRequest.class
+com/neria/manager/storage/StorageUploadService.class
+com/neria/manager/storage/TenantServiceStorageController.class
 com/neria/manager/tenantservices/TenantServicesService$TenantServiceUserService.class
 com/neria/manager/servicecatalog/ServiceCatalogService$CreateServiceCatalogRequest.class
 com/neria/manager/redaction/RedactionService.class
@@ -54,6 +59,7 @@ com/neria/manager/common/repos/ProviderRepository.class
 com/neria/manager/common/repos/TenantServiceConfigRepository.class
 com/neria/manager/docs/DocsService$UpdateDocRequest.class
 com/neria/manager/config/AppProperties$Security.class
+com/neria/manager/storage/TenantServiceStorageService$ResolvedStorage.class
 com/neria/manager/auth/AdminUsersService.class
 com/neria/manager/common/entities/AdminPasswordReset.class
 com/neria/manager/common/security/AuthContext.class
@@ -83,8 +89,10 @@ com/neria/manager/tenants/TenantsService$UpdateTenantRequest.class
 com/neria/manager/tenantservices/TenantServicesService.class
 com/neria/manager/usage/UsageAlertsService.class
 com/neria/manager/dbconnections/DbConnectionsController.class
+com/neria/manager/chat/ChatService$CreateHumanMessageRequest.class
 com/neria/manager/chat/ChatAdminController.class
 com/neria/manager/ocr/OcrDocumentsController.class
+com/neria/manager/common/repos/TenantServiceStorageRepository.class
 com/neria/manager/common/repos/ChatMessageRepository.class
 com/neria/manager/pricing/PricingController.class
 com/neria/manager/adapters/AdaptersService.class
@@ -99,6 +107,7 @@ com/neria/manager/common/repos/AuditEventRepository.class
 com/neria/manager/common/repos/OcrDocumentRepository.class
 com/neria/manager/common/entities/OcrDocument.class
 com/neria/manager/dbconnections/DbConnectionsService.class
+com/neria/manager/storage/TenantServiceStorageService$StorageRequest.class
 com/neria/manager/auth/AuthService.class
 com/neria/manager/tenantservices/TenantServicesService$ChatUserSummary.class
 com/neria/manager/chatbots/ChatbotsService$ChatbotSqlRequest.class
@@ -115,6 +124,7 @@ com/neria/manager/common/services/ScryptHasher.class
 com/neria/manager/common/entities/TenantPricing.class
 com/neria/manager/tenantservices/TenantServicesService$TenantServiceSummary.class
 com/neria/manager/config/AppProperties$Cookies.class
+com/neria/manager/storage/TenantServiceStorageService$StorageResponse.class
 com/neria/manager/common/services/KillSwitchService$CacheEntry.class
 com/neria/manager/chatbots/ChatbotsController.class
 com/neria/manager/webhooks/WebhooksService$CreateWebhookRequest.class
@@ -132,6 +142,7 @@ com/neria/manager/adapters/ProviderAdapter.class
 com/neria/manager/common/security/AuthUtils.class
 com/neria/manager/common/repos/TenantServiceUserRepository.class
 com/neria/manager/auth/AdminUsersService$AdminUserView.class
+com/neria/manager/storage/StorageUploadService$UploadResult.class
 com/neria/manager/tenantpricing/TenantPricingController.class
 com/neria/manager/chat/ChatService$CreateChatUserRequest.class
 com/neria/manager/usage/UsageAlertsService$UsageAlert.class
@@ -140,6 +151,7 @@ com/neria/manager/tenantpricing/TenantPricingService$TenantPricingResponse.class
 com/neria/manager/common/repos/PricingModelRepository.class
 com/neria/manager/config/CorsConfig.class
 com/neria/manager/common/entities/Webhook.class
+com/neria/manager/storage/StorageUploadService$1.class
 com/neria/manager/common/repos/DocumentationEntryRepository.class
 com/neria/manager/common/entities/TenantInvoiceItem.class
 com/neria/manager/common/repos/AdminPasswordResetRepository.class
@@ -176,6 +188,7 @@ com/neria/manager/chat/ChatService$UpdateChatUserRequest.class
 com/neria/manager/usage/UsageService$Totals.class
 com/neria/manager/common/repos/WebhookRepository.class
 com/neria/manager/common/entities/TenantServiceApiKey.class
+com/neria/manager/storage/TenantServiceStorageService$1.class
 com/neria/manager/servicecatalog/ServiceCatalogService.class
 com/neria/manager/ocr/OcrDocumentsService$UpdateOcrDocumentRequest.class
 com/neria/manager/runtime/RuntimeController.class
@@ -193,6 +206,7 @@ com/neria/manager/config/AppProperties$Jwt.class
 com/neria/manager/chat/ChatService$EndpointContext.class
 com/neria/manager/common/services/EncryptionService.class
 com/neria/manager/servicecatalog/ServiceCatalogController.class
+com/neria/manager/storage/TenantServiceStorageService.class
 com/neria/manager/common/entities/ChatMessage.class
 com/neria/manager/common/repos/SubscriptionPaymentRequestRepository.class
 com/neria/manager/common/repos/TenantInvoiceRepository.class
@@ -204,6 +218,7 @@ com/neria/manager/pricing/PricingService.class
 com/neria/manager/chat/ChatController.class
 com/neria/manager/runtime/RuntimeService.class
 com/neria/manager/tenantservices/TenantServicesService$UpdateEndpointRequest.class
+com/neria/manager/chat/ChatService$AttachmentPayload.class
 com/neria/manager/config/AppProperties$Cors.class
 com/neria/manager/common/entities/TenantServiceConfig.class
 com/neria/manager/common/services/RateLimitService.class

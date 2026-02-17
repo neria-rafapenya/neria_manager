@@ -59,6 +59,8 @@ interface ChatContextValue {
     model: string;
     apiUrl: string;
     serviceName?: string;
+    humanHandoffEnabled?: boolean;
+    fileStorageEnabled?: boolean;
   };
 
   usageMode: UsageMode;
@@ -67,6 +69,7 @@ interface ChatContextValue {
   reloadConversations: () => Promise<void>;
   selectConversation: (idOrNew: string | null) => Promise<void>;
   sendMessage: (text: string, attachments?: ChatAttachment[]) => Promise<void>;
+  requestHandoff: (reason?: string) => Promise<void>;
   createConversation: (title: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
 }
@@ -242,6 +245,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     model: getModel(),
     apiUrl: getApiUrl(),
     serviceName: "",
+    humanHandoffEnabled: true,
+    fileStorageEnabled: true,
   });
 
   const [usageMode, setUsageMode] = useState<UsageMode>("idle");
@@ -289,6 +294,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       setServiceInfo((prev) => ({
         ...prev,
         serviceName: matched?.name || matched?.serviceCode || prev.serviceCode,
+        humanHandoffEnabled: matched?.humanHandoffEnabled ?? prev.humanHandoffEnabled ?? true,
+        fileStorageEnabled: matched?.fileStorageEnabled ?? prev.fileStorageEnabled ?? true,
       }));
     } catch {
       // ignore
@@ -461,6 +468,46 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   }, [selectedConversationId]);
 
+  useEffect(() => {
+    if (IS_EPHEMERAL) return;
+    if (!selectedConversationId) return;
+    const active = conversations.find((item) => item.id === selectedConversationId);
+    const status = active?.handoffStatus ?? "none";
+    if (status !== "requested" && status !== "active") {
+      return;
+    }
+
+    let alive = true;
+    const poll = async () => {
+      if (!alive) return;
+      if (isStreaming) return;
+      try {
+        const detail = await conversationService.getConversationWithMessages(
+          selectedConversationId,
+        );
+        if (!alive) return;
+        const sortedMessages = Array.isArray(detail.messages)
+          ? [...detail.messages].sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            )
+          : [];
+        setMessages(sortedMessages);
+        await reloadConversations();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    poll();
+    const interval = window.setInterval(poll, 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, [selectedConversationId, conversations, isStreaming]);
+
+
   const selectConversation = async (idOrNew: string | null) => {
     setError("");
 
@@ -495,6 +542,30 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       setMessages([]);
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  const requestHandoff = async (reason?: string) => {
+    if (IS_EPHEMERAL) {
+      return;
+    }
+    setError("");
+    try {
+      let conversationId = selectedConversationId;
+      if (!conversationId) {
+        const created = await conversationService.createConversation(
+          "Atención humana",
+        );
+        conversationId = created.id;
+        setConversations((prev) => [...prev, created]);
+        setSelectedConversationId(conversationId);
+      }
+      await chatService.requestHandoff(conversationId, reason);
+      await selectConversation(conversationId);
+      await reloadConversations();
+    } catch (e) {
+      console.error(e);
+      setError("No se ha podido solicitar atención humana.");
     }
   };
 
@@ -721,6 +792,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       sendMessage,
       createConversation,
       deleteConversation,
+      requestHandoff,
     }),
     [
       conversations,

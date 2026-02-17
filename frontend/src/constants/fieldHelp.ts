@@ -104,6 +104,8 @@ export const fieldHelp = {
   serviceApiBaseUrl: 'URL base de la API a la que apuntara el servicio en integraciones externas.',
   serviceEndpointsEnabled:
     'Indica si este servicio permite configurar endpoints por tenant.',
+  serviceHumanHandoffEnabled: 'Permite que este servicio utilice atención humana (handoff) cuando el LLM no pueda responder.',
+  serviceFileStorageEnabled: 'Permite subir archivos e imágenes desde el chatbot para este servicio.',
   serviceEndpointResponsePath:
     'Ruta en el JSON donde se encuentra la lista de datos (ej: list, data.items, results). Si se deja vacío, se intenta usar "list".',
   servicePriceMonthly: 'Precio mensual en EUR.',

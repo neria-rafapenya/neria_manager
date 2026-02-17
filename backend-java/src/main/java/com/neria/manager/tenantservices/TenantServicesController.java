@@ -49,7 +49,9 @@ public class TenantServicesController {
         dto.apiBaseUrl,
         dto.providerId,
         dto.pricingId,
-        dto.policyId);
+        dto.policyId,
+        dto.humanHandoffEnabled,
+        dto.fileStorageEnabled);
   }
 
   @GetMapping("/{serviceCode}/endpoints")
@@ -144,5 +146,7 @@ public class TenantServicesController {
     public String providerId;
     public String pricingId;
     public String policyId;
+    public Boolean humanHandoffEnabled;
+    public Boolean fileStorageEnabled;
   }
 }

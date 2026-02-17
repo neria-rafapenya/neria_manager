@@ -72,6 +72,40 @@ public class ChatAdminController {
     return chatService.adminListMessages(tenantId, id);
   }
 
+  @GetMapping("/handoffs")
+  public Object listHandoffs(HttpServletRequest request, @PathVariable String tenantId) {
+    requireTenantScope(request, tenantId);
+    return chatService.adminListHandoffs(tenantId);
+  }
+
+  @PostMapping("/conversations/{id}/handoff/accept")
+  public Object acceptHandoff(
+      HttpServletRequest request, @PathVariable String tenantId, @PathVariable String id) {
+    requireTenantScope(request, tenantId);
+    AuthContext auth = AuthUtils.requireAuth(request);
+    return chatService.adminAcceptHandoff(
+        tenantId, id, auth.getSub(), auth.getSub());
+  }
+
+  @PostMapping("/conversations/{id}/handoff/resolve")
+  public Object resolveHandoff(
+      HttpServletRequest request, @PathVariable String tenantId, @PathVariable String id) {
+    requireTenantScope(request, tenantId);
+    return chatService.adminResolveHandoff(tenantId, id);
+  }
+
+  @PostMapping("/conversations/{id}/messages/human")
+  public Object addHumanMessage(
+      HttpServletRequest request,
+      @PathVariable String tenantId,
+      @PathVariable String id,
+      @RequestBody ChatService.CreateHumanMessageRequest dto) {
+    requireTenantScope(request, tenantId);
+    AuthContext auth = AuthUtils.requireAuth(request);
+    return chatService.adminAddHumanMessage(
+        tenantId, id, auth.getSub(), auth.getSub(), dto);
+  }
+
   @DeleteMapping("/conversations/{id}")
   public Object deleteConversation(
       HttpServletRequest request, @PathVariable String tenantId, @PathVariable String id) {

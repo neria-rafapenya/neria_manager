@@ -13,6 +13,7 @@ public class AppProperties {
   private Auth auth = new Auth();
   private Security security = new Security();
   private Cookies cookies = new Cookies();
+  private Storage storage = new Storage();
 
   @Getter
   @Setter
@@ -48,5 +49,11 @@ public class AppProperties {
   public static class Cookies {
     private boolean secure = false;
     private String sameSite = "lax";
+  }
+
+  @Getter
+  @Setter
+  public static class Storage {
+    private String cloudinaryUrl = "";
   }
 }

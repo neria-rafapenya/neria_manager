@@ -1,0 +1,3 @@
+ALTER TABLE service_catalog
+  ADD COLUMN humanHandoffEnabled TINYINT(1) NOT NULL DEFAULT 1,
+  ADD COLUMN fileStorageEnabled TINYINT(1) NOT NULL DEFAULT 1;

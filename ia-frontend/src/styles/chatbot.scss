@@ -614,6 +614,34 @@
   background-color: #fef2f2;
 }
 
+
+.ia-chatbot-handoff-banner {
+  margin: 0.35rem 0.75rem 0;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  color: #1f2937;
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.5rem;
+}
+
+.ia-chatbot-handoff-button {
+  margin: 0.35rem 0.75rem 0;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #c7d2fe;
+  background-color: #eef2ff;
+  color: #3730a3;
+  cursor: pointer;
+}
+
+.ia-chatbot-handoff-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
 .ia-chatbot-streaming {
   padding: 0.25rem 0.75rem 0.5rem;
   font-size: 0.75rem;

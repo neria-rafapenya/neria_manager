@@ -12,4 +12,7 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
   List<ChatConversation> findByTenantIdOrderByUpdatedAtDesc(String tenantId);
 
   Optional<ChatConversation> findByIdAndTenantId(String id, String tenantId);
+
+  List<ChatConversation> findByTenantIdAndHandoffStatusInOrderByUpdatedAtDesc(
+      String tenantId, List<String> statuses);
 }

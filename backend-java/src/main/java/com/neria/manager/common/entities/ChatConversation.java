@@ -38,6 +38,27 @@ public class ChatConversation {
   @Column(name = "apiKeyId", length = 36)
   private String apiKeyId;
 
+  @Column(name = "handoffStatus", length = 16)
+  private String handoffStatus;
+
+  @Column(name = "handoffReason", columnDefinition = "text")
+  private String handoffReason;
+
+  @Column(name = "handoffRequestedAt")
+  private LocalDateTime handoffRequestedAt;
+
+  @Column(name = "handoffAcceptedAt")
+  private LocalDateTime handoffAcceptedAt;
+
+  @Column(name = "handoffResolvedAt")
+  private LocalDateTime handoffResolvedAt;
+
+  @Column(name = "assignedAgentId", length = 64)
+  private String assignedAgentId;
+
+  @Column(name = "assignedAgentName", length = 255)
+  private String assignedAgentName;
+
   @Column(name = "createdAt")
   private LocalDateTime createdAt;
 

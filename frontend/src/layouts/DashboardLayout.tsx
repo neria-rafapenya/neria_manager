@@ -106,6 +106,9 @@ export function DashboardLayout() {
       if (parts[2] === "usage") {
         return withHome([...base, { label: t("Uso") }]);
       }
+      if (parts[2] === "support") {
+        return withHome([...base, { label: t("Atención humana") }]);
+      }
       return withHome(base);
     }
 

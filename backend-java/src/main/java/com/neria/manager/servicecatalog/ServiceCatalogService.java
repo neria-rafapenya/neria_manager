@@ -58,6 +58,8 @@ public class ServiceCatalogService {
     item.setPriceAnnualEur(dto.priceAnnualEur);
     item.setEnabled(dto.enabled != null ? dto.enabled : true);
     item.setEndpointsEnabled(dto.endpointsEnabled != null ? dto.endpointsEnabled : true);
+    item.setHumanHandoffEnabled(dto.humanHandoffEnabled != null ? dto.humanHandoffEnabled : true);
+    item.setFileStorageEnabled(dto.fileStorageEnabled != null ? dto.fileStorageEnabled : true);
     item.setCreatedAt(LocalDateTime.now());
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
@@ -108,6 +110,8 @@ public class ServiceCatalogService {
     }
     if (dto.enabled != null) item.setEnabled(dto.enabled);
     if (dto.endpointsEnabled != null) item.setEndpointsEnabled(dto.endpointsEnabled);
+    if (dto.humanHandoffEnabled != null) item.setHumanHandoffEnabled(dto.humanHandoffEnabled);
+    if (dto.fileStorageEnabled != null) item.setFileStorageEnabled(dto.fileStorageEnabled);
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
   }
@@ -160,6 +164,8 @@ public class ServiceCatalogService {
     public BigDecimal priceAnnualEur;
     public Boolean enabled;
     public Boolean endpointsEnabled;
+    public Boolean humanHandoffEnabled;
+    public Boolean fileStorageEnabled;
   }
 
   public static class UpdateServiceCatalogRequest {
@@ -171,5 +177,7 @@ public class ServiceCatalogService {
     public BigDecimal priceAnnualEur;
     public Boolean enabled;
     public Boolean endpointsEnabled;
+    public Boolean humanHandoffEnabled;
+    public Boolean fileStorageEnabled;
   }
 }

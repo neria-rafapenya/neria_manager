@@ -11,6 +11,11 @@ export interface Conversation {
   model?: string;
   tenantId?: string;
   userId?: string;
+  handoffStatus?: "none" | "requested" | "active" | "resolved" | null;
+  handoffReason?: string | null;
+  handoffRequestedAt?: string | null;
+  handoffAcceptedAt?: string | null;
+  handoffResolvedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

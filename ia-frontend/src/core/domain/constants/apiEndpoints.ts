@@ -12,6 +12,9 @@ export const API_ENDPOINTS = {
     `/chat/conversations/${id}/messages`,
   CONVERSATION_MESSAGES_STREAM: (id: string) =>
     `/chat/conversations/${id}/messages/stream`,
+  CONVERSATION_HANDOFF: (id: string) =>
+    `/chat/conversations/${id}/handoff`,
 
+  CHAT_UPLOADS: "/chat/uploads",
   CHAT_MESSAGE: "/chat/conversations",
 } as const;
