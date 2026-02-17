@@ -7,8 +7,8 @@
     "dev": "vite",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build": "tsc -b && vite build --config vite.widget.config.ts",
-    "build:widget": "tsc -b && vite build --config vite.widget.config.ts"
+    "build": "tsc -b && vite build",
+    "build:widget": "tsc -b && vite build --mode lib"
   },
   "dependencies": {
     "i18next": "^25.6.3",
