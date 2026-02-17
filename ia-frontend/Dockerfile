@@ -1,9 +1,9 @@
-FROM node:18-bullseye-slim AS deps
+FROM node:22-bullseye-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN rm -f package-lock.json && npm install --include=optional
 
-FROM node:18-bullseye-slim AS build
+FROM node:22-bullseye-slim AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
