@@ -1,0 +1,56 @@
+/* ia-chatbot-header-anim.scss
+
+Animación de altura del header del chatbot */
+
+.ia-chatbot-header {
+  /* Solo la parte relacionada con la altura y la animación */
+  box-sizing: border-box;
+  height: 80px;
+  overflow: visible;
+  transition: height 0.35s ease-out;
+}
+
+/* cuando no estamos loggeados: header expandido */
+.ia-chatbot-header--expanded {
+  height: 250px; /* o 220px si lo prefieres */
+}
+
+/* Header en modo intro (no loggeado): animación 80px -> 250px */
+.ia-chatbot-header--intro {
+  animation: iachat-header-expand 0.35s ease-out forwards;
+}
+
+/* Header compacto (loggeado): se queda en 80px */
+.ia-chatbot-header--compact {
+  height: 80px;
+}
+
+@keyframes iachat-header-expand {
+  from {
+    height: 80px;
+  }
+  to {
+    height: 250px;
+  }
+}
+
+.ia-chatbot-header-intro-title {
+  font-size: 3rem;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+.ia-chatbot-header-intro-subtitle {
+  font-size: 1.5rem;
+  font-weight: lighter;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+.ia-chatbot-header-intro-copy {
+  margin: 20px;
+}
