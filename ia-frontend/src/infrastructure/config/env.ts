@@ -4,7 +4,8 @@ const TOKEN_COOKIE_NAME = "ia_chat_access_token";
 const TOKEN_STORAGE_KEY = "ia_chat_access_token";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_MANAGER ?? "http://localhost:3000";
+  import.meta.env.VITE_API_MANAGER ??
+  "https://backend-production-d7ca.up.railway.app";
 const API_URL = import.meta.env.VITE_API_URL ?? API_BASE_URL;
 const SERVICE_API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const TENANT_ID = import.meta.env.VITE_TENANT_ID ?? "";
@@ -32,7 +33,7 @@ const readTokenFromCookie = (): string | null => {
   if (!isBrowser()) return memoryToken;
 
   const match = document.cookie.match(
-    new RegExp(`(?:^|; )${TOKEN_COOKIE_NAME}=([^;]*)`)
+    new RegExp(`(?:^|; )${TOKEN_COOKIE_NAME}=([^;]*)`),
   );
 
   return match ? decodeURIComponent(match[1]) : null;
@@ -76,7 +77,7 @@ export const setAuthToken = (token: string | null): void => {
   const maxAgeSeconds = 60 * 60;
 
   document.cookie = `${TOKEN_COOKIE_NAME}=${encodeURIComponent(
-    token
+    token,
   )}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
 
   memoryToken = token;
