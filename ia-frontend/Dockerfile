@@ -1,18 +1,40 @@
-FROM node:20-alpine AS build
-WORKDIR /app
+# ===== deps =====
+FROM node:18-bullseye-slim AS deps
+WORKDIR /work
 
-# Copiamos SOLO la app ia-frontend
-COPY ia-frontend/package*.json ./
-RUN npm ci
+# Copiamos SOLO los manifests de ia-frontend para cachear bien
+COPY ia-frontend/package.json ia-frontend/package-lock.json* ./ia-frontend/
+WORKDIR /work/ia-frontend
 
-COPY ia-frontend/ .
+RUN rm -f package-lock.json && npm install --include=optional
+
+# ===== build =====
+FROM node:18-bullseye-slim AS build
+WORKDIR /work
+
+COPY --from=deps /work/ia-frontend/node_modules ./ia-frontend/node_modules
+
+# Copiamos el código de ia-frontend (no todo el repo)
+COPY ia-frontend ./ia-frontend
+
+WORKDIR /work/ia-frontend
+
+# Si quieres inyectar envs en build, usa ARGs (Railway Variables no llegan a Vite en runtime)
+# ARG VITE_API_URL
+# ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
-FROM nginx:alpine
-RUN rm -rf /usr/share/nginx/html/*
-COPY --from=build /app/dist /usr/share/nginx/html
+# ===== runner =====
+FROM nginx:alpine AS runner
+# Railway te inyecta PORT; si no existe, default 8080
+ENV PORT=8080
 
-RUN printf 'server {\n  listen 8080;\n  server_name _;\n  root /usr/share/nginx/html;\n  index index.html;\n  location / { try_files $uri /index.html; }\n}\n' > /etc/nginx/conf.d/default.conf
+# Copiamos el dist REAL del build
+COPY --from=build /work/ia-frontend/dist /usr/share/nginx/html
+
+# Plantilla de nginx con envsubst
+COPY ia-frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
