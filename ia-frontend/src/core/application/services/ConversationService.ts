@@ -26,7 +26,7 @@ export class ConversationService {
     return this.repository.create(trimmedTitle);
   }
 
-  deleteConversation(id: string): Promise<void> {
-    return this.repository.delete(id);
-  }
+  // deleteConversation(id: string): Promise<void> {
+  //   return this.repository.delete(id);
+  // }
 }

@@ -232,7 +232,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [serviceEndpoints, setServiceEndpoints] = useState<ServiceEndpoint[]>(
-    []
+    [],
   );
   const [serviceInfo, setServiceInfo] = useState({
     tenantId: getTenantId(),
@@ -262,7 +262,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       if (!Array.isArray(data)) {
         console.error(
           "[ChatContext] getConversations() ha devuelto algo que no es un array:",
-          data
+          data,
         );
       }
 
@@ -295,7 +295,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
     try {
       const endpoints = await fetchWithAuth<ServiceEndpoint[]>(
-        API_ENDPOINTS.SERVICE_ENDPOINTS(serviceCode)
+        API_ENDPOINTS.SERVICE_ENDPOINTS(serviceCode),
       );
       setServiceEndpoints(endpoints);
     } catch {
@@ -327,7 +327,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         if (!Array.isArray(data)) {
           console.error(
             "[ChatContext] init: getConversations() ha devuelto algo que no es un array:",
-            data
+            data,
           );
         }
 
@@ -337,7 +337,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         // 🔐 Si no hay conversaciones, no intentes leer .id
         if (!safeConversations || safeConversations.length === 0) {
           console.warn(
-            "[ChatContext] init: no hay conversaciones disponibles tras el login"
+            "[ChatContext] init: no hay conversaciones disponibles tras el login",
           );
           setSelectedConversationId(null);
           setMessages([]);
@@ -357,7 +357,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           } else {
             console.warn(
               "[ChatContext] init: la última conversación no tiene id válido",
-              last
+              last,
             );
             setSelectedConversationId(null);
             setMessages([]);
@@ -374,15 +374,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         setSelectedConversationId(conversationIdToLoad);
         setLoadingMessages(true);
         try {
-          const detail = await conversationService.getConversationWithMessages(
-            conversationIdToLoad
-          );
+          const detail =
+            await conversationService.getConversationWithMessages(
+              conversationIdToLoad,
+            );
 
           const sortedMessages = Array.isArray(detail.messages)
             ? [...detail.messages].sort(
                 (a, b) =>
                   new Date(a.createdAt).getTime() -
-                  new Date(b.createdAt).getTime()
+                  new Date(b.createdAt).getTime(),
               )
             : [];
 
@@ -390,7 +391,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         } catch (e) {
           console.error(
             "[ChatContext] No se ha podido cargar la conversación inicial",
-            e
+            e,
           );
           setSelectedConversationId(null);
           setMessages([]);
@@ -453,7 +454,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     if (selectedConversationId) {
       window.localStorage.setItem(
         SELECTED_CONVERSATION_STORAGE_KEY,
-        selectedConversationId
+        selectedConversationId,
       );
     } else {
       window.localStorage.removeItem(SELECTED_CONVERSATION_STORAGE_KEY);
@@ -477,14 +478,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     setLoadingMessages(true);
 
     try {
-      const detail = await conversationService.getConversationWithMessages(
-        idOrNew
-      );
+      const detail =
+        await conversationService.getConversationWithMessages(idOrNew);
 
       const sortedMessages = Array.isArray(detail.messages)
         ? [...detail.messages].sort(
             (a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
           )
         : [];
 
@@ -500,7 +500,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
   const sendMessage = async (
     text: string,
-    attachments: ChatAttachment[] = []
+    attachments: ChatAttachment[] = [],
   ) => {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -511,7 +511,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       const currentUsageState = loadUsageState();
       const { allowed, updatedState, remainingMs } = evaluateUsage(
         now,
-        currentUsageState
+        currentUsageState,
       );
       saveUsageState(updatedState);
 
@@ -521,12 +521,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
       if (!allowed) {
         const remaining =
-          remainingMs != null ? remainingMs : view.remainingMs ?? COOLDOWN_MS;
+          remainingMs != null ? remainingMs : (view.remainingMs ?? COOLDOWN_MS);
         const remainingMinutes = Math.max(1, Math.ceil(remaining / 60000));
 
         setError(
           `Has alcanzado el tiempo máximo de uso del asistente. ` +
-            `Podrás volver a utilizarlo en aproximadamente ${remainingMinutes} minutos.`
+            `Podrás volver a utilizarlo en aproximadamente ${remainingMinutes} minutos.`,
         );
         return;
       }
@@ -539,7 +539,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const nowIso = new Date().toISOString();
     const currentConversationId = IS_EPHEMERAL
       ? undefined
-      : selectedConversationId ?? undefined;
+      : (selectedConversationId ?? undefined);
 
     const userMessage: ChatMessage = {
       id: `${nowIso}-user`,
@@ -582,8 +582,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                     content: (msg.content ?? "") + safeDelta,
                     conversationId: newConversationId ?? msg.conversationId,
                   }
-                : msg
-            )
+                : msg,
+            ),
           );
 
           if (
@@ -593,7 +593,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           ) {
             setSelectedConversationId(newConversationId);
           }
-        }
+        },
       );
 
       if (
@@ -619,8 +619,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                   msg.content ||
                   "Lo siento, no he podido generar una respuesta en este momento.",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
     } finally {
       setIsStreaming(false);
@@ -638,9 +638,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     setError("");
 
     try {
-      const newConversation = await conversationService.createConversation(
-        trimmed
-      );
+      const newConversation =
+        await conversationService.createConversation(trimmed);
 
       setConversations((prev) => [...prev, newConversation]);
       setSelectedConversationId(newConversation.id);
@@ -662,7 +661,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       const previousList = conversations;
       const index = previousList.findIndex((c) => c.id === id);
 
-      await conversationService.deleteConversation(id);
+      // await conversationService.deleteConversation(id);
 
       const newList = previousList.filter((c) => c.id !== id);
       setConversations(newList);
@@ -678,14 +677,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           try {
             const detail =
               await conversationService.getConversationWithMessages(
-                newSelectedId
+                newSelectedId,
               );
 
             const sortedMessages = Array.isArray(detail.messages)
               ? [...detail.messages].sort(
                   (a, b) =>
                     new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime()
+                    new Date(b.createdAt).getTime(),
                 )
               : [];
 
@@ -735,7 +734,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       serviceInfo,
       usageMode,
       usageRemainingMs,
-    ]
+    ],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

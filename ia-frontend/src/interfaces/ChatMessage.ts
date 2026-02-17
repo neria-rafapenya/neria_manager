@@ -8,7 +8,7 @@ export interface ChatMessage {
   id: string;
   role: ChatMessageRole;
   content: string;
-  createdAt?: string;
+  createdAt?: any;
   conversationId?: string;
   tenantId?: string;
   userId?: string;

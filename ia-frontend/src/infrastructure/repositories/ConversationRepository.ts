@@ -1,12 +1,12 @@
 // src/infrastructure/repositories/ConversationRepository.ts
 import { fetchWithAuth } from "../api/api";
 import { API_ENDPOINTS } from "../../core/domain/constants/apiEndpoints";
-import type { Conversation, ConversationWithMessages, ChatMessage } from "../../interfaces";
-import {
-  getModel,
-  getProviderId,
-  getServiceCode,
-} from "../config/env";
+import type {
+  Conversation,
+  ConversationWithMessages,
+  ChatMessage,
+} from "../../interfaces";
+import { getModel, getProviderId, getServiceCode } from "../config/env";
 
 interface PaginatedConversations {
   pageSize: number;
@@ -34,7 +34,7 @@ export class ConversationRepository {
 
   async getWithMessages(id: string): Promise<ConversationWithMessages> {
     const messages = await fetchWithAuth<ChatMessage[]>(
-      API_ENDPOINTS.CONVERSATION_MESSAGES(id)
+      API_ENDPOINTS.CONVERSATION_MESSAGES(id),
     );
     return {
       id,
@@ -59,7 +59,7 @@ export class ConversationRepository {
     });
   }
 
-  async delete(id: string): Promise<void> {
-    throw new Error("Eliminar conversaciones no está disponible.");
-  }
+  // async delete(id: string): Promise<void> {
+  //   throw new Error("Eliminar conversaciones no está disponible.");
+  // }
 }
