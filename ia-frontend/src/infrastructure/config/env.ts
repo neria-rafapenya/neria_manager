@@ -3,27 +3,40 @@
 const TOKEN_COOKIE_NAME = "ia_chat_access_token";
 const TOKEN_STORAGE_KEY = "ia_chat_access_token";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_MANAGER ??
-  "https://backend-production-d7ca.up.railway.app";
-const API_URL = import.meta.env.VITE_API_URL ?? API_BASE_URL;
-const SERVICE_API_KEY = import.meta.env.VITE_API_KEY ?? "";
-const TENANT_ID = import.meta.env.VITE_TENANT_ID ?? "";
-const SERVICE_CODE = import.meta.env.VITE_SERVICE_CODE ?? "";
-const SERVICE_ID = import.meta.env.VITE_SERVICE_ID ?? "";
-const PROVIDER_ID = import.meta.env.VITE_PROVIDER_ID ?? "";
-const MODEL = import.meta.env.VITE_MODEL ?? "";
-const CHAT_ENDPOINT = import.meta.env.VITE_CHAT_ENDPOINT ?? "persisted";
+type RuntimeEnv = Partial<Record<string, string>>;
 
-export const getApiBaseUrl = (): string => API_BASE_URL;
-export const getApiUrl = (): string => API_URL;
-export const getServiceApiKey = (): string => SERVICE_API_KEY;
-export const getTenantId = (): string => TENANT_ID;
-export const getServiceCode = (): string => SERVICE_CODE;
-export const getServiceId = (): string => SERVICE_ID;
-export const getProviderId = (): string => PROVIDER_ID;
-export const getModel = (): string => MODEL;
-export const getChatEndpoint = (): string => CHAT_ENDPOINT;
+const getRuntimeEnv = (): RuntimeEnv => {
+  if (typeof window === "undefined") return {};
+  return ((window as any).__ENV__ ?? {}) as RuntimeEnv;
+};
+
+// Helpers: runtime (Railway) > import.meta.env (local) > fallback
+const readEnv = (key: string, fallback = ""): string => {
+  const runtime = getRuntimeEnv();
+  const fromRuntime = runtime[key];
+  if (typeof fromRuntime === "string" && fromRuntime.length > 0)
+    return fromRuntime;
+
+  // import.meta.env solo existe en el bundle de Vite
+  const fromVite = (import.meta as any)?.env?.[key];
+  if (typeof fromVite === "string" && fromVite.length > 0) return fromVite;
+
+  return fallback;
+};
+
+export const getApiBaseUrl = (): string =>
+  readEnv("VITE_API_MANAGER", "https://backend-production-d7ca.up.railway.app");
+
+export const getApiUrl = (): string => readEnv("VITE_API_URL", getApiBaseUrl());
+
+export const getServiceApiKey = (): string => readEnv("VITE_API_KEY", "");
+export const getTenantId = (): string => readEnv("VITE_TENANT_ID", "");
+export const getServiceCode = (): string => readEnv("VITE_SERVICE_CODE", "");
+export const getServiceId = (): string => readEnv("VITE_SERVICE_ID", "");
+export const getProviderId = (): string => readEnv("VITE_PROVIDER_ID", "");
+export const getModel = (): string => readEnv("VITE_MODEL", "");
+export const getChatEndpoint = (): string =>
+  readEnv("VITE_CHAT_ENDPOINT", "persisted");
 
 const isBrowser = (): boolean => typeof document !== "undefined";
 
@@ -62,7 +75,6 @@ export const setAuthToken = (token: string | null): void => {
   }
 
   if (!token) {
-    // Borramos la cookie
     document.cookie = `${TOKEN_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`;
     memoryToken = null;
     try {
@@ -73,7 +85,6 @@ export const setAuthToken = (token: string | null): void => {
     return;
   }
 
-  // Ajusta Max-Age a lo que tenga tu JWT (aquí 1h)
   const maxAgeSeconds = 60 * 60;
 
   document.cookie = `${TOKEN_COOKIE_NAME}=${encodeURIComponent(

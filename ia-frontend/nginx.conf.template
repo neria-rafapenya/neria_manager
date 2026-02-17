@@ -5,6 +5,24 @@ server {
   root /usr/share/nginx/html;
   index index.html;
 
+  # Runtime env para el frontend (Railway -> variables del servicio)
+  location = /env.js {
+    default_type application/javascript;
+    add_header Cache-Control "no-store";
+    return 200 'window.__ENV__={
+      "VITE_API_MANAGER":"${VITE_API_MANAGER}",
+      "VITE_API_URL":"${VITE_API_URL}",
+      "VITE_API_KEY":"${VITE_API_KEY}",
+      "VITE_TENANT_ID":"${VITE_TENANT_ID}",
+      "VITE_SERVICE_CODE":"${VITE_SERVICE_CODE}",
+      "VITE_SERVICE_ID":"${VITE_SERVICE_ID}",
+      "VITE_PROVIDER_ID":"${VITE_PROVIDER_ID}",
+      "VITE_MODEL":"${VITE_MODEL}",
+      "VITE_CHAT_ENDPOINT":"${VITE_CHAT_ENDPOINT}",
+      "VITE_CHAT_AUTH_MODE":"${VITE_CHAT_AUTH_MODE}"
+    };';
+  }
+
   location / {
     try_files $uri $uri/ /index.html;
   }
