@@ -1,68 +1,13 @@
-# ---- deps ----
-FROM node:18-bullseye-slim AS deps
+FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json* ./
-ENV npm_config_optional=true
-RUN rm -f package-lock.json && npm install --include=optional
-
-# ---- build ----
-FROM node:18-bullseye-slim AS build
-WORKDIR /app
-
-# Build args (Vite los necesita en build-time)
-ARG VITE_CHAT_TYPE
-ARG VITE_CHAT_MANIFEST_URL
-ARG VITE_API_MANAGER
-ARG VITE_API_URL
-ARG VITE_PORT
-ARG VITE_API_KEY
-ARG VITE_TENANT_ID
-ARG VITE_SERVICE_CODE
-ARG VITE_SERVICE_ID
-ARG VITE_PROVIDER_ID
-ARG VITE_MODEL
-ARG VITE_CHAT_ENDPOINT
-ARG VITE_CHAT_AUTH_MODE
-ARG VITE_I18N_LANGS
-ARG VITE_CHATBOT_OPENED
-ARG VITE_I18N_DEFAULT_LANG
-ARG VITE_CAPTCHA
-ARG VITE_RECAPTCHA_SITE_KEY
-ARG VITE_CHATBOT_RESTRICTED
-
-# Pasarlos a ENV para que Vite los lea durante `npm run build`
-ENV VITE_CHAT_TYPE=$VITE_CHAT_TYPE
-ENV VITE_CHAT_MANIFEST_URL=$VITE_CHAT_MANIFEST_URL
-ENV VITE_API_MANAGER=$VITE_API_MANAGER
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_PORT=$VITE_PORT
-ENV VITE_API_KEY=$VITE_API_KEY
-ENV VITE_TENANT_ID=$VITE_TENANT_ID
-ENV VITE_SERVICE_CODE=$VITE_SERVICE_CODE
-ENV VITE_SERVICE_ID=$VITE_SERVICE_ID
-ENV VITE_PROVIDER_ID=$VITE_PROVIDER_ID
-ENV VITE_MODEL=$VITE_MODEL
-ENV VITE_CHAT_ENDPOINT=$VITE_CHAT_ENDPOINT
-ENV VITE_CHAT_AUTH_MODE=$VITE_CHAT_AUTH_MODE
-ENV VITE_I18N_LANGS=$VITE_I18N_LANGS
-ENV VITE_CHATBOT_OPENED=$VITE_CHATBOT_OPENED
-ENV VITE_I18N_DEFAULT_LANG=$VITE_I18N_DEFAULT_LANG
-ENV VITE_CAPTCHA=$VITE_CAPTCHA
-ENV VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY
-ENV VITE_CHATBOT_RESTRICTED=$VITE_CHATBOT_RESTRICTED
-
-COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+RUN npm ci
 COPY . .
-
-# OJO: NO copiamos .env.local en Railway
 RUN npm run build
 
-# ---- runner ----
-FROM nginx:alpine AS runner
-ENV PORT=8080
-
+FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
-
+# SPA fallback
+RUN printf 'server {\n  listen 8080;\n  server_name _;\n  root /usr/share/nginx/html;\n  index index.html;\n  location / { try_files $uri /index.html; }\n}\n' > /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
