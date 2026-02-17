@@ -1,40 +1,28 @@
-# ===== deps =====
 FROM node:18-bullseye-slim AS deps
-WORKDIR /work
-
-# Copiamos SOLO los manifests de ia-frontend para cachear bien
-COPY ia-frontend/package.json ia-frontend/package-lock.json* ./ia-frontend/
-WORKDIR /work/ia-frontend
-
+WORKDIR /app
+COPY package.json package-lock.json* ./
 RUN rm -f package-lock.json && npm install --include=optional
 
-# ===== build =====
 FROM node:18-bullseye-slim AS build
-WORKDIR /work
-
-COPY --from=deps /work/ia-frontend/node_modules ./ia-frontend/node_modules
-
-# Copiamos el código de ia-frontend (no todo el repo)
-COPY ia-frontend ./ia-frontend
-
-WORKDIR /work/ia-frontend
-
-# Si quieres inyectar envs en build, usa ARGs (Railway Variables no llegan a Vite en runtime)
-# ARG VITE_API_URL
-# ENV VITE_API_URL=$VITE_API_URL
-
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 RUN npm run build
 
-# ===== runner =====
+# --- CHECKS (si no hay dist/index.html, el build falla y lo verás en Railway) ---
+RUN ls -la
+RUN ls -la dist || (echo "❌ dist/ NO existe. Revisa el output de Vite (build.outDir)" && exit 1)
+RUN test -f dist/index.html || (echo "❌ dist/index.html NO existe" && exit 1)
+# ------------------------------------------------------------------------------
+
 FROM nginx:alpine AS runner
-# Railway te inyecta PORT; si no existe, default 8080
 ENV PORT=8080
 
-# Copiamos el dist REAL del build
-COPY --from=build /work/ia-frontend/dist /usr/share/nginx/html
+# Limpia el HTML por defecto de nginx para evitar el welcome
+RUN rm -rf /usr/share/nginx/html/*
 
-# Plantilla de nginx con envsubst
-COPY ia-frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
