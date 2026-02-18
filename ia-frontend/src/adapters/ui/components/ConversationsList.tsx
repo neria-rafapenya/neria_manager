@@ -8,7 +8,7 @@ export interface ConversationsListProps {
   selectedConversationId: string | null;
   loading: boolean;
   onChange: (idOrNew: string | null) => Promise<void>;
-  onCreateConversation: (title: string) => Promise<void>;
+  onCreateConversation: (title: string) => Promise<string | null>;
   onDeleteConversation: (id: string) => Promise<void>;
   allowDelete?: boolean;
 }

@@ -24,10 +24,27 @@ const readEnv = (key: string, fallback = ""): string => {
   return fallback;
 };
 
-export const getApiBaseUrl = (): string =>
-  readEnv("VITE_API_MANAGER", "https://backend-production-d7ca.up.railway.app");
+const localFallback = (): string => {
+  if (typeof window === "undefined") return "";
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return "http://localhost:3000";
+  }
+  return "";
+};
 
-export const getApiUrl = (): string => readEnv("VITE_API_URL", getApiBaseUrl());
+const normalizeUrl = (value: string, fallback: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return fallback;
+};
+
+export const getApiBaseUrl = (): string =>
+  normalizeUrl(readEnv("VITE_API_MANAGER", ""), localFallback());
+
+export const getApiUrl = (): string =>
+  normalizeUrl(readEnv("VITE_API_URL", ""), getApiBaseUrl());
 
 export const getServiceApiKey = (): string => readEnv("VITE_API_KEY", "");
 export const getTenantId = (): string => readEnv("VITE_TENANT_ID", "");

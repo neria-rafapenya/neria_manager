@@ -29,6 +29,14 @@ type UploadResponse = {
   originalName?: string;
   contentType?: string;
   size?: number;
+  fileId?: string;
+  status?: string;
+  ocrStatus?: string;
+  semanticStatus?: string;
+  embeddingStatus?: string;
+  embeddingCount?: number;
+  resultType?: string;
+  resultFileUrl?: string;
 };
 
 export class UploadRepository {
@@ -92,11 +100,19 @@ export class UploadRepository {
     const contentType = data.contentType ?? "";
     const size = data.size ?? 0;
     return {
+      fileId: data.fileId,
       url,
       key: storageKey,
       filename: name,
       mimeType: contentType,
       sizeBytes: size,
+      status: data.status,
+      ocrStatus: data.ocrStatus,
+      semanticStatus: data.semanticStatus,
+      embeddingStatus: data.embeddingStatus,
+      embeddingCount: data.embeddingCount,
+      resultType: data.resultType,
+      resultFileUrl: data.resultFileUrl,
       provider: data.provider,
       storageKey,
       name,
@@ -105,20 +121,28 @@ export class UploadRepository {
     };
   }
 
-  private async uploadSingle(file: File): Promise<ChatAttachment> {
+  private async uploadSingle(
+    file: File,
+    conversationId?: string
+  ): Promise<ChatAttachment> {
     const [validFile] = this.validateFiles([file]);
     const serviceCode = getServiceCode();
-    if (!serviceCode) {
+    if (!serviceCode && !conversationId) {
       throw new Error("No se ha definido el serviceCode del chatbot.");
     }
 
     const formData = new FormData();
     formData.append("file", validFile);
-    formData.append("serviceCode", serviceCode);
 
     let data: UploadResponse;
     try {
-      data = await fetchWithAuth<UploadResponse>(API_ENDPOINTS.CHAT_UPLOADS, {
+      const endpoint = conversationId
+        ? API_ENDPOINTS.CONVERSATION_UPLOADS(conversationId)
+        : API_ENDPOINTS.CHAT_UPLOADS;
+      if (!conversationId) {
+        formData.append("serviceCode", serviceCode);
+      }
+      data = await fetchWithAuth<UploadResponse>(endpoint, {
         method: "POST",
         body: formData,
       });
@@ -138,17 +162,24 @@ export class UploadRepository {
     return this.mapAttachment(data);
   }
 
-  async uploadFiles(files: File[]): Promise<ChatAttachment[]> {
+  async uploadFiles(
+    files: File[],
+    conversationId?: string
+  ): Promise<ChatAttachment[]> {
     if (!files.length) return [];
 
     const validFiles = this.validateFiles(files);
     const results: ChatAttachment[] = [];
 
     for (const file of validFiles) {
-      const uploaded = await this.uploadSingle(file);
+      const uploaded = await this.uploadSingle(file, conversationId);
       results.push(uploaded);
     }
 
     return results;
+  }
+
+  async listConversationFiles(conversationId: string): Promise<any[]> {
+    return fetchWithAuth<any[]>(API_ENDPOINTS.CONVERSATION_FILES(conversationId));
   }
 }

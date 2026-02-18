@@ -122,6 +122,32 @@ export const ChatInputArea = ({
                 className="ia-chatbot-attachment-chip"
               >
                 <span>📎 {att.filename}</span>
+                {(() => {
+                  if (att.localFile) {
+                    return (
+                      <span className="ia-chatbot-attachment-status">
+                        {t("chat_attachment_pending_send")}
+                      </span>
+                    );
+                  }
+                  const parts: string[] = [];
+                  if (att.ocrStatus && att.ocrStatus !== "skipped") {
+                    parts.push(`OCR: ${att.ocrStatus}`);
+                  }
+                  if (att.semanticStatus && att.semanticStatus !== "skipped") {
+                    parts.push(`IA: ${att.semanticStatus}`);
+                  }
+                  if (att.embeddingStatus && att.embeddingStatus !== "skipped") {
+                    parts.push(`VEC: ${att.embeddingStatus}`);
+                  }
+                  if (att.resultType === "file" && att.resultFileUrl) {
+                    parts.push("Resumen: listo");
+                  }
+                  const text = parts.length ? parts.join(" · ") : att.status;
+                  return text ? (
+                    <span className="ia-chatbot-attachment-status">{text}</span>
+                  ) : null;
+                })()}
                 <button
                   type="button"
                   className="ia-chatbot-attachment-chip-remove"

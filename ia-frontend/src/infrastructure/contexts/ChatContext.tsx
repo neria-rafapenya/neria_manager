@@ -5,11 +5,13 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 import {
   ConversationService,
   ChatService,
+  UploadService,
 } from "../../core/application/services";
 import type {
   Conversation,
@@ -17,7 +19,7 @@ import type {
   ChatAttachment,
   ServiceEndpoint,
 } from "../../interfaces";
-import { ConversationRepository, ChatRepository } from "../repositories";
+import { ConversationRepository, ChatRepository, UploadRepository } from "../repositories";
 import { isAuthModeNone } from "../config/chatConfig";
 import {
   getApiUrl,
@@ -32,9 +34,11 @@ import { fetchWithAuth } from "../api/api";
 
 const conversationRepository = new ConversationRepository();
 const chatRepository = new ChatRepository();
+const uploadRepository = new UploadRepository();
 
 const conversationService = new ConversationService(conversationRepository);
 const chatService = new ChatService(chatRepository);
+const uploadService = new UploadService(uploadRepository);
 
 const IS_EPHEMERAL = isAuthModeNone;
 // Nuevo: flag de restricción por entorno
@@ -61,6 +65,11 @@ interface ChatContextValue {
     serviceName?: string;
     humanHandoffEnabled?: boolean;
     fileStorageEnabled?: boolean;
+    documentProcessingEnabled?: boolean;
+    ocrEnabled?: boolean;
+    semanticSearchEnabled?: boolean;
+    jiraEnabled?: boolean;
+    jiraConfigured?: boolean;
   };
 
   usageMode: UsageMode;
@@ -68,9 +77,14 @@ interface ChatContextValue {
 
   reloadConversations: () => Promise<void>;
   selectConversation: (idOrNew: string | null) => Promise<void>;
-  sendMessage: (text: string, attachments?: ChatAttachment[]) => Promise<void>;
+  sendMessage: (
+    text: string,
+    attachments?: ChatAttachment[],
+    conversationIdOverride?: string | null,
+  ) => Promise<void>;
   requestHandoff: (reason?: string) => Promise<void>;
-  createConversation: (title: string) => Promise<void>;
+  createJiraIssue: (messageContent: string) => Promise<any>;
+  createConversation: (title: string) => Promise<string | null>;
   deleteConversation: (id: string) => Promise<void>;
 }
 
@@ -94,6 +108,7 @@ const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
 const USAGE_STORAGE_KEY = "ia_chat_usage_state";
 const USAGE_WINDOW_MS = 5 * 60 * 1000; // 5 minutos
 const COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos
+const HANDOFF_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutos
 
 interface UsageState {
   windowStart: number | null;
@@ -247,10 +262,97 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     serviceName: "",
     humanHandoffEnabled: true,
     fileStorageEnabled: true,
+    documentProcessingEnabled: false,
+    ocrEnabled: false,
+    semanticSearchEnabled: false,
+    jiraEnabled: false,
+    jiraConfigured: false,
   });
 
   const [usageMode, setUsageMode] = useState<UsageMode>("idle");
   const [usageRemainingMs, setUsageRemainingMs] = useState<number | null>(null);
+
+  const filesPollRef = useRef<number | null>(null);
+  const handoffTimeoutRef = useRef<number | null>(null);
+
+  const mergeMessagesWithFiles = (
+    current: ChatMessage[],
+    files: any[],
+  ): ChatMessage[] => {
+    if (!Array.isArray(files) || files.length === 0) {
+      return current;
+    }
+    const fileMap = new Map(files.map((item) => [item.id, item]));
+    return current.map((msg) => {
+      if (!msg.attachments || msg.attachments.length === 0) {
+        return msg;
+      }
+      const updated = msg.attachments.map((att) => {
+        if (!att.fileId) return att;
+        const match = fileMap.get(att.fileId);
+        if (!match) return att;
+        return {
+          ...att,
+          status: match.status ?? att.status,
+          ocrStatus: match.ocrStatus ?? att.ocrStatus,
+          semanticStatus: match.semanticStatus ?? att.semanticStatus,
+          embeddingStatus: match.embeddingStatus ?? att.embeddingStatus,
+          embeddingCount: match.embeddingCount ?? att.embeddingCount,
+          resultType: match.resultType ?? att.resultType,
+          resultFileUrl: match.resultFileUrl ?? att.resultFileUrl,
+        };
+      });
+      return { ...msg, attachments: updated };
+    });
+  };
+
+  const refreshConversationFiles = async (
+    conversationId: string,
+    baseMessages?: ChatMessage[],
+  ) => {
+    try {
+      const list = await uploadService.listConversationFiles(conversationId);
+      if (!Array.isArray(list)) return;
+      setMessages((prev) =>
+        mergeMessagesWithFiles(baseMessages ?? prev, list),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const scheduleFilesPoll = (conversationId: string) => {
+    if (typeof window === "undefined") return;
+    if (filesPollRef.current) {
+      window.clearTimeout(filesPollRef.current);
+      filesPollRef.current = null;
+    }
+    let attempts = 0;
+    const maxAttempts = 12;
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const list = await uploadService.listConversationFiles(conversationId);
+        if (!Array.isArray(list)) return;
+        setMessages((prev) => mergeMessagesWithFiles(prev, list));
+        const hasPending = list.some(
+          (item) =>
+            ["pending", "processing"].includes(item.status) ||
+            ["pending", "processing"].includes(item.ocrStatus) ||
+            ["pending", "processing"].includes(item.semanticStatus) ||
+            ["pending", "processing"].includes(item.embeddingStatus),
+        );
+        if (hasPending && attempts < maxAttempts) {
+          filesPollRef.current = window.setTimeout(poll, 3000);
+        } else {
+          filesPollRef.current = null;
+        }
+      } catch {
+        filesPollRef.current = null;
+      }
+    };
+    void poll();
+  };
 
   const reloadConversations = async () => {
     if (IS_EPHEMERAL) {
@@ -296,6 +398,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         serviceName: matched?.name || matched?.serviceCode || prev.serviceCode,
         humanHandoffEnabled: matched?.humanHandoffEnabled ?? prev.humanHandoffEnabled ?? true,
         fileStorageEnabled: matched?.fileStorageEnabled ?? prev.fileStorageEnabled ?? true,
+        documentProcessingEnabled:
+          matched?.documentProcessingEnabled ??
+          prev.documentProcessingEnabled ??
+          false,
+        ocrEnabled: matched?.ocrEnabled ?? prev.ocrEnabled ?? false,
+        semanticSearchEnabled:
+          matched?.semanticSearchEnabled ?? prev.semanticSearchEnabled ?? false,
+        jiraEnabled: matched?.jiraEnabled ?? prev.jiraEnabled ?? false,
+        jiraConfigured: matched?.jiraConfigured ?? prev.jiraConfigured ?? false,
       }));
     } catch {
       // ignore
@@ -378,8 +489,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           return;
         }
 
-        setSelectedConversationId(conversationIdToLoad);
-        setLoadingMessages(true);
+          setSelectedConversationId(conversationIdToLoad);
+          setLoadingMessages(true);
         try {
           const detail =
             await conversationService.getConversationWithMessages(
@@ -395,6 +506,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             : [];
 
           setMessages(sortedMessages);
+          await refreshConversationFiles(conversationIdToLoad, sortedMessages);
         } catch (e) {
           console.error(
             "[ChatContext] No se ha podido cargar la conversación inicial",
@@ -468,12 +580,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   }, [selectedConversationId]);
 
+  const handoffStatus = useMemo(() => {
+    if (!selectedConversationId) return "none";
+    const active = conversations.find((item) => item.id === selectedConversationId);
+    return active?.handoffStatus ?? "none";
+  }, [selectedConversationId, conversations]);
+
   useEffect(() => {
     if (IS_EPHEMERAL) return;
     if (!selectedConversationId) return;
-    const active = conversations.find((item) => item.id === selectedConversationId);
-    const status = active?.handoffStatus ?? "none";
-    if (status !== "requested" && status !== "active") {
+    if (handoffStatus !== "requested" && handoffStatus !== "active") {
       return;
     }
 
@@ -493,7 +609,17 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             )
           : [];
         setMessages(sortedMessages);
-        await reloadConversations();
+        if (detail && detail.id) {
+          const { messages: _messages, ...conversationDetail } = detail;
+          setConversations((prev) =>
+            prev.map((item) =>
+              item.id === detail.id ? { ...item, ...conversationDetail } : item,
+            ),
+          );
+        }
+        if (serviceInfo.fileStorageEnabled !== false) {
+          await refreshConversationFiles(selectedConversationId, sortedMessages);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -505,7 +631,74 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       alive = false;
       window.clearInterval(interval);
     };
-  }, [selectedConversationId, conversations, isStreaming]);
+  }, [selectedConversationId, handoffStatus, isStreaming, serviceInfo.fileStorageEnabled]);
+
+  useEffect(() => {
+    if (IS_EPHEMERAL) return;
+    if (!selectedConversationId) return;
+    if (handoffStatus !== "requested" && handoffStatus !== "active") {
+      if (handoffTimeoutRef.current) {
+        window.clearTimeout(handoffTimeoutRef.current);
+        handoffTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    const activeConversation = conversations.find(
+      (item) => item.id === selectedConversationId,
+    );
+
+    const timestamps: number[] = [];
+    if (Array.isArray(messages) && messages.length > 0) {
+      for (const msg of messages) {
+        const ts = Date.parse(msg.createdAt);
+        if (!Number.isNaN(ts)) timestamps.push(ts);
+      }
+    }
+    const requestedAt = activeConversation?.handoffRequestedAt
+      ? Date.parse(activeConversation.handoffRequestedAt)
+      : NaN;
+    if (!Number.isNaN(requestedAt)) timestamps.push(requestedAt);
+    const acceptedAt = activeConversation?.handoffAcceptedAt
+      ? Date.parse(activeConversation.handoffAcceptedAt)
+      : NaN;
+    if (!Number.isNaN(acceptedAt)) timestamps.push(acceptedAt);
+    const updatedAt = activeConversation?.updatedAt
+      ? Date.parse(activeConversation.updatedAt)
+      : NaN;
+    if (!Number.isNaN(updatedAt)) timestamps.push(updatedAt);
+
+    const lastActivity =
+      timestamps.length > 0 ? Math.max(...timestamps) : Date.now();
+    const remainingMs = HANDOFF_INACTIVITY_MS - (Date.now() - lastActivity);
+
+    if (handoffTimeoutRef.current) {
+      window.clearTimeout(handoffTimeoutRef.current);
+      handoffTimeoutRef.current = null;
+    }
+
+    const resolveAfter = async () => {
+      try {
+        await chatService.resolveHandoff(selectedConversationId);
+        await reloadConversations();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (remainingMs <= 0) {
+      void resolveAfter();
+      return;
+    }
+
+    handoffTimeoutRef.current = window.setTimeout(resolveAfter, remainingMs);
+    return () => {
+      if (handoffTimeoutRef.current) {
+        window.clearTimeout(handoffTimeoutRef.current);
+        handoffTimeoutRef.current = null;
+      }
+    };
+  }, [selectedConversationId, handoffStatus, messages, conversations]);
 
 
   const selectConversation = async (idOrNew: string | null) => {
@@ -536,6 +729,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         : [];
 
       setMessages(sortedMessages);
+      await refreshConversationFiles(idOrNew, sortedMessages);
     } catch (e) {
       console.error(e);
       setError("No se ha podido cargar la conversación seleccionada.");
@@ -569,12 +763,24 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   };
 
+  const createJiraIssue = async (messageContent: string) => {
+    if (IS_EPHEMERAL) {
+      throw new Error("No hay conversación activa.");
+    }
+    const conversationId = selectedConversationId;
+    if (!conversationId) {
+      throw new Error("No hay conversación activa.");
+    }
+    return chatService.createJiraIssue(conversationId, messageContent);
+  };
+
   const sendMessage = async (
     text: string,
     attachments: ChatAttachment[] = [],
+    conversationIdOverride?: string | null,
   ) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed && attachments.length === 0) return;
 
     // --- LÓGICA DE USO SOLO SI ESTÁ RESTRINGIDO ---
     if (IS_RESTRICTED) {
@@ -610,7 +816,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const nowIso = new Date().toISOString();
     const currentConversationId = IS_EPHEMERAL
       ? undefined
-      : (selectedConversationId ?? undefined);
+      : (conversationIdOverride ?? selectedConversationId ?? undefined);
 
     const userMessage: ChatMessage = {
       id: `${nowIso}-user`,
@@ -678,6 +884,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       if (!IS_EPHEMERAL) {
         await reloadConversations();
       }
+      if (!IS_EPHEMERAL && attachments.length > 0) {
+        const resolvedConversationId =
+          result.conversationId ?? currentConversationId;
+        if (resolvedConversationId) {
+          scheduleFilesPoll(resolvedConversationId);
+        }
+      }
     } catch (e) {
       console.error(e);
       setError("Ha ocurrido un error al generar la respuesta.");
@@ -698,13 +911,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   };
 
-  const createConversation = async (title: string) => {
+  const createConversation = async (title: string): Promise<string | null> => {
     if (IS_EPHEMERAL) {
-      return;
+      return null;
     }
 
     const trimmed = title.trim();
-    if (!trimmed) return;
+    if (!trimmed) return null;
 
     setError("");
 
@@ -715,10 +928,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       setConversations((prev) => [...prev, newConversation]);
       setSelectedConversationId(newConversation.id);
       setMessages([]);
+      return newConversation.id;
     } catch (e) {
       console.error(e);
       setError("No se ha podido crear la conversación.");
     }
+    return null;
   };
 
   const deleteConversation = async (id: string) => {
@@ -790,6 +1005,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       reloadConversations,
       selectConversation,
       sendMessage,
+      createJiraIssue,
       createConversation,
       deleteConversation,
       requestHandoff,
@@ -806,6 +1022,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       serviceInfo,
       usageMode,
       usageRemainingMs,
+      createJiraIssue,
     ],
   );
 

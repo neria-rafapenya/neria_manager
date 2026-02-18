@@ -1,8 +1,12 @@
 TODO:
+- probar chat humano/humano desde frontend app
+- probar Smart Document Processing (OCR + IA semántica) desde frontend app
+- probar conexion JIRA desde chatbot
 
--al caducar la sesion no debe mostrar disclaimer, debe ir al login
+
 - analizar el servicio OCR para no implicar gastos.
 - analizar el uso atencion client donde al final pasamos a human response vía socket o via REST??
+
 - lectura o envio de comunicacion con JIRA
 - Smart Document Processing (OCR + IA semántica) (precio por documento) 
 - Automatización Inteligente de Correos y Tickets

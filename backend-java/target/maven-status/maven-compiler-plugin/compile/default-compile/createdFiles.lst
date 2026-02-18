@@ -8,6 +8,7 @@ com/neria/manager/auth/ApiKeysService.class
 com/neria/manager/common/entities/AdminUser.class
 com/neria/manager/chat/TenantChatAuthController.class
 com/neria/manager/webhooks/WebhooksService$WebhookEventPayload.class
+com/neria/manager/jira/JiraIssuesService$IssueDraft.class
 com/neria/manager/docs/DocsController.class
 com/neria/manager/auth/ApiKeysController.class
 com/neria/manager/tenantservices/TenantServicesService$CreateEndpointRequest.class
@@ -16,6 +17,7 @@ com/neria/manager/auth/TenantAuthService.class
 com/neria/manager/auth/AdminUsersService$UpdateProfileRequest.class
 com/neria/manager/BackendJavaApplication.class
 com/neria/manager/subscriptions/AdminSubscriptionsController.class
+com/neria/manager/tenantservices/TenantServicesService$JiraSettings.class
 com/neria/manager/auth/ApiKeysService$ApiKeyCreateResult.class
 com/neria/manager/auth/AdminUsersService$UpdateAdminUserRequest.class
 com/neria/manager/providers/ProvidersService.class
@@ -29,6 +31,7 @@ com/neria/manager/subscriptions/SubscriptionsService.class
 com/neria/manager/config/SecurityConfig.class
 com/neria/manager/adapters/OpenAIAdapter.class
 com/neria/manager/subscriptions/SubscriptionsService$ServiceSummary.class
+com/neria/manager/documents/EmbeddingsService$2.class
 com/neria/manager/chat/ChatService$1.class
 com/neria/manager/auth/AdminPasswordResetService$ResetResult.class
 com/neria/manager/providers/ProvidersService$CreateProviderRequest.class
@@ -42,6 +45,7 @@ com/neria/manager/storage/TenantServiceStorageController.class
 com/neria/manager/tenantservices/TenantServicesService$TenantServiceUserService.class
 com/neria/manager/servicecatalog/ServiceCatalogService$CreateServiceCatalogRequest.class
 com/neria/manager/redaction/RedactionService.class
+com/neria/manager/storage/StorageUploadService$2.class
 com/neria/manager/common/services/JwtService.class
 com/neria/manager/common/services/RateLimitService$Bucket.class
 com/neria/manager/chatbots/ChatbotsService$ChatbotGenericRequest.class
@@ -49,13 +53,16 @@ com/neria/manager/chat/ChatService$CreateConversationRequest.class
 com/neria/manager/common/entities/Subscription.class
 com/neria/manager/common/repos/SubscriptionRepository.class
 com/neria/manager/common/entities/ServiceCatalog.class
+com/neria/manager/documents/EmbeddingsService$1.class
 com/neria/manager/common/repos/SystemSettingRepository.class
+com/neria/manager/jira/TenantServiceJiraService$ResolvedJira.class
 com/neria/manager/config/AppProperties$Auth.class
 com/neria/manager/tenants/TenantsService$UpdateTenantSelfRequest.class
 com/neria/manager/common/repos/AdminUserRepository.class
 com/neria/manager/pricing/PricingService$UpsertPricingRequest.class
 com/neria/manager/chatbots/ChatbotsService$ChatbotOcrRequest.class
 com/neria/manager/common/repos/ProviderRepository.class
+com/neria/manager/common/entities/TenantServiceFile.class
 com/neria/manager/common/repos/TenantServiceConfigRepository.class
 com/neria/manager/docs/DocsService$UpdateDocRequest.class
 com/neria/manager/config/AppProperties$Security.class
@@ -65,6 +72,7 @@ com/neria/manager/common/entities/AdminPasswordReset.class
 com/neria/manager/common/security/AuthContext.class
 com/neria/manager/config/AppConfig.class
 com/neria/manager/subscriptions/SubscriptionsService$UpdateSubscriptionRequest.class
+com/neria/manager/jira/JiraIssuesService$2.class
 com/neria/manager/chat/ChatService.class
 com/neria/manager/common/services/EmailService.class
 com/neria/manager/common/entities/ChatConversation.class
@@ -86,6 +94,8 @@ com/neria/manager/common/repos/ApiKeyRepository.class
 com/neria/manager/common/services/KillSwitchService.class
 com/neria/manager/docs/DocsService$CreateDocRequest.class
 com/neria/manager/tenants/TenantsService$UpdateTenantRequest.class
+com/neria/manager/jira/TenantServiceJiraService$JiraCredentialsRequest.class
+com/neria/manager/jira/TenantServiceJiraService.class
 com/neria/manager/tenantservices/TenantServicesService.class
 com/neria/manager/usage/UsageAlertsService.class
 com/neria/manager/dbconnections/DbConnectionsController.class
@@ -98,7 +108,9 @@ com/neria/manager/pricing/PricingController.class
 com/neria/manager/adapters/AdaptersService.class
 com/neria/manager/notifications/NotificationsService.class
 com/neria/manager/common/repos/TenantInvoiceItemRepository.class
+com/neria/manager/documents/DocumentProcessingService.class
 com/neria/manager/common/entities/ApiKey.class
+com/neria/manager/jira/JiraIssuesService$1.class
 com/neria/manager/policies/PoliciesController.class
 com/neria/manager/common/entities/SystemSetting.class
 com/neria/manager/tenants/TenantsService$CreateTenantRequest.class
@@ -115,6 +127,7 @@ com/neria/manager/chat/ChatService$EndpointFetch.class
 com/neria/manager/common/repos/SubscriptionHistoryRepository.class
 com/neria/manager/audit/AuditService.class
 com/neria/manager/common/repos/PolicyRepository.class
+com/neria/manager/documents/EmbeddingsService.class
 com/neria/manager/auth/AdminUsersController.class
 com/neria/manager/common/repos/NotificationChannelRepository.class
 com/neria/manager/common/entities/DbConnection.class
@@ -129,6 +142,7 @@ com/neria/manager/common/services/KillSwitchService$CacheEntry.class
 com/neria/manager/chatbots/ChatbotsController.class
 com/neria/manager/webhooks/WebhooksService$CreateWebhookRequest.class
 com/neria/manager/adapters/GoogleVertexAdapter.class
+com/neria/manager/documents/DocumentProcessingService$ScoredChunk.class
 com/neria/manager/chat/ChatAuthService$RegisterChatUserRequest.class
 com/neria/manager/common/repos/TenantServiceApiKeyRepository.class
 com/neria/manager/common/entities/UsageEvent.class
@@ -140,10 +154,13 @@ com/neria/manager/common/security/AuthFilter.class
 com/neria/manager/notifications/NotificationsController.class
 com/neria/manager/adapters/ProviderAdapter.class
 com/neria/manager/common/security/AuthUtils.class
+com/neria/manager/tenantservices/TenantServicesService$JiraSettingsUpdateRequest.class
 com/neria/manager/common/repos/TenantServiceUserRepository.class
 com/neria/manager/auth/AdminUsersService$AdminUserView.class
 com/neria/manager/storage/StorageUploadService$UploadResult.class
 com/neria/manager/tenantpricing/TenantPricingController.class
+com/neria/manager/common/repos/TenantServiceEmbeddingRepository.class
+com/neria/manager/jira/TenantServiceJiraService$1.class
 com/neria/manager/chat/ChatService$CreateChatUserRequest.class
 com/neria/manager/usage/UsageAlertsService$UsageAlert.class
 com/neria/manager/chat/ChatService$CreateMessageRequest.class
@@ -156,8 +173,10 @@ com/neria/manager/common/repos/DocumentationEntryRepository.class
 com/neria/manager/common/entities/TenantInvoiceItem.class
 com/neria/manager/common/repos/AdminPasswordResetRepository.class
 com/neria/manager/common/entities/SubscriptionPaymentRequest.class
+com/neria/manager/jira/JiraIssuesService$CreateJiraIssueRequest.class
 com/neria/manager/pricing/PricingService$UpdatePricingRequest.class
 com/neria/manager/dbconnections/DbConnectionsService$UpdateDbConnectionRequest.class
+com/neria/manager/common/repos/TenantServiceJiraRepository.class
 com/neria/manager/chat/ChatAuthService$LoginChatUserRequest.class
 com/neria/manager/usage/UsageService.class
 com/neria/manager/tenantservices/TenantServicesController$UpdateConfigRequest.class
@@ -173,6 +192,7 @@ com/neria/manager/common/repos/DbConnectionRepository.class
 com/neria/manager/tenants/TenantsController.class
 com/neria/manager/common/repos/TenantRepository.class
 com/neria/manager/settings/SettingsService.class
+com/neria/manager/common/entities/TenantServiceEmbedding.class
 com/neria/manager/subscriptions/SubscriptionsService$CreateSubscriptionRequest.class
 com/neria/manager/tenantpricing/TenantPricingService.class
 com/neria/manager/common/repos/SubscriptionServiceRepository.class
@@ -180,6 +200,7 @@ com/neria/manager/common/security/AuthContext$AuthContextBuilder.class
 com/neria/manager/common/repos/TenantServiceEndpointRepository.class
 com/neria/manager/common/entities/Provider.class
 com/neria/manager/webhooks/WebhooksService.class
+com/neria/manager/common/entities/TenantServiceJira.class
 com/neria/manager/common/entities/DocumentationEntry.class
 com/neria/manager/adapters/MockAdapter.class
 com/neria/manager/common/entities/Policy.class
@@ -187,6 +208,7 @@ com/neria/manager/providers/ProvidersController.class
 com/neria/manager/chat/ChatService$UpdateChatUserRequest.class
 com/neria/manager/usage/UsageService$Totals.class
 com/neria/manager/common/repos/WebhookRepository.class
+com/neria/manager/jira/TenantServiceJiraService$JiraCredentials.class
 com/neria/manager/common/entities/TenantServiceApiKey.class
 com/neria/manager/storage/TenantServiceStorageService$1.class
 com/neria/manager/servicecatalog/ServiceCatalogService.class
@@ -205,14 +227,18 @@ com/neria/manager/adapters/AwsBedrockAdapter.class
 com/neria/manager/config/AppProperties$Jwt.class
 com/neria/manager/chat/ChatService$EndpointContext.class
 com/neria/manager/common/services/EncryptionService.class
+com/neria/manager/jira/JiraIssuesService.class
 com/neria/manager/servicecatalog/ServiceCatalogController.class
 com/neria/manager/storage/TenantServiceStorageService.class
 com/neria/manager/common/entities/ChatMessage.class
 com/neria/manager/common/repos/SubscriptionPaymentRequestRepository.class
+com/neria/manager/common/repos/TenantServiceFileRepository.class
 com/neria/manager/common/repos/TenantInvoiceRepository.class
+com/neria/manager/documents/EmbeddingsService$EmbeddingItem.class
 com/neria/manager/auth/TenantServiceApiKeysService.class
 com/neria/manager/common/repos/TenantPricingRepository.class
 com/neria/manager/common/entities/NotificationChannel.class
+com/neria/manager/documents/EmbeddingsService$EmbeddingResult.class
 com/neria/manager/tenantservices/TenantServicesController$TenantServiceUserRequest.class
 com/neria/manager/pricing/PricingService.class
 com/neria/manager/chat/ChatController.class

@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Locale;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,34 +40,57 @@ public class TenantServiceApiKeysService {
   }
 
   public TenantServiceApiKey getOrCreate(String tenantId, String serviceCode) {
+    String normalized = normalizeServiceCode(serviceCode);
+    if (normalized == null) {
+      throw new IllegalArgumentException("Missing serviceCode");
+    }
     return repository
-        .findByTenantIdAndServiceCode(tenantId, serviceCode)
-        .orElseGet(() -> create(tenantId, serviceCode));
+        .findByTenantIdAndServiceCode(tenantId, normalized)
+        .orElseGet(() -> create(tenantId, normalized));
   }
 
   public List<TenantServiceApiKey> ensureKeys(String tenantId, List<String> serviceCodes) {
     if (serviceCodes == null || serviceCodes.isEmpty()) {
       return List.of();
     }
+    List<String> normalizedCodes =
+        serviceCodes.stream()
+            .map(this::normalizeServiceCode)
+            .filter(code -> code != null && !code.isBlank())
+            .distinct()
+            .toList();
+    if (normalizedCodes.isEmpty()) {
+      return List.of();
+    }
     Map<String, TenantServiceApiKey> existing =
-        repository.findByTenantIdAndServiceCodeIn(tenantId, serviceCodes).stream()
+        repository.findByTenantIdAndServiceCodeIn(tenantId, normalizedCodes).stream()
             .collect(Collectors.toMap(TenantServiceApiKey::getServiceCode, item -> item));
-    return serviceCodes.stream()
+    return normalizedCodes.stream()
         .map(code -> existing.getOrDefault(code, create(tenantId, code)))
         .toList();
   }
 
   public TenantServiceApiKey create(String tenantId, String serviceCode) {
+    String normalized = normalizeServiceCode(serviceCode);
+    if (normalized == null) {
+      throw new IllegalArgumentException("Missing serviceCode");
+    }
     String plain = generateKey();
     TenantServiceApiKey record = new TenantServiceApiKey();
     record.setId(UUID.randomUUID().toString());
     record.setTenantId(tenantId);
-    record.setServiceCode(serviceCode);
+    record.setServiceCode(normalized);
     record.setHashedKey(hasher.hash(plain, salt));
     record.setEncryptedKey(encryptionService.encrypt(plain));
     record.setStatus("active");
     record.setCreatedAt(LocalDateTime.now());
-    return repository.save(record);
+    try {
+      return repository.save(record);
+    } catch (DataIntegrityViolationException ex) {
+      return repository
+          .findByTenantIdAndServiceCode(tenantId, normalized)
+          .orElseThrow(() -> ex);
+    }
   }
 
   public TenantServiceApiKey validate(String apiKey) {
@@ -93,12 +118,27 @@ public class TenantServiceApiKeysService {
     if (tenantId == null || serviceCode == null) {
       return;
     }
-    repository.deleteByTenantIdAndServiceCode(tenantId, serviceCode);
+    String normalized = normalizeServiceCode(serviceCode);
+    if (normalized == null) {
+      return;
+    }
+    repository.deleteByTenantIdAndServiceCode(tenantId, normalized);
   }
 
   private String generateKey() {
     byte[] bytes = new byte[32];
     new SecureRandom().nextBytes(bytes);
     return HexFormat.of().formatHex(bytes);
+  }
+
+  private String normalizeServiceCode(String serviceCode) {
+    if (serviceCode == null) {
+      return null;
+    }
+    String trimmed = serviceCode.trim();
+    if (trimmed.isBlank()) {
+      return null;
+    }
+    return trimmed.toLowerCase(Locale.ROOT);
   }
 }

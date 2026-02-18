@@ -106,6 +106,19 @@ export const fieldHelp = {
     'Indica si este servicio permite configurar endpoints por tenant.',
   serviceHumanHandoffEnabled: 'Permite que este servicio utilice atención humana (handoff) cuando el LLM no pueda responder.',
   serviceFileStorageEnabled: 'Permite subir archivos e imágenes desde el chatbot para este servicio.',
+  serviceDocumentProcessingEnabled:
+    'Activa el procesamiento documental (OCR + análisis semántico) para este servicio.',
+  serviceOcrEnabled:
+    'Permite extraer texto de documentos e imágenes cargadas en este servicio.',
+  serviceSemanticEnabled:
+    'Activa el análisis semántico y resumen automático de los documentos OCR.',
+  serviceJiraEnabled: 'Activa la integración Jira para este servicio (se configura por tenant).',
+  serviceJiraProjectKey: 'Project key de Jira que se usará por defecto al crear incidencias.',
+  serviceJiraDefaultIssueType: 'Tipo de issue por defecto (Task, Bug, Story...).',
+  serviceJiraAllowUserPriorityOverride:
+    'Permite que el usuario indique prioridad en las incidencias generadas.',
+  serviceJiraAutoLabelWithServiceName:
+    'Añade automáticamente una etiqueta con el nombre del servicio.',
   serviceEndpointResponsePath:
     'Ruta en el JSON donde se encuentra la lista de datos (ej: list, data.items, results). Si se deja vacío, se intenta usar "list".',
   servicePriceMonthly: 'Precio mensual en EUR.',

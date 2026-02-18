@@ -343,6 +343,17 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
+  getTenantServiceJira: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/jira`),
+  updateTenantServiceJira: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/jira`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   listTenantServiceEndpoints: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/endpoints`,

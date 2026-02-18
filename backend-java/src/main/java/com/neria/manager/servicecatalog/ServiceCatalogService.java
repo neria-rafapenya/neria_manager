@@ -60,6 +60,20 @@ public class ServiceCatalogService {
     item.setEndpointsEnabled(dto.endpointsEnabled != null ? dto.endpointsEnabled : true);
     item.setHumanHandoffEnabled(dto.humanHandoffEnabled != null ? dto.humanHandoffEnabled : true);
     item.setFileStorageEnabled(dto.fileStorageEnabled != null ? dto.fileStorageEnabled : true);
+    item.setDocumentProcessingEnabled(
+        dto.documentProcessingEnabled != null ? dto.documentProcessingEnabled : false);
+    item.setOcrEnabled(dto.ocrEnabled != null ? dto.ocrEnabled : false);
+    item.setSemanticSearchEnabled(
+        dto.semanticSearchEnabled != null ? dto.semanticSearchEnabled : false);
+    item.setJiraEnabled(dto.jiraEnabled != null ? dto.jiraEnabled : false);
+    String jiraProjectKey = normalize(dto.jiraProjectKey);
+    item.setJiraProjectKey(jiraProjectKey.isBlank() ? null : jiraProjectKey);
+    String jiraDefaultIssueType = normalize(dto.jiraDefaultIssueType);
+    item.setJiraDefaultIssueType(jiraDefaultIssueType.isBlank() ? "Task" : jiraDefaultIssueType);
+    item.setJiraAllowUserPriorityOverride(
+        dto.jiraAllowUserPriorityOverride != null ? dto.jiraAllowUserPriorityOverride : true);
+    item.setJiraAutoLabelWithServiceName(
+        dto.jiraAutoLabelWithServiceName != null ? dto.jiraAutoLabelWithServiceName : true);
     item.setCreatedAt(LocalDateTime.now());
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
@@ -112,6 +126,26 @@ public class ServiceCatalogService {
     if (dto.endpointsEnabled != null) item.setEndpointsEnabled(dto.endpointsEnabled);
     if (dto.humanHandoffEnabled != null) item.setHumanHandoffEnabled(dto.humanHandoffEnabled);
     if (dto.fileStorageEnabled != null) item.setFileStorageEnabled(dto.fileStorageEnabled);
+    if (dto.documentProcessingEnabled != null) {
+      item.setDocumentProcessingEnabled(dto.documentProcessingEnabled);
+    }
+    if (dto.ocrEnabled != null) item.setOcrEnabled(dto.ocrEnabled);
+    if (dto.semanticSearchEnabled != null) item.setSemanticSearchEnabled(dto.semanticSearchEnabled);
+    if (dto.jiraEnabled != null) item.setJiraEnabled(dto.jiraEnabled);
+    if (dto.jiraProjectKey != null) {
+      String jiraProjectKey = normalize(dto.jiraProjectKey);
+      item.setJiraProjectKey(jiraProjectKey.isBlank() ? null : jiraProjectKey);
+    }
+    if (dto.jiraDefaultIssueType != null) {
+      String jiraDefaultIssueType = normalize(dto.jiraDefaultIssueType);
+      item.setJiraDefaultIssueType(jiraDefaultIssueType.isBlank() ? null : jiraDefaultIssueType);
+    }
+    if (dto.jiraAllowUserPriorityOverride != null) {
+      item.setJiraAllowUserPriorityOverride(dto.jiraAllowUserPriorityOverride);
+    }
+    if (dto.jiraAutoLabelWithServiceName != null) {
+      item.setJiraAutoLabelWithServiceName(dto.jiraAutoLabelWithServiceName);
+    }
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
   }
@@ -166,6 +200,14 @@ public class ServiceCatalogService {
     public Boolean endpointsEnabled;
     public Boolean humanHandoffEnabled;
     public Boolean fileStorageEnabled;
+    public Boolean documentProcessingEnabled;
+    public Boolean ocrEnabled;
+    public Boolean semanticSearchEnabled;
+    public Boolean jiraEnabled;
+    public String jiraProjectKey;
+    public String jiraDefaultIssueType;
+    public Boolean jiraAllowUserPriorityOverride;
+    public Boolean jiraAutoLabelWithServiceName;
   }
 
   public static class UpdateServiceCatalogRequest {
@@ -179,5 +221,13 @@ public class ServiceCatalogService {
     public Boolean endpointsEnabled;
     public Boolean humanHandoffEnabled;
     public Boolean fileStorageEnabled;
+    public Boolean documentProcessingEnabled;
+    public Boolean ocrEnabled;
+    public Boolean semanticSearchEnabled;
+    public Boolean jiraEnabled;
+    public String jiraProjectKey;
+    public String jiraDefaultIssueType;
+    public Boolean jiraAllowUserPriorityOverride;
+    public Boolean jiraAutoLabelWithServiceName;
   }
 }

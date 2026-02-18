@@ -142,10 +142,19 @@ export type TenantServiceOverview = {
   endpointsEnabled: boolean;
   catalogHumanHandoffEnabled?: boolean;
   catalogFileStorageEnabled?: boolean;
+  catalogDocumentProcessingEnabled?: boolean;
+  catalogOcrEnabled?: boolean;
+  catalogSemanticSearchEnabled?: boolean;
   tenantHumanHandoffEnabled?: boolean | null;
   tenantFileStorageEnabled?: boolean | null;
+  tenantDocumentProcessingEnabled?: boolean | null;
+  tenantOcrEnabled?: boolean | null;
+  tenantSemanticSearchEnabled?: boolean | null;
   humanHandoffEnabled?: boolean;
   fileStorageEnabled?: boolean;
+  documentProcessingEnabled?: boolean;
+  ocrEnabled?: boolean;
+  semanticSearchEnabled?: boolean;
   subscriptionStatus: 'active' | 'pending' | 'pending_removal' | 'disabled';
   activateAt: string | null;
   deactivateAt?: string | null;
@@ -155,9 +164,13 @@ export type TenantServiceOverview = {
   providerId?: string | null;
   pricingId?: string | null;
   policyId?: string | null;
+  documentDomain?: string | null;
+  documentOutputType?: string | null;
   serviceApiKey?: string | null;
   userCount: number;
   endpointCount: number;
+  jiraEnabled?: boolean;
+  jiraConfigured?: boolean;
 };
 
 export type TenantServiceEndpoint = {
@@ -193,10 +206,36 @@ export type ServiceCatalogItem = {
   endpointsEnabled: boolean;
   catalogHumanHandoffEnabled?: boolean;
   catalogFileStorageEnabled?: boolean;
+  catalogDocumentProcessingEnabled?: boolean;
+  catalogOcrEnabled?: boolean;
+  catalogSemanticSearchEnabled?: boolean;
   tenantHumanHandoffEnabled?: boolean | null;
   tenantFileStorageEnabled?: boolean | null;
+  tenantDocumentProcessingEnabled?: boolean | null;
+  tenantOcrEnabled?: boolean | null;
+  tenantSemanticSearchEnabled?: boolean | null;
   humanHandoffEnabled?: boolean;
   fileStorageEnabled?: boolean;
+  documentProcessingEnabled?: boolean;
+  ocrEnabled?: boolean;
+  semanticSearchEnabled?: boolean;
+  jiraEnabled?: boolean;
+  jiraProjectKey?: string | null;
+  jiraDefaultIssueType?: string | null;
+  jiraAllowUserPriorityOverride?: boolean;
+  jiraAutoLabelWithServiceName?: boolean;
+};
+
+export type TenantServiceJiraSettings = {
+  jiraEnabled: boolean;
+  jiraProjectKey?: string | null;
+  jiraDefaultIssueType?: string | null;
+  jiraAllowUserPriorityOverride: boolean;
+  jiraAutoLabelWithServiceName: boolean;
+  jiraBaseUrl?: string | null;
+  jiraEmail?: string | null;
+  jiraCredentialsEnabled: boolean;
+  jiraHasToken: boolean;
 };
 
 export type Subscription = {

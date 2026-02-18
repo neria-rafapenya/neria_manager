@@ -18,6 +18,7 @@ import com.neria.manager.common.repos.TenantServiceConfigRepository;
 import com.neria.manager.common.repos.TenantServiceEndpointRepository;
 import com.neria.manager.common.repos.TenantServiceUserRepository;
 import com.neria.manager.auth.TenantServiceApiKeysService;
+import com.neria.manager.jira.TenantServiceJiraService;
 import com.neria.manager.tenants.TenantsService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class TenantServicesService {
   private final ServiceCatalogRepository serviceCatalogRepository;
   private final ChatUserRepository chatUsersRepository;
   private final TenantServiceApiKeysService tenantServiceApiKeysService;
+  private final TenantServiceJiraService tenantServiceJiraService;
   private final TenantsService tenantsService;
   private final ObjectMapper objectMapper;
 
@@ -54,6 +56,7 @@ public class TenantServicesService {
       ServiceCatalogRepository serviceCatalogRepository,
       ChatUserRepository chatUsersRepository,
       TenantServiceApiKeysService tenantServiceApiKeysService,
+      TenantServiceJiraService tenantServiceJiraService,
       TenantsService tenantsService,
       ObjectMapper objectMapper) {
     this.configRepository = configRepository;
@@ -64,6 +67,7 @@ public class TenantServicesService {
     this.serviceCatalogRepository = serviceCatalogRepository;
     this.chatUsersRepository = chatUsersRepository;
     this.tenantServiceApiKeysService = tenantServiceApiKeysService;
+    this.tenantServiceJiraService = tenantServiceJiraService;
     this.tenantsService = tenantsService;
     this.objectMapper = objectMapper;
   }
@@ -100,6 +104,23 @@ public class TenantServicesService {
               ServiceCatalog catalog = requireService(serviceCode);
               config.setHumanHandoffEnabled(catalog.isHumanHandoffEnabled());
               config.setFileStorageEnabled(catalog.isFileStorageEnabled());
+              config.setDocumentProcessingEnabled(catalog.isDocumentProcessingEnabled());
+              config.setOcrEnabled(catalog.isOcrEnabled());
+              config.setSemanticSearchEnabled(catalog.isSemanticSearchEnabled());
+              config.setDocumentDomain(null);
+              config.setDocumentOutputType("markdown");
+              config.setJiraEnabled(catalog.isJiraEnabled());
+              config.setJiraProjectKey(catalog.getJiraProjectKey());
+              String defaultIssueType =
+                  catalog.getJiraDefaultIssueType() != null
+                          && !catalog.getJiraDefaultIssueType().isBlank()
+                      ? catalog.getJiraDefaultIssueType()
+                      : "Task";
+              config.setJiraDefaultIssueType(defaultIssueType);
+              config.setJiraAllowUserPriorityOverride(
+                  catalog.isJiraAllowUserPriorityOverride());
+              config.setJiraAutoLabelWithServiceName(
+                  catalog.isJiraAutoLabelWithServiceName());
               config.setCreatedAt(LocalDateTime.now());
               config.setUpdatedAt(LocalDateTime.now());
               return configRepository.save(config);
@@ -140,6 +161,42 @@ public class TenantServicesService {
     ServiceCatalog catalog = requireService(normalized);
     TenantServiceConfig config = ensureConfig(tenantId, normalized);
     return resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled());
+  }
+
+  public boolean resolveDocumentProcessingEnabled(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    boolean docEnabled =
+        resolveCapability(
+            config.getDocumentProcessingEnabled(), catalog.isDocumentProcessingEnabled());
+    if (!resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled())) {
+      return false;
+    }
+    return docEnabled;
+  }
+
+  public boolean resolveOcrEnabled(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    if (!resolveDocumentProcessingEnabled(tenantId, normalized)) {
+      return false;
+    }
+    return resolveCapability(config.getOcrEnabled(), catalog.isOcrEnabled());
+  }
+
+  public boolean resolveSemanticSearchEnabled(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    ServiceCatalog catalog = requireService(normalized);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    if (!resolveDocumentProcessingEnabled(tenantId, normalized)) {
+      return false;
+    }
+    return resolveCapability(config.getSemanticSearchEnabled(), catalog.isSemanticSearchEnabled());
   }
 
   public void requireFileStorageEnabled(String tenantId, String serviceCode) {
@@ -200,12 +257,32 @@ public class TenantServicesService {
       summary.endpointsEnabled = service.isEndpointsEnabled();
       Boolean tenantHandoff = config != null ? config.getHumanHandoffEnabled() : null;
       Boolean tenantStorage = config != null ? config.getFileStorageEnabled() : null;
+      Boolean tenantDoc = config != null ? config.getDocumentProcessingEnabled() : null;
+      Boolean tenantOcr = config != null ? config.getOcrEnabled() : null;
+      Boolean tenantSemantic = config != null ? config.getSemanticSearchEnabled() : null;
+      Boolean tenantJira = config != null ? config.getJiraEnabled() : null;
       summary.catalogHumanHandoffEnabled = service.isHumanHandoffEnabled();
       summary.catalogFileStorageEnabled = service.isFileStorageEnabled();
+      summary.catalogDocumentProcessingEnabled = service.isDocumentProcessingEnabled();
+      summary.catalogOcrEnabled = service.isOcrEnabled();
+      summary.catalogSemanticSearchEnabled = service.isSemanticSearchEnabled();
       summary.tenantHumanHandoffEnabled = tenantHandoff;
       summary.tenantFileStorageEnabled = tenantStorage;
+      summary.tenantDocumentProcessingEnabled = tenantDoc;
+      summary.tenantOcrEnabled = tenantOcr;
+      summary.tenantSemanticSearchEnabled = tenantSemantic;
       summary.humanHandoffEnabled = resolveCapability(tenantHandoff, service.isHumanHandoffEnabled());
       summary.fileStorageEnabled = resolveCapability(tenantStorage, service.isFileStorageEnabled());
+      summary.documentProcessingEnabled =
+          resolveCapability(tenantDoc, service.isDocumentProcessingEnabled())
+              && resolveCapability(tenantStorage, service.isFileStorageEnabled());
+      summary.ocrEnabled =
+          summary.documentProcessingEnabled
+              && resolveCapability(tenantOcr, service.isOcrEnabled());
+      summary.semanticSearchEnabled =
+          summary.documentProcessingEnabled
+              && resolveCapability(tenantSemantic, service.isSemanticSearchEnabled());
+      summary.jiraEnabled = resolveCapability(tenantJira, service.isJiraEnabled());
       summary.subscriptionStatus = subscription != null ? subscription.getStatus() : "disabled";
       summary.activateAt = subscription != null ? subscription.getActivateAt() : null;
       summary.deactivateAt = subscription != null ? subscription.getDeactivateAt() : null;
@@ -215,9 +292,13 @@ public class TenantServicesService {
       summary.providerId = config != null ? config.getProviderId() : null;
       summary.pricingId = config != null ? config.getPricingId() : null;
       summary.policyId = config != null ? config.getPolicyId() : null;
+      summary.documentDomain = config != null ? config.getDocumentDomain() : null;
+      summary.documentOutputType = config != null ? config.getDocumentOutputType() : null;
       summary.serviceApiKey = subscription != null ? serviceApiKeys.get(service.getCode()) : null;
       summary.userCount = userCount;
       summary.endpointCount = endpointCount;
+      summary.jiraConfigured =
+          summary.jiraEnabled && tenantServiceJiraService.isConfigured(tenantId, service.getCode());
       results.add(summary);
     }
     return results;
@@ -233,7 +314,17 @@ public class TenantServicesService {
       String pricingId,
       String policyId,
       Boolean humanHandoffEnabled,
-      Boolean fileStorageEnabled) {
+      Boolean fileStorageEnabled,
+      Boolean documentProcessingEnabled,
+      Boolean ocrEnabled,
+      Boolean semanticSearchEnabled,
+      String documentDomain,
+      String documentOutputType,
+      Boolean jiraEnabled,
+      String jiraProjectKey,
+      String jiraDefaultIssueType,
+      Boolean jiraAllowUserPriorityOverride,
+      Boolean jiraAutoLabelWithServiceName) {
     ensureTenant(tenantId);
     String normalized = normalizeServiceCode(serviceCode);
     TenantServiceConfig config = ensureConfig(tenantId, normalized);
@@ -275,6 +366,69 @@ public class TenantServicesService {
         config.setFileStorageEnabled(fileStorageEnabled);
       }
     }
+    if (documentProcessingEnabled != null) {
+      if (!catalog.isDocumentProcessingEnabled()) {
+        config.setDocumentProcessingEnabled(false);
+      } else {
+        config.setDocumentProcessingEnabled(documentProcessingEnabled);
+      }
+    }
+    if (ocrEnabled != null) {
+      if (!catalog.isOcrEnabled()) {
+        config.setOcrEnabled(false);
+      } else {
+        config.setOcrEnabled(ocrEnabled);
+      }
+    }
+    if (semanticSearchEnabled != null) {
+      if (!catalog.isSemanticSearchEnabled()) {
+        config.setSemanticSearchEnabled(false);
+      } else {
+        config.setSemanticSearchEnabled(semanticSearchEnabled);
+      }
+    }
+    if (documentDomain != null) {
+      String trimmed = documentDomain.trim();
+      config.setDocumentDomain(trimmed.isEmpty() ? null : trimmed);
+    }
+    if (documentOutputType != null) {
+      String trimmed = documentOutputType.trim().toLowerCase();
+      if (trimmed.isEmpty()) {
+        config.setDocumentOutputType(null);
+      } else if ("markdown".equals(trimmed) || "file".equals(trimmed)) {
+        config.setDocumentOutputType(trimmed);
+      }
+    }
+    if (jiraEnabled != null) {
+      if (!catalog.isJiraEnabled()) {
+        config.setJiraEnabled(false);
+      } else {
+        config.setJiraEnabled(jiraEnabled);
+      }
+    }
+    if (jiraProjectKey != null) {
+      String trimmed = jiraProjectKey.trim();
+      config.setJiraProjectKey(trimmed.isEmpty() ? null : trimmed);
+    }
+    if (jiraDefaultIssueType != null) {
+      String trimmed = jiraDefaultIssueType.trim();
+      config.setJiraDefaultIssueType(trimmed.isEmpty() ? null : trimmed);
+    }
+    if (jiraAllowUserPriorityOverride != null) {
+      config.setJiraAllowUserPriorityOverride(jiraAllowUserPriorityOverride);
+    }
+    if (jiraAutoLabelWithServiceName != null) {
+      config.setJiraAutoLabelWithServiceName(jiraAutoLabelWithServiceName);
+    }
+    if (!resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled())) {
+      config.setDocumentProcessingEnabled(false);
+      config.setOcrEnabled(false);
+      config.setSemanticSearchEnabled(false);
+    }
+    if (!resolveCapability(config.getDocumentProcessingEnabled(), catalog.isDocumentProcessingEnabled())) {
+      config.setOcrEnabled(false);
+      config.setSemanticSearchEnabled(false);
+    }
     config.setUpdatedAt(LocalDateTime.now());
     return configRepository.save(config);
   }
@@ -283,6 +437,82 @@ public class TenantServicesService {
     ensureTenant(tenantId);
     String normalized = normalizeServiceCode(serviceCode);
     return configRepository.findByTenantIdAndServiceCode(tenantId, normalized).orElse(null);
+  }
+
+  public JiraSettings getJiraSettings(String tenantId, String serviceCode) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    ServiceCatalog catalog = requireService(normalized);
+    var creds = tenantServiceJiraService.get(tenantId, normalized);
+    JiraSettings settings = new JiraSettings();
+    settings.jiraEnabled = resolveCapability(config.getJiraEnabled(), catalog.isJiraEnabled());
+    settings.jiraProjectKey = config.getJiraProjectKey();
+    settings.jiraDefaultIssueType = config.getJiraDefaultIssueType();
+    settings.jiraAllowUserPriorityOverride =
+        config.getJiraAllowUserPriorityOverride() != null
+            ? config.getJiraAllowUserPriorityOverride()
+            : false;
+    settings.jiraAutoLabelWithServiceName =
+        config.getJiraAutoLabelWithServiceName() != null
+            ? config.getJiraAutoLabelWithServiceName()
+            : false;
+    if (creds != null) {
+      settings.jiraBaseUrl = creds.baseUrl;
+      settings.jiraEmail = creds.email;
+      settings.jiraCredentialsEnabled = creds.enabled;
+      settings.jiraHasToken = creds.hasToken;
+    } else {
+      settings.jiraCredentialsEnabled = false;
+      settings.jiraHasToken = false;
+    }
+    return settings;
+  }
+
+  public JiraSettings updateJiraSettings(
+      String tenantId, String serviceCode, JiraSettingsUpdateRequest payload) {
+    ensureTenant(tenantId);
+    String normalized = normalizeServiceCode(serviceCode);
+    TenantServiceConfig config = ensureConfig(tenantId, normalized);
+    ServiceCatalog catalog = requireService(normalized);
+
+    if (payload.jiraEnabled != null) {
+      if (!catalog.isJiraEnabled()) {
+        config.setJiraEnabled(false);
+      } else {
+        config.setJiraEnabled(payload.jiraEnabled);
+      }
+    }
+    if (payload.jiraProjectKey != null) {
+      String trimmed = payload.jiraProjectKey.trim();
+      config.setJiraProjectKey(trimmed.isEmpty() ? null : trimmed);
+    }
+    if (payload.jiraDefaultIssueType != null) {
+      String trimmed = payload.jiraDefaultIssueType.trim();
+      config.setJiraDefaultIssueType(trimmed.isEmpty() ? null : trimmed);
+    }
+    if (payload.jiraAllowUserPriorityOverride != null) {
+      config.setJiraAllowUserPriorityOverride(payload.jiraAllowUserPriorityOverride);
+    }
+    if (payload.jiraAutoLabelWithServiceName != null) {
+      config.setJiraAutoLabelWithServiceName(payload.jiraAutoLabelWithServiceName);
+    }
+    config.setUpdatedAt(LocalDateTime.now());
+    configRepository.save(config);
+
+    if (payload.jiraBaseUrl != null
+        || payload.jiraEmail != null
+        || payload.jiraApiToken != null) {
+      TenantServiceJiraService.JiraCredentialsRequest req =
+          new TenantServiceJiraService.JiraCredentialsRequest();
+      req.baseUrl = payload.jiraBaseUrl;
+      req.email = payload.jiraEmail;
+      req.apiToken = payload.jiraApiToken;
+      req.enabled = payload.jiraCredentialsEnabled;
+      tenantServiceJiraService.upsert(tenantId, normalized, req);
+    }
+
+    return getJiraSettings(tenantId, normalized);
   }
 
   public List<TenantServiceEndpointResponse> listEndpoints(String tenantId, String serviceCode) {
@@ -504,11 +734,30 @@ public class TenantServicesService {
               view.activateAt = subscription != null ? subscription.getActivateAt() : null;
               view.deactivateAt = subscription != null ? subscription.getDeactivateAt() : null;
               view.status = operationalStatus;
+              Boolean tenantJira = config != null ? config.getJiraEnabled() : null;
+              view.jiraEnabled =
+                  catalogItem != null
+                      ? resolveCapability(tenantJira, catalogItem.isJiraEnabled())
+                      : (tenantJira != null && tenantJira);
+              view.jiraConfigured =
+                  view.jiraEnabled
+                      && tenantServiceJiraService.isConfigured(
+                          tenantId, assignment.getServiceCode());
               if (catalogItem != null) {
                 Boolean tenantHandoff = config != null ? config.getHumanHandoffEnabled() : null;
                 Boolean tenantStorage = config != null ? config.getFileStorageEnabled() : null;
+                Boolean tenantDoc = config != null ? config.getDocumentProcessingEnabled() : null;
+                Boolean tenantOcr = config != null ? config.getOcrEnabled() : null;
+                Boolean tenantSemantic = config != null ? config.getSemanticSearchEnabled() : null;
                 view.humanHandoffEnabled = resolveCapability(tenantHandoff, catalogItem.isHumanHandoffEnabled());
                 view.fileStorageEnabled = resolveCapability(tenantStorage, catalogItem.isFileStorageEnabled());
+                boolean docEnabled =
+                    resolveCapability(tenantDoc, catalogItem.isDocumentProcessingEnabled())
+                        && resolveCapability(tenantStorage, catalogItem.isFileStorageEnabled());
+                view.documentProcessingEnabled = docEnabled;
+                view.ocrEnabled = docEnabled && resolveCapability(tenantOcr, catalogItem.isOcrEnabled());
+                view.semanticSearchEnabled =
+                    docEnabled && resolveCapability(tenantSemantic, catalogItem.isSemanticSearchEnabled());
               }
               return view;
             })
@@ -556,6 +805,19 @@ public class TenantServicesService {
         resolveCapability(config.getHumanHandoffEnabled(), catalog.isHumanHandoffEnabled());
     access.fileStorageEnabled =
         resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled());
+    access.documentProcessingEnabled =
+        resolveCapability(config.getDocumentProcessingEnabled(), catalog.isDocumentProcessingEnabled())
+            && resolveCapability(config.getFileStorageEnabled(), catalog.isFileStorageEnabled());
+    access.ocrEnabled =
+        access.documentProcessingEnabled
+            && resolveCapability(config.getOcrEnabled(), catalog.isOcrEnabled());
+    access.semanticSearchEnabled =
+        access.documentProcessingEnabled
+            && resolveCapability(config.getSemanticSearchEnabled(), catalog.isSemanticSearchEnabled());
+    access.jiraEnabled =
+        resolveCapability(config.getJiraEnabled(), catalog.isJiraEnabled());
+    access.jiraConfigured =
+        access.jiraEnabled && tenantServiceJiraService.isConfigured(tenantId, normalized);
     return access;
   }
 
@@ -608,10 +870,19 @@ public class TenantServicesService {
     public boolean endpointsEnabled;
     public boolean catalogHumanHandoffEnabled;
     public boolean catalogFileStorageEnabled;
+    public boolean catalogDocumentProcessingEnabled;
+    public boolean catalogOcrEnabled;
+    public boolean catalogSemanticSearchEnabled;
     public Boolean tenantHumanHandoffEnabled;
     public Boolean tenantFileStorageEnabled;
+    public Boolean tenantDocumentProcessingEnabled;
+    public Boolean tenantOcrEnabled;
+    public Boolean tenantSemanticSearchEnabled;
     public boolean humanHandoffEnabled;
     public boolean fileStorageEnabled;
+    public boolean documentProcessingEnabled;
+    public boolean ocrEnabled;
+    public boolean semanticSearchEnabled;
     public String subscriptionStatus;
     public LocalDateTime activateAt;
     public LocalDateTime deactivateAt;
@@ -621,9 +892,13 @@ public class TenantServicesService {
     public String providerId;
     public String pricingId;
     public String policyId;
+    public String documentDomain;
+    public String documentOutputType;
     public String serviceApiKey;
     public long userCount;
     public long endpointCount;
+    public boolean jiraEnabled;
+    public boolean jiraConfigured;
   }
 
   public static class TenantServiceEndpointResponse {
@@ -677,6 +952,11 @@ public class TenantServicesService {
     public String status;
     public boolean humanHandoffEnabled;
     public boolean fileStorageEnabled;
+    public boolean documentProcessingEnabled;
+    public boolean ocrEnabled;
+    public boolean semanticSearchEnabled;
+    public boolean jiraEnabled;
+    public boolean jiraConfigured;
   }
 
   public static class ServiceAccess {
@@ -685,6 +965,35 @@ public class TenantServicesService {
     public ServiceCatalog catalog;
     public boolean humanHandoffEnabled;
     public boolean fileStorageEnabled;
+    public boolean documentProcessingEnabled;
+    public boolean ocrEnabled;
+    public boolean semanticSearchEnabled;
+    public boolean jiraEnabled;
+    public boolean jiraConfigured;
+  }
+
+  public static class JiraSettings {
+    public boolean jiraEnabled;
+    public String jiraProjectKey;
+    public String jiraDefaultIssueType;
+    public boolean jiraAllowUserPriorityOverride;
+    public boolean jiraAutoLabelWithServiceName;
+    public String jiraBaseUrl;
+    public String jiraEmail;
+    public boolean jiraCredentialsEnabled;
+    public boolean jiraHasToken;
+  }
+
+  public static class JiraSettingsUpdateRequest {
+    public Boolean jiraEnabled;
+    public String jiraProjectKey;
+    public String jiraDefaultIssueType;
+    public Boolean jiraAllowUserPriorityOverride;
+    public Boolean jiraAutoLabelWithServiceName;
+    public String jiraBaseUrl;
+    public String jiraEmail;
+    public String jiraApiToken;
+    public Boolean jiraCredentialsEnabled;
   }
 
   public static class CreateEndpointRequest {

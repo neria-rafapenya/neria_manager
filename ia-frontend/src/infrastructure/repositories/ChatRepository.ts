@@ -32,6 +32,7 @@ export class ChatRepository {
   private mapAttachmentsForApi(attachments?: ChatAttachment[]) {
     if (!attachments || attachments.length == 0) return [];
     return attachments.map((att) => ({
+      fileId: att.fileId,
       url: att.url,
       name: att.filename || att.name || att.key,
       contentType: att.mimeType || att.contentType || "",
@@ -169,6 +170,22 @@ export class ChatRepository {
     await fetchWithAuth(API_ENDPOINTS.CONVERSATION_HANDOFF(conversationId), {
       method: "POST",
       body: JSON.stringify({ reason: reason ?? "" }),
+    });
+  }
+
+  async resolveHandoff(conversationId: string): Promise<void> {
+    await fetchWithAuth(API_ENDPOINTS.CONVERSATION_HANDOFF_RESOLVE(conversationId), {
+      method: "POST",
+    });
+  }
+
+  async createJiraIssue(
+    conversationId: string,
+    messageContent: string
+  ): Promise<any> {
+    return fetchWithAuth(API_ENDPOINTS.CONVERSATION_JIRA_ISSUES(conversationId), {
+      method: "POST",
+      body: JSON.stringify({ messageContent }),
     });
   }
 }
