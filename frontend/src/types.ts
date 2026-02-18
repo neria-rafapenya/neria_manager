@@ -140,6 +140,7 @@ export type TenantServiceOverview = {
   priceMonthlyEur: number;
   priceAnnualEur: number;
   endpointsEnabled: boolean;
+  emailAutomationEnabled?: boolean;
   catalogHumanHandoffEnabled?: boolean;
   catalogFileStorageEnabled?: boolean;
   catalogDocumentProcessingEnabled?: boolean;
@@ -188,6 +189,37 @@ export type TenantServiceEndpoint = {
   updatedAt: string;
 };
 
+export type TenantServiceEmailAccount = {
+  id: string;
+  label?: string | null;
+  email: string;
+  host: string;
+  port?: number | null;
+  username: string;
+  folder?: string | null;
+  useSsl: boolean;
+  useStartTls: boolean;
+  enabled: boolean;
+  hasPassword: boolean;
+  lastSyncAt?: string | null;
+};
+
+export type TenantServiceEmailMessage = {
+  id: string;
+  accountId: string;
+  subject?: string | null;
+  fromEmail?: string | null;
+  fromName?: string | null;
+  receivedAt?: string | null;
+  status?: string | null;
+  intent?: string | null;
+  priority?: string | null;
+  actionType?: string | null;
+  actionStatus?: string | null;
+  jiraIssueKey?: string | null;
+  jiraIssueUrl?: string | null;
+};
+
 export type TenantServiceUser = {
   userId: string;
   status: 'active' | 'suspended';
@@ -204,6 +236,7 @@ export type ServiceCatalogItem = {
   priceAnnualEur: number;
   enabled: boolean;
   endpointsEnabled: boolean;
+  emailAutomationEnabled?: boolean;
   catalogHumanHandoffEnabled?: boolean;
   catalogFileStorageEnabled?: boolean;
   catalogDocumentProcessingEnabled?: boolean;

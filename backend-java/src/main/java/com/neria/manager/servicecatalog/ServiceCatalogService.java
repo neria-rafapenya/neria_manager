@@ -65,6 +65,8 @@ public class ServiceCatalogService {
     item.setOcrEnabled(dto.ocrEnabled != null ? dto.ocrEnabled : false);
     item.setSemanticSearchEnabled(
         dto.semanticSearchEnabled != null ? dto.semanticSearchEnabled : false);
+    item.setEmailAutomationEnabled(
+        dto.emailAutomationEnabled != null ? dto.emailAutomationEnabled : false);
     item.setJiraEnabled(dto.jiraEnabled != null ? dto.jiraEnabled : false);
     String jiraProjectKey = normalize(dto.jiraProjectKey);
     item.setJiraProjectKey(jiraProjectKey.isBlank() ? null : jiraProjectKey);
@@ -74,6 +76,7 @@ public class ServiceCatalogService {
         dto.jiraAllowUserPriorityOverride != null ? dto.jiraAllowUserPriorityOverride : true);
     item.setJiraAutoLabelWithServiceName(
         dto.jiraAutoLabelWithServiceName != null ? dto.jiraAutoLabelWithServiceName : true);
+    enforceEmailAutomationRules(item);
     item.setCreatedAt(LocalDateTime.now());
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
@@ -131,6 +134,9 @@ public class ServiceCatalogService {
     }
     if (dto.ocrEnabled != null) item.setOcrEnabled(dto.ocrEnabled);
     if (dto.semanticSearchEnabled != null) item.setSemanticSearchEnabled(dto.semanticSearchEnabled);
+    if (dto.emailAutomationEnabled != null) {
+      item.setEmailAutomationEnabled(dto.emailAutomationEnabled);
+    }
     if (dto.jiraEnabled != null) item.setJiraEnabled(dto.jiraEnabled);
     if (dto.jiraProjectKey != null) {
       String jiraProjectKey = normalize(dto.jiraProjectKey);
@@ -146,6 +152,7 @@ public class ServiceCatalogService {
     if (dto.jiraAutoLabelWithServiceName != null) {
       item.setJiraAutoLabelWithServiceName(dto.jiraAutoLabelWithServiceName);
     }
+    enforceEmailAutomationRules(item);
     item.setUpdatedAt(LocalDateTime.now());
     return repository.save(item);
   }
@@ -189,6 +196,23 @@ public class ServiceCatalogService {
     }
   }
 
+  private void enforceEmailAutomationRules(ServiceCatalog item) {
+    if (!item.isEmailAutomationEnabled()) {
+      return;
+    }
+    if (!item.isJiraEnabled()) {
+      item.setJiraEnabled(true);
+    }
+    String projectKey = normalize(item.getJiraProjectKey());
+    if (projectKey.isBlank()) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Jira project key required for email automation");
+    }
+    item.setJiraProjectKey(projectKey);
+    String issueType = normalize(item.getJiraDefaultIssueType());
+    item.setJiraDefaultIssueType(issueType.isBlank() ? "Task" : issueType);
+  }
+
   public static class CreateServiceCatalogRequest {
     public String code;
     public String name;
@@ -203,6 +227,7 @@ public class ServiceCatalogService {
     public Boolean documentProcessingEnabled;
     public Boolean ocrEnabled;
     public Boolean semanticSearchEnabled;
+    public Boolean emailAutomationEnabled;
     public Boolean jiraEnabled;
     public String jiraProjectKey;
     public String jiraDefaultIssueType;
@@ -224,6 +249,7 @@ public class ServiceCatalogService {
     public Boolean documentProcessingEnabled;
     public Boolean ocrEnabled;
     public Boolean semanticSearchEnabled;
+    public Boolean emailAutomationEnabled;
     public Boolean jiraEnabled;
     public String jiraProjectKey;
     public String jiraDefaultIssueType;

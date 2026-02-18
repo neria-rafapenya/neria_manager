@@ -4,6 +4,7 @@ import com.neria.manager.common.entities.ChatConversation;
 import com.neria.manager.common.security.AuthContext;
 import com.neria.manager.common.security.AuthUtils;
 import com.neria.manager.documents.DocumentProcessingService;
+import com.neria.manager.emailautomation.TenantServiceEmailService;
 import com.neria.manager.jira.JiraIssuesService;
 import com.neria.manager.storage.StorageUploadService;
 import io.jsonwebtoken.Claims;
@@ -35,6 +36,7 @@ public class ChatController {
   private final StorageUploadService storageUploadService;
   private final DocumentProcessingService documentProcessingService;
   private final JiraIssuesService jiraIssuesService;
+  private final TenantServiceEmailService emailService;
   private final ExecutorService streamExecutor = Executors.newCachedThreadPool();
 
   public ChatController(
@@ -42,12 +44,14 @@ public class ChatController {
       ChatAuthService chatAuthService,
       StorageUploadService storageUploadService,
       DocumentProcessingService documentProcessingService,
-      JiraIssuesService jiraIssuesService) {
+      JiraIssuesService jiraIssuesService,
+      TenantServiceEmailService emailService) {
     this.chatService = chatService;
     this.chatAuthService = chatAuthService;
     this.storageUploadService = storageUploadService;
     this.documentProcessingService = documentProcessingService;
     this.jiraIssuesService = jiraIssuesService;
+    this.emailService = emailService;
   }
 
   private Claims requireChatToken(HttpServletRequest request, String tenantId) {
@@ -103,6 +107,21 @@ public class ChatController {
     Claims claims = requireChatToken(request, tenantId);
     String userId = requireUserId(claims);
     return chatService.listServiceEndpoints(tenantId, userId, serviceCode);
+  }
+
+  @GetMapping("/email/messages")
+  public Object listEmailMessages(
+      HttpServletRequest request,
+      @RequestParam("serviceCode") String serviceCode,
+      @RequestParam(name = "limit", required = false, defaultValue = "50") int limit) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    if (serviceCode == null || serviceCode.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing serviceCode");
+    }
+    chatService.requireServiceAccess(tenantId, serviceCode.trim(), userId);
+    return emailService.listMessagesForChat(tenantId, serviceCode.trim(), limit);
   }
 
   @PostMapping("/conversations")

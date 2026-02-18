@@ -25,7 +25,7 @@
   color-scheme: light;
   --bg: #f5f2ee;
   --surface: #ffffff;
-  --surface-2: #f0ebe3;
+  --surface-2: #f6f6f6;
   --ink: #101111;
   --muted: #6d6b67;
   --accent: #d8512a;
@@ -1273,6 +1273,51 @@ h1 {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: var(--surface-2);
+}
+
+.servicetable-row {
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.servicetable-row p {
+  font-size: 14px;
+}
+
+.servicetable-row .link {
+  font-size: 14px;
+  padding: 6px 12px 6px 12px;
+  background-color: #000;
+  border-radius: 50px;
+  color: #ffffff;
+  border: 0px;
+}
+.servicetable-row .link2 {
+  font-size: 14px;
+  padding: 6px 12px 6px 12px;
+  background-color: #bc8743;
+  border-radius: 50px;
+  color: #ffffff;
+  border: 0px;
+}
+
+.servicetable-row .link3 {
+  font-size: 14px;
+  padding: 6px 12px 6px 12px;
+  background-color: #931a0f;
+  border-radius: 50px;
+  color: #ffffff;
+  border: 0px;
+}
+
+.servicetable-row .link:hover,
+.link2:hover,
+.link3:hover {
+  font-size: 14px;
+  padding: 6px 12px 6px 12px;
+  background-color: #666666;
+  border-radius: 50px;
+  color: #ffffff;
 }
 
 .cell-stack {

@@ -1,11 +1,9 @@
 // src/App.tsx
 import { ChatbotApp } from "./adapters/ui/components/ChatbotApp";
-import { AuthProvider } from "./infrastructure/contexts/AuthContext";
+import { EmailAutomationApp } from "./adapters/ui/components/EmailAutomationApp";
+import { getServiceMode } from "./infrastructure/config/env";
 
 export const App = () => {
-  return (
-    <AuthProvider>
-      <ChatbotApp />
-    </AuthProvider>
-  );
+  const mode = getServiceMode();
+  return mode === "email" ? <EmailAutomationApp /> : <ChatbotApp />;
 };

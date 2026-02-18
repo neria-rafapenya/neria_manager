@@ -20,6 +20,8 @@ import type {
   Policy,
   Provider,
   PricingEntry,
+  TenantServiceEmailAccount,
+  TenantServiceEmailMessage,
   TenantServiceJiraSettings,
   TenantServiceEndpoint,
   TenantServiceOverview,
@@ -36,6 +38,7 @@ export function TenantServiceDetailPage() {
   const canManageChatUsers = role === "admin" || role === "tenant";
   const canManagePolicies = role === "admin";
   const canManageConversations = role === "admin";
+  const canManageEmailAutomation = role === "admin" || role === "tenant";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +111,31 @@ export function TenantServiceDetailPage() {
     jiraHasToken: false,
   });
   const [jiraBusy, setJiraBusy] = useState(false);
+  const [emailAccounts, setEmailAccounts] = useState<
+    TenantServiceEmailAccount[]
+  >([]);
+  const [emailMessages, setEmailMessages] = useState<
+    TenantServiceEmailMessage[]
+  >([]);
+  const [emailAccountDraft, setEmailAccountDraft] = useState({
+    id: "",
+    label: "",
+    email: "",
+    host: "",
+    port: "",
+    username: "",
+    password: "",
+    folder: "INBOX",
+    useSsl: true,
+    useStartTls: false,
+    enabled: true,
+  });
+  const [emailAccountMode, setEmailAccountMode] = useState<
+    "create" | "edit"
+  >("create");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailSyncBusy, setEmailSyncBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [serviceRuntimeForm, setServiceRuntimeForm] = useState({
     providerId: "",
     model: "",
@@ -461,6 +489,18 @@ export function TenantServiceDetailPage() {
     };
   }, [tenantId, serviceCode, canManagePolicies]);
 
+  useEffect(() => {
+    if (!tenantId || !serviceCode) {
+      return;
+    }
+    if (!service?.emailAutomationEnabled) {
+      setEmailAccounts([]);
+      setEmailMessages([]);
+      return;
+    }
+    refreshEmailAutomation();
+  }, [tenantId, serviceCode, service?.emailAutomationEnabled]);
+
   const handleSaveServiceConfig = async () => {
     if (!tenantId || !serviceCode) {
       return;
@@ -557,6 +597,293 @@ export function TenantServiceDetailPage() {
       jiraHasToken: data.jiraHasToken ?? false,
     });
   };
+
+  const resetEmailDraft = () => {
+    setEmailAccountMode("create");
+    setEmailAccountDraft({
+      id: "",
+      label: "",
+      email: "",
+      host: "",
+      port: "",
+      username: "",
+      password: "",
+      folder: "INBOX",
+      useSsl: true,
+      useStartTls: false,
+      enabled: true,
+    });
+  };
+
+  const refreshEmailAutomation = async () => {
+    if (!tenantId || !serviceCode || !service?.emailAutomationEnabled) {
+      setEmailAccounts([]);
+      setEmailMessages([]);
+      return;
+    }
+    setEmailBusy(true);
+    setEmailError(null);
+    try {
+      const [accounts, messages] = await Promise.all([
+        api.listTenantServiceEmailAccounts(tenantId, serviceCode),
+        api.listTenantServiceEmailMessages(tenantId, serviceCode, 50),
+      ]);
+      setEmailAccounts(accounts as TenantServiceEmailAccount[]);
+      setEmailMessages(messages as TenantServiceEmailMessage[]);
+    } catch (err: any) {
+      setEmailError(err.message || t("No se pudo cargar la bandeja."));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const handleSaveEmailAccount = async () => {
+    if (!tenantId || !serviceCode) {
+      return;
+    }
+    if (!canManageEmailAutomation) {
+      return;
+    }
+    if (!emailAccountDraft.email.trim()) {
+      emitToast(t("El email es obligatorio."), "error");
+      return;
+    }
+    if (!emailAccountDraft.host.trim()) {
+      emitToast(t("El host IMAP es obligatorio."), "error");
+      return;
+    }
+    if (!emailAccountDraft.username.trim()) {
+      emitToast(t("El usuario es obligatorio."), "error");
+      return;
+    }
+    if (
+      emailAccountMode === "create" &&
+      !emailAccountDraft.password.trim()
+    ) {
+      emitToast(t("La contraseña es obligatoria."), "error");
+      return;
+    }
+    setEmailBusy(true);
+    try {
+      const portValue = emailAccountDraft.port.trim();
+      const parsedPort = portValue ? Number(portValue) : null;
+      const resolvedPort =
+        parsedPort != null && Number.isFinite(parsedPort) ? parsedPort : null;
+      const payload: any = {
+        label: emailAccountDraft.label.trim() || null,
+        email: emailAccountDraft.email.trim(),
+        host: emailAccountDraft.host.trim(),
+        port: resolvedPort,
+        username: emailAccountDraft.username.trim(),
+        folder: emailAccountDraft.folder.trim() || null,
+        useSsl: emailAccountDraft.useSsl,
+        useStartTls: emailAccountDraft.useStartTls,
+        enabled: emailAccountDraft.enabled,
+      };
+      if (emailAccountDraft.password.trim()) {
+        payload.password = emailAccountDraft.password.trim();
+      }
+      if (emailAccountMode === "create") {
+        await api.createTenantServiceEmailAccount(
+          tenantId,
+          serviceCode,
+          payload,
+        );
+        emitToast(t("Cuenta de correo añadida."));
+      } else {
+        await api.updateTenantServiceEmailAccount(
+          tenantId,
+          serviceCode,
+          emailAccountDraft.id,
+          payload,
+        );
+        emitToast(t("Cuenta de correo actualizada."));
+      }
+      resetEmailDraft();
+      await refreshEmailAutomation();
+    } catch (err: any) {
+      emitToast(err.message || t("No se pudo guardar la cuenta."), "error");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const handleEditEmailAccount = (account: TenantServiceEmailAccount) => {
+    setEmailAccountMode("edit");
+    setEmailAccountDraft({
+      id: account.id,
+      label: account.label || "",
+      email: account.email || "",
+      host: account.host || "",
+      port: account.port != null ? String(account.port) : "",
+      username: account.username || "",
+      password: "",
+      folder: account.folder || "INBOX",
+      useSsl: account.useSsl,
+      useStartTls: account.useStartTls,
+      enabled: account.enabled,
+    });
+  };
+
+  const handleDeleteEmailAccount = async (account: TenantServiceEmailAccount) => {
+    if (!tenantId || !serviceCode) {
+      return;
+    }
+    const result = await Swal.fire({
+      title: t("Eliminar cuenta"),
+      text: t("¿Eliminar la cuenta {email}?", { email: account.email }),
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: t("Eliminar"),
+      cancelButtonText: t("Cancelar"),
+    });
+    if (!result.isConfirmed) {
+      return;
+    }
+    setEmailBusy(true);
+    try {
+      await api.deleteTenantServiceEmailAccount(
+        tenantId,
+        serviceCode,
+        account.id,
+      );
+      emitToast(t("Cuenta eliminada"));
+      await refreshEmailAutomation();
+    } catch (err: any) {
+      emitToast(err.message || t("No se pudo eliminar la cuenta."), "error");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const handleSyncEmail = async () => {
+    if (!tenantId || !serviceCode) {
+      return;
+    }
+    if (!canManageEmailAutomation) {
+      return;
+    }
+    setEmailSyncBusy(true);
+    try {
+      await api.syncTenantServiceEmail(tenantId, serviceCode);
+      emitToast(t("Sincronización en cola."));
+      await refreshEmailAutomation();
+    } catch (err: any) {
+      emitToast(err.message || t("No se pudo sincronizar."), "error");
+    } finally {
+      setEmailSyncBusy(false);
+    }
+  };
+
+  const emailAccountColumns = useMemo(
+    () => [
+      {
+        key: "email",
+        label: t("Email"),
+        sortable: true,
+      },
+      {
+        key: "host",
+        label: t("Servidor IMAP"),
+      },
+      {
+        key: "folder",
+        label: t("Carpeta"),
+        render: (row: TenantServiceEmailAccount) => row.folder || "INBOX",
+      },
+      {
+        key: "enabled",
+        label: t("Estado"),
+        render: (row: TenantServiceEmailAccount) =>
+          row.enabled ? t("Activo") : t("Inactivo"),
+      },
+      {
+        key: "lastSyncAt",
+        label: t("Última sincronización"),
+        render: (row: TenantServiceEmailAccount) =>
+          row.lastSyncAt ? new Date(row.lastSyncAt).toLocaleString() : "—",
+      },
+      {
+        key: "actions",
+        label: t("Acciones"),
+        render: (row: TenantServiceEmailAccount) =>
+          canManageEmailAutomation ? (
+            <div className="row-actions">
+              <button
+                type="button"
+                className="link"
+                onClick={() => handleEditEmailAccount(row)}
+              >
+                {t("Editar")}
+              </button>
+              <button
+                type="button"
+                className="link3"
+                onClick={() => handleDeleteEmailAccount(row)}
+                disabled={emailBusy}
+              >
+                {t("Eliminar")}
+              </button>
+            </div>
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    [t, canManageEmailAutomation, emailBusy],
+  );
+
+  const emailMessageColumns = useMemo(
+    () => [
+      {
+        key: "subject",
+        label: t("Asunto"),
+        sortable: true,
+        render: (row: TenantServiceEmailMessage) => row.subject || "—",
+      },
+      {
+        key: "fromEmail",
+        label: t("Remitente"),
+        render: (row: TenantServiceEmailMessage) =>
+          row.fromEmail || row.fromName || "—",
+      },
+      {
+        key: "intent",
+        label: t("Intención"),
+        render: (row: TenantServiceEmailMessage) => row.intent || "—",
+      },
+      {
+        key: "priority",
+        label: t("Prioridad"),
+        render: (row: TenantServiceEmailMessage) => row.priority || "—",
+      },
+      {
+        key: "actionStatus",
+        label: t("Acción"),
+        render: (row: TenantServiceEmailMessage) =>
+          row.actionStatus || row.actionType || "—",
+      },
+      {
+        key: "jiraIssueKey",
+        label: t("Jira"),
+        render: (row: TenantServiceEmailMessage) =>
+          row.jiraIssueUrl ? (
+            <a href={row.jiraIssueUrl} target="_blank" rel="noreferrer">
+              {row.jiraIssueKey || t("Ver")}
+            </a>
+          ) : (
+            row.jiraIssueKey || "—"
+          ),
+      },
+      {
+        key: "receivedAt",
+        label: t("Recibido"),
+        render: (row: TenantServiceEmailMessage) =>
+          row.receivedAt ? new Date(row.receivedAt).toLocaleString() : "—",
+      },
+    ],
+    [t],
+  );
 
   const handleResetStorage = async () => {
     if (!tenantId || !serviceCode || !canManageServices) {
@@ -1469,6 +1796,11 @@ export function TenantServiceDetailPage() {
                 "Configura Jira para crear incidencias manuales desde el chatbot.",
               )}
             </p>
+            {service?.emailAutomationEnabled && (
+              <div className="info-banner">
+                {t("Jira es obligatorio para la automatización de correos.")}
+              </div>
+            )}
             {canManageServices ? (
               <>
                 <div className="row g-3 form-grid-13">
@@ -1483,6 +1815,7 @@ export function TenantServiceDetailPage() {
                             jiraEnabled: event.target.checked,
                           }))
                         }
+                        disabled={service?.emailAutomationEnabled}
                       />
                       {t("Habilitar Jira")}
                     </label>
@@ -1690,7 +2023,258 @@ export function TenantServiceDetailPage() {
               </div>
             )}
 
-            <div className="section-divider" />
+            {service?.emailAutomationEnabled ? (
+              <>
+                <div className="section-divider" />
+                <h4>{t("Automatización de correos y tickets")}</h4>
+                <p className="muted mb-3">
+                  {t(
+                    "Conecta cuentas IMAP para clasificar correos y crear acciones automáticas en Jira.",
+                  )}
+                </p>
+                {emailError && <div className="error-banner">{emailError}</div>}
+                {canManageEmailAutomation && (
+                  <>
+                    <div className="row g-3 form-grid-13">
+                      <div className="col-12 col-md-6">
+                        <label>
+                          {t("Etiqueta interna")}
+                          <input
+                            className="form-control"
+                            value={emailAccountDraft.label}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                label: event.target.value,
+                              }))
+                            }
+                            placeholder={t("Ej: Soporte general")}
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label>
+                          {t("Email")}
+                          <input
+                            className="form-control"
+                            value={emailAccountDraft.email}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                email: event.target.value,
+                              }))
+                            }
+                            placeholder="soporte@tuempresa.com"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label>
+                          {t("Servidor IMAP")}
+                          <input
+                            className="form-control"
+                            value={emailAccountDraft.host}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                host: event.target.value,
+                              }))
+                            }
+                            placeholder="imap.tuempresa.com"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-3">
+                        <label>
+                          {t("Puerto")}
+                          <input
+                            className="form-control"
+                            type="number"
+                            value={emailAccountDraft.port}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                port: event.target.value,
+                              }))
+                            }
+                            placeholder="993"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-3">
+                        <label>
+                          {t("Carpeta")}
+                          <input
+                            className="form-control"
+                            value={emailAccountDraft.folder}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                folder: event.target.value,
+                              }))
+                            }
+                            placeholder="INBOX"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label>
+                          {t("Usuario")}
+                          <input
+                            className="form-control"
+                            value={emailAccountDraft.username}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                username: event.target.value,
+                              }))
+                            }
+                            placeholder="soporte@tuempresa.com"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label>
+                          {t("Contraseña")}
+                          <input
+                            className="form-control"
+                            type="password"
+                            value={emailAccountDraft.password}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                password: event.target.value,
+                              }))
+                            }
+                            placeholder={
+                              emailAccountMode === "edit"
+                                ? t("Dejar vacío para mantener")
+                                : t("Introduce la contraseña")
+                            }
+                          />
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-4">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={emailAccountDraft.useSsl}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                useSsl: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Usar SSL")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-4">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={emailAccountDraft.useStartTls}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                useStartTls: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Usar STARTTLS")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-4">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={emailAccountDraft.enabled}
+                            onChange={(event) =>
+                              setEmailAccountDraft((prev) => ({
+                                ...prev,
+                                enabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Cuenta activa")}
+                        </label>
+                      </div>
+                    </div>
+                    <div className="form-actions">
+                      <button
+                        className="btn primary"
+                        onClick={handleSaveEmailAccount}
+                        disabled={emailBusy}
+                      >
+                        {emailBusy
+                          ? t("Guardando...")
+                          : emailAccountMode === "edit"
+                            ? t("Actualizar cuenta")
+                            : t("Añadir cuenta")}
+                      </button>
+                      {emailAccountMode === "edit" && (
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={resetEmailDraft}
+                        >
+                          {t("Cancelar")}
+                        </button>
+                      )}
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={handleSyncEmail}
+                        disabled={emailSyncBusy}
+                      >
+                        {emailSyncBusy
+                          ? t("Sincronizando...")
+                          : t("Sincronizar ahora")}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                <div className="section-divider" />
+
+                <h5>{t("Cuentas conectadas")}</h5>
+                {emailAccounts.length === 0 && !emailBusy && (
+                  <div className="muted">
+                    {t("No hay cuentas configuradas.")}
+                  </div>
+                )}
+                {emailAccounts.length > 0 && (
+                  <DataTable
+                    columns={emailAccountColumns}
+                    data={emailAccounts}
+                    getRowId={(row) => row.id}
+                    pageSize={5}
+                    filterKeys={["email", "host", "label"]}
+                  />
+                )}
+
+                <div className="section-divider" />
+
+                <h5>{t("Bandeja procesada")}</h5>
+                {emailMessages.length === 0 && !emailBusy && (
+                  <div className="muted">
+                    {t("No se han procesado correos aún.")}
+                  </div>
+                )}
+                {emailMessages.length > 0 && (
+                  <DataTable
+                    columns={emailMessageColumns}
+                    data={emailMessages}
+                    getRowId={(row) => row.id}
+                    pageSize={8}
+                    filterKeys={["subject", "fromEmail", "intent", "priority"]}
+                  />
+                )}
+                <div className="section-divider" />
+              </>
+            ) : (
+              <div className="section-divider" />
+            )}
 
             {!catalogStorageEnabled ? (
               <div className="info-banner">

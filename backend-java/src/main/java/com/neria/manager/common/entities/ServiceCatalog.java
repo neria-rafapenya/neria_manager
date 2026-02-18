@@ -48,6 +48,9 @@ public class ServiceCatalog {
   @Column(name = "semanticSearchEnabled", nullable = false)
   private boolean semanticSearchEnabled;
 
+  @Column(name = "emailAutomationEnabled", nullable = false)
+  private boolean emailAutomationEnabled;
+
   @Column(name = "jiraEnabled", nullable = false)
   private boolean jiraEnabled;
 

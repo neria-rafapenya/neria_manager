@@ -354,6 +354,61 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  listTenantServiceEmailAccounts: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/accounts`,
+    ),
+  createTenantServiceEmailAccount: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/accounts`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    ),
+  updateTenantServiceEmailAccount: (
+    tenantId: string,
+    serviceCode: string,
+    accountId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/accounts/${accountId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    ),
+  deleteTenantServiceEmailAccount: (
+    tenantId: string,
+    serviceCode: string,
+    accountId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/accounts/${accountId}`,
+      {
+        method: "DELETE",
+      },
+    ),
+  listTenantServiceEmailMessages: (
+    tenantId: string,
+    serviceCode: string,
+    limit = 50,
+  ) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/messages?limit=${limit}`,
+    ),
+  syncTenantServiceEmail: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/email/sync`,
+      {
+        method: "POST",
+      },
+    ),
   listTenantServiceEndpoints: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/endpoints`,

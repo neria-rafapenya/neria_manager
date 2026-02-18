@@ -67,6 +67,15 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql := (
   SELECT IF(COUNT(*) = 0,
+    'ALTER TABLE service_catalog ADD COLUMN emailAutomationEnabled TINYINT(1) NOT NULL DEFAULT 0',
+    'SELECT 1')
+  FROM information_schema.columns
+  WHERE table_schema = @db AND table_name = 'service_catalog' AND column_name = 'emailAutomationEnabled'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+  SELECT IF(COUNT(*) = 0,
     'ALTER TABLE service_catalog ADD COLUMN jiraEnabled TINYINT(1) NOT NULL DEFAULT 0',
     'SELECT 1')
   FROM information_schema.columns

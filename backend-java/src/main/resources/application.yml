@@ -40,6 +40,8 @@ app:
   cookies:
     secure: ${AUTH_COOKIE_SECURE:false}
     sameSite: ${AUTH_COOKIE_SAMESITE:lax}
+  emailAutomation:
+    pollIntervalMs: ${EMAIL_AUTOMATION_POLL_INTERVAL_MS:60000}
 
 management:
   endpoints:
