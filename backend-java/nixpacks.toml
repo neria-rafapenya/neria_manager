@@ -1,0 +1,8 @@
+[phases.setup]
+aptPkgs = ["tesseract-ocr", "tesseract-ocr-spa", "tesseract-ocr-cat", "tesseract-ocr-eng"]
+
+[phases.build]
+cmds = ["mvn -q -DskipTests package"]
+
+[phases.start]
+cmd = "java -jar target/*.jar"
