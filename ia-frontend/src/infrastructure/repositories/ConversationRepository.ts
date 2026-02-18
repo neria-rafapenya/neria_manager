@@ -1,5 +1,5 @@
 // src/infrastructure/repositories/ConversationRepository.ts
-import { fetchWithAuth } from "../api/api";
+import { ApiError, fetchWithAuth } from "../api/api";
 import { API_ENDPOINTS } from "../../core/domain/constants/apiEndpoints";
 import type {
   Conversation,
@@ -17,7 +17,15 @@ interface PaginatedConversations {
 
 export class ConversationRepository {
   async getAll(): Promise<Conversation[]> {
-    const raw = await fetchWithAuth<any>(API_ENDPOINTS.CONVERSATIONS);
+    let raw: any;
+    try {
+      raw = await fetchWithAuth<any>(API_ENDPOINTS.CONVERSATIONS);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        return [];
+      }
+      throw err;
+    }
     if (Array.isArray(raw)) {
       return raw as Conversation[];
     }
