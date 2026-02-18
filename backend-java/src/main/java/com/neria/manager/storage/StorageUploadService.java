@@ -65,6 +65,37 @@ public class StorageUploadService {
     }
   }
 
+  public UploadResult uploadBytes(
+      String tenantId,
+      String serviceCode,
+      String filename,
+      String contentType,
+      byte[] bytes) {
+    TenantServiceStorageService.ResolvedStorage resolved =
+        storageService.resolve(tenantId, serviceCode);
+    String provider = resolved.provider != null ? resolved.provider.toLowerCase(Locale.ROOT) : "";
+    if (provider.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Storage provider missing");
+    }
+    String safeName = sanitizeFilename(filename);
+    String type = contentType != null ? contentType : "application/octet-stream";
+    switch (provider) {
+      case "cloudinary":
+        return uploadCloudinaryBytes(resolved.config, tenantId, serviceCode, safeName, type, bytes);
+      case "s3":
+      case "minio":
+      case "ibm":
+      case "google":
+      case "gcs":
+        return uploadS3CompatibleBytes(
+            resolved.config, tenantId, serviceCode, safeName, type, bytes, provider);
+      case "azure":
+        return uploadAzureBytes(resolved.config, tenantId, serviceCode, safeName, type, bytes);
+      default:
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Storage provider not supported");
+    }
+  }
+
   private UploadResult uploadCloudinary(
       Map<String, Object> config,
       String tenantId,
@@ -266,6 +297,193 @@ public class StorageUploadService {
     return result;
   }
 
+  private UploadResult uploadCloudinaryBytes(
+      Map<String, Object> config,
+      String tenantId,
+      String serviceCode,
+      String filename,
+      String contentType,
+      byte[] bytes) {
+    String cloudName = asString(config.get("cloudName"));
+    String apiKey = asString(config.get("apiKey"));
+    String apiSecret = asString(config.get("apiSecret"));
+    String uploadPreset = asString(config.get("uploadPreset"));
+    String folder = asString(config.getOrDefault("folder", "tenant-" + tenantId + "/" + serviceCode));
+    if (cloudName == null || apiKey == null || apiSecret == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cloudinary config missing");
+    }
+
+    long timestamp = Instant.now().getEpochSecond();
+    String publicId = UUID.randomUUID().toString();
+
+    Map<String, String> params = new HashMap<>();
+    params.put("timestamp", String.valueOf(timestamp));
+    params.put("folder", folder);
+    params.put("public_id", publicId);
+    if (uploadPreset != null && !uploadPreset.isBlank()) {
+      params.put("upload_preset", uploadPreset);
+    }
+    String signature = signCloudinary(params, apiSecret);
+
+    Map<String, Object> fields = new HashMap<>(params);
+    fields.put("api_key", apiKey);
+    fields.put("signature", signature);
+    fields.put("resource_type", "auto");
+
+    String boundary = "----NeriaBoundary" + UUID.randomUUID();
+    byte[] body = buildMultipart(boundary, fields, filename, contentType, bytes);
+
+    String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/auto/upload";
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(endpoint))
+              .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+              .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+              .build();
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() >= 400) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Cloudinary upload failed: " + response.body());
+      }
+      Map<String, Object> parsed =
+          objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
+      UploadResult result = new UploadResult();
+      result.provider = "cloudinary";
+      result.url = asString(parsed.getOrDefault("secure_url", parsed.get("url")));
+      result.storageKey = asString(parsed.get("public_id"));
+      result.originalName = filename;
+      result.contentType = contentType;
+      result.size = bytes != null ? bytes.length : 0;
+      return result;
+    } catch (Exception ex) {
+      if (ex instanceof ResponseStatusException) {
+        throw (ResponseStatusException) ex;
+      }
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cloudinary upload failed", ex);
+    }
+  }
+
+  private UploadResult uploadS3CompatibleBytes(
+      Map<String, Object> config,
+      String tenantId,
+      String serviceCode,
+      String filename,
+      String contentType,
+      byte[] bytes,
+      String provider) {
+    String accessKey = asString(config.get("accessKey"));
+    String secretKey = asString(config.get("secretKey"));
+    String bucket = asString(config.get("bucket"));
+    String region = asString(config.getOrDefault("region", "us-east-1"));
+    String endpoint = asString(config.get("endpoint"));
+
+    if (accessKey == null || secretKey == null || bucket == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "S3 config missing");
+    }
+    String key =
+        "tenant-"
+            + tenantId
+            + "/"
+            + serviceCode
+            + "/"
+            + UUID.randomUUID()
+            + "-"
+            + sanitizeFilename(filename);
+
+    AwsBasicCredentials creds = AwsBasicCredentials.create(accessKey, secretKey);
+    S3ClientBuilder builder =
+        S3Client.builder()
+            .credentialsProvider(StaticCredentialsProvider.create(creds))
+            .region(Region.of(region));
+    if (endpoint != null && !endpoint.isBlank()) {
+      builder =
+          builder.endpointOverride(URI.create(endpoint))
+              .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
+    }
+    try (S3Client s3 = builder.build()) {
+      PutObjectRequest request =
+          PutObjectRequest.builder()
+              .bucket(bucket)
+              .key(key)
+              .contentType(contentType)
+              .build();
+      s3.putObject(request, RequestBody.fromBytes(bytes));
+    } catch (Exception ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "S3 upload failed", ex);
+    }
+
+    UploadResult result = new UploadResult();
+    result.provider = provider;
+    result.storageKey = key;
+    result.originalName = filename;
+    result.contentType = contentType;
+    result.size = bytes != null ? bytes.length : 0;
+    result.url = buildS3Url(endpoint, bucket, region, key, provider);
+    return result;
+  }
+
+  private UploadResult uploadAzureBytes(
+      Map<String, Object> config,
+      String tenantId,
+      String serviceCode,
+      String filename,
+      String contentType,
+      byte[] bytes) {
+    String account = asString(config.get("account"));
+    String container = asString(config.get("container"));
+    String sasToken = asString(config.get("sasToken"));
+    String endpoint = asString(config.get("endpoint"));
+    if (account == null || container == null || sasToken == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Azure config missing");
+    }
+    String base =
+        endpoint != null && !endpoint.isBlank()
+            ? endpoint
+            : "https://" + account + ".blob.core.windows.net";
+    String key =
+        "tenant-"
+            + tenantId
+            + "/"
+            + serviceCode
+            + "/"
+            + UUID.randomUUID()
+            + "-"
+            + sanitizeFilename(filename);
+    String url = base + "/" + container + "/" + key;
+    String signedUrl = url + (sasToken.startsWith("?") ? sasToken : "?" + sasToken);
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(signedUrl))
+              .header("x-ms-blob-type", "BlockBlob")
+              .header("Content-Type", contentType)
+              .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
+              .build();
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() >= 300) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Azure upload failed: " + response.body());
+      }
+    } catch (Exception ex) {
+      if (ex instanceof ResponseStatusException) {
+        throw (ResponseStatusException) ex;
+      }
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Azure upload failed", ex);
+    }
+
+    UploadResult result = new UploadResult();
+    result.provider = "azure";
+    result.storageKey = key;
+    result.originalName = filename;
+    result.contentType = contentType;
+    result.size = bytes != null ? bytes.length : 0;
+    result.url = signedUrl;
+    return result;
+  }
+
   private byte[] buildMultipart(
       String boundary, Map<String, Object> fields, MultipartFile file) {
     try {
@@ -291,6 +509,39 @@ public class StorageUploadService {
                 .getBytes(StandardCharsets.UTF_8));
         baos.write(("Content-Type: " + contentType + "\r\n\r\n").getBytes(StandardCharsets.UTF_8));
         baos.write(file.getBytes());
+        baos.write("\r\n".getBytes(StandardCharsets.UTF_8));
+      }
+      baos.write(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+      return baos.toByteArray();
+    } catch (Exception ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to build upload request", ex);
+    }
+  }
+
+  private byte[] buildMultipart(
+      String boundary, Map<String, Object> fields, String filename, String contentType, byte[] bytes) {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      for (Map.Entry<String, Object> entry : fields.entrySet()) {
+        if (entry.getValue() == null) {
+          continue;
+        }
+        baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(
+            ("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"\r\n\r\n")
+                .getBytes(StandardCharsets.UTF_8));
+        baos.write(String.valueOf(entry.getValue()).getBytes(StandardCharsets.UTF_8));
+        baos.write("\r\n".getBytes(StandardCharsets.UTF_8));
+      }
+      if (bytes != null) {
+        baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        String safeName = sanitizeFilename(filename);
+        String type = contentType != null ? contentType : "application/octet-stream";
+        baos.write(
+            ("Content-Disposition: form-data; name=\"file\"; filename=\"" + safeName + "\"\r\n")
+                .getBytes(StandardCharsets.UTF_8));
+        baos.write(("Content-Type: " + type + "\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(bytes);
         baos.write("\r\n".getBytes(StandardCharsets.UTF_8));
       }
       baos.write(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));

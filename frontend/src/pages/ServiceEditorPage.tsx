@@ -30,6 +30,14 @@ export function ServiceEditorPage() {
     endpointsEnabled: true,
     humanHandoffEnabled: true,
     fileStorageEnabled: true,
+    documentProcessingEnabled: false,
+    ocrEnabled: false,
+    semanticSearchEnabled: false,
+    jiraEnabled: false,
+    jiraProjectKey: "",
+    jiraDefaultIssueType: "Task",
+    jiraAllowUserPriorityOverride: true,
+    jiraAutoLabelWithServiceName: true,
   });
   const codeValue = form.code.trim();
   const codeValid = codeValue.length > 0 && CODE_REGEX.test(codeValue);
@@ -66,6 +74,16 @@ export function ServiceEditorPage() {
           endpointsEnabled: normalizeBool(match.endpointsEnabled),
           humanHandoffEnabled: normalizeBool(match.humanHandoffEnabled),
           fileStorageEnabled: normalizeBool(match.fileStorageEnabled),
+          documentProcessingEnabled: match.documentProcessingEnabled ?? false,
+          ocrEnabled: match.ocrEnabled ?? false,
+          semanticSearchEnabled: match.semanticSearchEnabled ?? false,
+          jiraEnabled: match.jiraEnabled ?? false,
+          jiraProjectKey: match.jiraProjectKey || "",
+          jiraDefaultIssueType: match.jiraDefaultIssueType || "Task",
+          jiraAllowUserPriorityOverride:
+            match.jiraAllowUserPriorityOverride ?? true,
+          jiraAutoLabelWithServiceName:
+            match.jiraAutoLabelWithServiceName ?? true,
         });
         setError(null);
       } catch (err: any) {
@@ -105,6 +123,14 @@ export function ServiceEditorPage() {
         endpointsEnabled: form.endpointsEnabled,
         humanHandoffEnabled: form.humanHandoffEnabled,
         fileStorageEnabled: form.fileStorageEnabled,
+        documentProcessingEnabled: form.documentProcessingEnabled,
+        ocrEnabled: form.ocrEnabled,
+        semanticSearchEnabled: form.semanticSearchEnabled,
+        jiraEnabled: form.jiraEnabled,
+        jiraProjectKey: form.jiraProjectKey.trim() || null,
+        jiraDefaultIssueType: form.jiraDefaultIssueType.trim() || null,
+        jiraAllowUserPriorityOverride: form.jiraAllowUserPriorityOverride,
+        jiraAutoLabelWithServiceName: form.jiraAutoLabelWithServiceName,
       };
       if (isNew) {
         await api.createServiceCatalog(payload);
@@ -270,6 +296,127 @@ export function ServiceEditorPage() {
                   }
                 />
                 {t("Permite adjuntos y almacenamiento")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceDocumentProcessingEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.documentProcessingEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      documentProcessingEnabled: event.target.checked,
+                    })
+                  }
+                />
+                {t("Procesamiento documental (OCR + IA)")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceOcrEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.ocrEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      ocrEnabled: event.target.checked,
+                    })
+                  }
+                  disabled={!form.documentProcessingEnabled}
+                />
+                {t("OCR habilitado")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceSemanticEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.semanticSearchEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      semanticSearchEnabled: event.target.checked,
+                    })
+                  }
+                  disabled={!form.documentProcessingEnabled}
+                />
+                {t("IA semántica habilitada")}
+              </label>
+            </FieldWithHelp>
+            <div className="section-divider full-row" />
+            <div className="full-row">
+              <strong>{t("Integración Jira")}</strong>
+            </div>
+            <FieldWithHelp help="serviceJiraEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.jiraEnabled}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      jiraEnabled: event.target.checked,
+                    })
+                  }
+                />
+                {t("Habilitar Jira")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceJiraProjectKey">
+              <input
+                placeholder={t("Project key (ej: NER)")}
+                value={form.jiraProjectKey}
+                onChange={(event) =>
+                  setForm({ ...form, jiraProjectKey: event.target.value })
+                }
+                disabled={!form.jiraEnabled}
+              />
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceJiraDefaultIssueType">
+              <input
+                placeholder={t("Tipo de issue por defecto (Task, Bug, Story)")}
+                value={form.jiraDefaultIssueType}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    jiraDefaultIssueType: event.target.value,
+                  })
+                }
+                disabled={!form.jiraEnabled}
+              />
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceJiraAllowUserPriorityOverride">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.jiraAllowUserPriorityOverride}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      jiraAllowUserPriorityOverride: event.target.checked,
+                    })
+                  }
+                  disabled={!form.jiraEnabled}
+                />
+                {t("Permitir prioridad definida por el usuario")}
+              </label>
+            </FieldWithHelp>
+            <FieldWithHelp help="serviceJiraAutoLabelWithServiceName">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.jiraAutoLabelWithServiceName}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      jiraAutoLabelWithServiceName: event.target.checked,
+                    })
+                  }
+                  disabled={!form.jiraEnabled}
+                />
+                {t("Etiquetar con el nombre del servicio")}
               </label>
             </FieldWithHelp>
             <FieldWithHelp help="serviceEnabled">

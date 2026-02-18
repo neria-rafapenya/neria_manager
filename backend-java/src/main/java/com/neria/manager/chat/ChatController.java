@@ -3,10 +3,13 @@ package com.neria.manager.chat;
 import com.neria.manager.common.entities.ChatConversation;
 import com.neria.manager.common.security.AuthContext;
 import com.neria.manager.common.security.AuthUtils;
+import com.neria.manager.documents.DocumentProcessingService;
+import com.neria.manager.jira.JiraIssuesService;
 import com.neria.manager.storage.StorageUploadService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -30,15 +33,21 @@ public class ChatController {
   private final ChatService chatService;
   private final ChatAuthService chatAuthService;
   private final StorageUploadService storageUploadService;
+  private final DocumentProcessingService documentProcessingService;
+  private final JiraIssuesService jiraIssuesService;
   private final ExecutorService streamExecutor = Executors.newCachedThreadPool();
 
   public ChatController(
       ChatService chatService,
       ChatAuthService chatAuthService,
-      StorageUploadService storageUploadService) {
+      StorageUploadService storageUploadService,
+      DocumentProcessingService documentProcessingService,
+      JiraIssuesService jiraIssuesService) {
     this.chatService = chatService;
     this.chatAuthService = chatAuthService;
     this.storageUploadService = storageUploadService;
+    this.documentProcessingService = documentProcessingService;
+    this.jiraIssuesService = jiraIssuesService;
   }
 
   private Claims requireChatToken(HttpServletRequest request, String tenantId) {
@@ -107,6 +116,14 @@ public class ChatController {
     return chatService.createConversation(tenantId, userId, apiKeyId, dto);
   }
 
+  @GetMapping("/conversations/{id}")
+  public Object getConversation(HttpServletRequest request, @PathVariable String id) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    return chatService.getConversationForUser(tenantId, userId, id);
+  }
+
   @GetMapping("/conversations/{id}/messages")
   public Object listMessages(HttpServletRequest request, @PathVariable String id) {
     String tenantId = resolveTenantId(request);
@@ -146,7 +163,11 @@ public class ChatController {
     if (access != null && !access.fileStorageEnabled) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "File storage not enabled for this service");
     }
-    return storageUploadService.upload(tenantId, serviceCode.trim(), file);
+    var upload = storageUploadService.upload(tenantId, serviceCode.trim(), file);
+    var fileRecord =
+        documentProcessingService.registerUpload(
+            tenantId, serviceCode.trim(), null, upload, access);
+    return buildUploadResponse(upload, fileRecord);
   }
 
 @PostMapping(value = "/conversations/{id}/uploads", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -165,7 +186,24 @@ public class ChatController {
     if (file == null || file.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing file");
     }
-    return storageUploadService.upload(tenantId, conversation.getServiceCode(), file);
+    var upload = storageUploadService.upload(tenantId, conversation.getServiceCode(), file);
+    var fileRecord =
+        documentProcessingService.registerUpload(
+            tenantId, conversation.getServiceCode(), conversation.getId(), upload, access);
+    return buildUploadResponse(upload, fileRecord);
+  }
+
+  @GetMapping("/conversations/{id}/files")
+  public Object listConversationFiles(HttpServletRequest request, @PathVariable String id) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    ChatConversation conversation = chatService.getConversationForUser(tenantId, userId, id);
+    return documentProcessingService.listFilesForConversation(
+        tenantId, conversation.getId())
+        .stream()
+        .map(documentProcessingService::toResponse)
+        .toList();
   }
 
   @PostMapping("/conversations/{id}/handoff")
@@ -178,6 +216,25 @@ public class ChatController {
     String userId = requireUserId(claims);
     String reason = payload != null ? String.valueOf(payload.getOrDefault("reason", "")) : "";
     return chatService.requestHandoff(tenantId, userId, id, reason);
+  }
+
+  @PostMapping("/conversations/{id}/handoff/resolve")
+  public Object resolveHandoff(HttpServletRequest request, @PathVariable String id) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    return chatService.resolveHandoffForUser(tenantId, userId, id);
+  }
+
+  @PostMapping("/conversations/{id}/jira-issues")
+  public Object createJiraIssue(
+      HttpServletRequest request,
+      @PathVariable String id,
+      @RequestBody JiraIssuesService.CreateJiraIssueRequest dto) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    return jiraIssuesService.createIssue(tenantId, userId, id, dto);
   }
 
   @PostMapping(value = "/conversations/{id}/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -240,5 +297,29 @@ public class ChatController {
       chunks.add(content.substring(i, Math.min(content.length(), i + size)));
     }
     return chunks;
+  }
+
+  private Map<String, Object> buildUploadResponse(
+      StorageUploadService.UploadResult upload, com.neria.manager.common.entities.TenantServiceFile file) {
+    Map<String, Object> response = new LinkedHashMap<>();
+    if (upload != null) {
+      response.put("provider", upload.provider);
+      response.put("url", upload.url);
+      response.put("storageKey", upload.storageKey);
+      response.put("originalName", upload.originalName);
+      response.put("contentType", upload.contentType);
+      response.put("size", upload.size);
+    }
+    if (file != null) {
+      response.put("fileId", file.getId());
+      response.put("status", file.getStatus());
+      response.put("ocrStatus", file.getOcrStatus());
+      response.put("semanticStatus", file.getSemanticStatus());
+      response.put("embeddingStatus", file.getEmbeddingStatus());
+      response.put("embeddingCount", file.getEmbeddingCount());
+      response.put("resultType", file.getResultType());
+      response.put("resultFileUrl", file.getResultFileUrl());
+    }
+    return response;
   }
 }

@@ -28,3 +28,6 @@ ENCRYPTION_KEY=dev_encryption_key_32_chars_min_please_change
 
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAMESITE=lax
+
+TESSDATA_PREFIX=/opt/homebrew/share/tessdata
+TESSERACT_LANG=spa+cat+eng

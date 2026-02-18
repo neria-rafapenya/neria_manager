@@ -7,6 +7,7 @@ import com.neria.manager.common.entities.TenantServiceConfig;
 import com.neria.manager.common.repos.ChatConversationRepository;
 import com.neria.manager.common.repos.ChatMessageRepository;
 import com.neria.manager.common.repos.ChatUserRepository;
+import com.neria.manager.documents.DocumentProcessingService;
 import com.neria.manager.runtime.ExecuteRequest;
 import com.neria.manager.runtime.RuntimeService;
 import com.neria.manager.tenantservices.TenantServicesService;
@@ -43,6 +44,7 @@ public class ChatService {
   private final RuntimeService runtimeService;
   private final ChatAuthService chatAuthService;
   private final TenantServicesService tenantServicesService;
+  private final DocumentProcessingService documentProcessingService;
   private final ObjectMapper objectMapper;
   private final HttpClient httpClient;
 
@@ -53,6 +55,7 @@ public class ChatService {
       RuntimeService runtimeService,
       ChatAuthService chatAuthService,
       TenantServicesService tenantServicesService,
+      DocumentProcessingService documentProcessingService,
       ObjectMapper objectMapper) {
     this.conversationsRepository = conversationsRepository;
     this.messagesRepository = messagesRepository;
@@ -60,6 +63,7 @@ public class ChatService {
     this.runtimeService = runtimeService;
     this.chatAuthService = chatAuthService;
     this.tenantServicesService = tenantServicesService;
+    this.documentProcessingService = documentProcessingService;
     this.objectMapper = objectMapper;
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
   }
@@ -182,6 +186,10 @@ public class ChatService {
     userMessage.setTokensOut(0);
     userMessage.setCreatedAt(LocalDateTime.now());
     messagesRepository.save(userMessage);
+    if (dto.attachments != null && !dto.attachments.isEmpty()) {
+      documentProcessingService.attachFilesToConversation(
+          tenantId, conversationId, dto.attachments);
+    }
 
     List<ChatMessage> history =
         messagesRepository.findTop20ByTenantIdAndConversationIdOrderByCreatedAtDesc(tenantId, conversationId);
@@ -324,6 +332,18 @@ public class ChatService {
               + "- Responde directamente con los datos de ENDPOINT_DATA.\n"
               + "- No anuncies búsquedas ni pidas confirmación.\n"
               + "- Si faltan datos, indícalo de forma concisa y sugiere un criterio alternativo.";
+    }
+    String documentContext =
+        documentProcessingService.buildDocumentContext(
+            tenantId, conversation.getServiceCode(), conversationId, searchMessage);
+    if (documentContext != null && !documentContext.isBlank()) {
+      systemPrompt =
+          systemPrompt
+              + "\n\nDOCUMENTOS_INDEXADOS:\n"
+              + documentContext
+              + "\n\nREGLAS DOCUMENTOS:\n"
+              + "- Usa la información de DOCUMENTOS_INDEXADOS para responder.\n"
+              + "- Si no hay datos en DOCUMENTOS_INDEXADOS, indícalo brevemente.";
     }
     boolean injectSystem = systemPrompt != null && !systemPrompt.isBlank();
 
@@ -567,6 +587,7 @@ public class ChatService {
   }
 
   public static class AttachmentPayload {
+    public String fileId;
     public String url;
     public String name;
     public String contentType;
@@ -620,11 +641,25 @@ public class ChatService {
       assistantMessage.setUserId(userId);
       assistantMessage.setRole("assistant");
       assistantMessage.setContent(
-          "Hemos solicitado asistencia humana. Un agente responderá en breve.");
+          "Hemos solicitado asistencia humana. Un agente responderá en breve. "
+              + "Si no hay respuesta en 5 minutos, volveremos al asistente automático.");
       assistantMessage.setTokensIn(0);
       assistantMessage.setTokensOut(0);
       assistantMessage.setCreatedAt(LocalDateTime.now());
       messagesRepository.save(assistantMessage);
+    }
+    return conversation;
+  }
+
+  public ChatConversation resolveHandoffForUser(
+      String tenantId, String userId, String conversationId) {
+    ChatConversation conversation = getConversationForUser(tenantId, userId, conversationId);
+    String status = conversation.getHandoffStatus();
+    if ("requested".equalsIgnoreCase(status) || "active".equalsIgnoreCase(status)) {
+      conversation.setHandoffStatus("resolved");
+      conversation.setHandoffResolvedAt(LocalDateTime.now());
+      conversation.setUpdatedAt(LocalDateTime.now());
+      return conversationsRepository.save(conversation);
     }
     return conversation;
   }

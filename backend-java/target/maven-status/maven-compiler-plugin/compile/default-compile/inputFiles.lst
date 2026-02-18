@@ -57,7 +57,10 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantPricing.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceApiKey.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceConfig.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEmbedding.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEndpoint.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceFile.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceJira.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceStorage.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceUser.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/UsageEvent.java
@@ -89,7 +92,10 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceApiKeyRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceConfigRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEmbeddingRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEndpointRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceFileRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceJiraRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceStorageRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceUserRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/UsageEventRepository.java
@@ -111,6 +117,10 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/dbconnections/DbConnectionsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/docs/DocsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/docs/DocsService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/documents/DocumentProcessingService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/documents/EmbeddingsService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/JiraIssuesService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/TenantServiceJiraService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/notifications/NotificationsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/notifications/NotificationsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/ocr/OcrDocumentsController.java

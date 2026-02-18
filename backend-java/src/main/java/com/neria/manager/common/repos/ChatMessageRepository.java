@@ -11,5 +11,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
   List<ChatMessage> findTop20ByTenantIdAndConversationIdOrderByCreatedAtDesc(
       String tenantId, String conversationId);
 
+  java.util.Optional<ChatMessage> findByIdAndTenantIdAndConversationId(
+      String id, String tenantId, String conversationId);
+
   void deleteByTenantIdAndConversationId(String tenantId, String conversationId);
 }

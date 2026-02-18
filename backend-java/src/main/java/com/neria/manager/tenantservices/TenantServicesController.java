@@ -51,7 +51,36 @@ public class TenantServicesController {
         dto.pricingId,
         dto.policyId,
         dto.humanHandoffEnabled,
-        dto.fileStorageEnabled);
+        dto.fileStorageEnabled,
+        dto.documentProcessingEnabled,
+        dto.ocrEnabled,
+        dto.semanticSearchEnabled,
+        dto.documentDomain,
+        dto.documentOutputType,
+        dto.jiraEnabled,
+        dto.jiraProjectKey,
+        dto.jiraDefaultIssueType,
+        dto.jiraAllowUserPriorityOverride,
+        dto.jiraAutoLabelWithServiceName);
+  }
+
+  @GetMapping("/{serviceCode}/jira")
+  public Object getJira(
+      HttpServletRequest request,
+      @PathVariable String tenantId,
+      @PathVariable String serviceCode) {
+    requireScope(request, tenantId);
+    return service.getJiraSettings(tenantId, serviceCode);
+  }
+
+  @PostMapping("/{serviceCode}/jira")
+  public Object updateJira(
+      HttpServletRequest request,
+      @PathVariable String tenantId,
+      @PathVariable String serviceCode,
+      @RequestBody TenantServicesService.JiraSettingsUpdateRequest dto) {
+    requireScope(request, tenantId);
+    return service.updateJiraSettings(tenantId, serviceCode, dto);
   }
 
   @GetMapping("/{serviceCode}/endpoints")
@@ -148,5 +177,15 @@ public class TenantServicesController {
     public String policyId;
     public Boolean humanHandoffEnabled;
     public Boolean fileStorageEnabled;
+    public Boolean documentProcessingEnabled;
+    public Boolean ocrEnabled;
+    public Boolean semanticSearchEnabled;
+    public String documentDomain;
+    public String documentOutputType;
+    public Boolean jiraEnabled;
+    public String jiraProjectKey;
+    public String jiraDefaultIssueType;
+    public Boolean jiraAllowUserPriorityOverride;
+    public Boolean jiraAutoLabelWithServiceName;
   }
 }

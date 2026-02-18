@@ -56,6 +56,7 @@ export const Chatbot = () => {
     openModal,
     closeModal,
     handleFilesSelected,
+    uploadPending,
     removeAttachment,
     clearAttachments,
   } = useUploadManager();
@@ -69,12 +70,30 @@ export const Chatbot = () => {
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text) return;
+    const hasAttachments = attachmentsAllowed && attachments.length > 0;
+    if (!text && !hasAttachments) return;
     if (isUploading) return; // bloqueamos enviar mientras sube
 
     setInput("");
 
-    await sendMessage(text, attachmentsAllowed ? (attachments as ChatAttachment[]) : []);
+    let conversationIdForUpload = selectedConversationId ?? undefined;
+    if (!isEphemeral && !conversationIdForUpload && hasAttachments) {
+      const createdId = await createConversation(
+        text || t("chat_conversation_attachments_title"),
+      );
+      conversationIdForUpload = createdId ?? undefined;
+    }
+
+    let resolvedAttachments: ChatAttachment[] = [];
+    if (attachmentsAllowed && hasAttachments) {
+      try {
+        resolvedAttachments = await uploadPending(conversationIdForUpload);
+      } catch {
+        return;
+      }
+    }
+
+    await sendMessage(text, resolvedAttachments, conversationIdForUpload ?? null);
 
     // Una vez enviado el mensaje, limpiamos adjuntos pendientes
     clearAttachments();
@@ -102,6 +121,7 @@ export const Chatbot = () => {
   // Flag para mostrar u ocultar la lista de conversaciones
   const authMode = getAuthMode();
   const showConversationsList = authMode !== "none";
+  const isEphemeral = authMode === "none";
 
   return (
     <div className="ia-chatbot-content">
@@ -146,13 +166,19 @@ export const Chatbot = () => {
       </div>
 
       <div className="ia-chatbot-messages">
-        {messages.map((msg) =>
-          msg.role === "user" ? (
-            <MessageHuman key={msg.id} message={msg} />
-          ) : (
-            <MessageBot key={msg.id} message={msg} isStreaming={isStreaming} />
-          )
-        )}
+        {messages
+          .filter((msg) => msg.role !== "system")
+          .map((msg) =>
+            msg.role === "user" ? (
+              <MessageHuman key={msg.id} message={msg} />
+            ) : (
+              <MessageBot
+                key={msg.id}
+                message={msg}
+                isStreaming={isStreaming}
+              />
+            ),
+          )}
 
         <div ref={messagesEndRef} />
       </div>

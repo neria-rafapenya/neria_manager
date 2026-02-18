@@ -8,11 +8,18 @@ export class UploadService {
     this.repository = repository;
   }
 
-  async uploadFiles(files: FileList | File[]): Promise<ChatAttachment[]> {
+  async uploadFiles(
+    files: FileList | File[],
+    conversationId?: string,
+  ): Promise<ChatAttachment[]> {
     const asArray = Array.isArray(files) ? files : Array.from(files);
     if (!asArray.length) return [];
 
     // Usamos el método unificado del repositorio
-    return this.repository.uploadFiles(asArray);
+    return this.repository.uploadFiles(asArray, conversationId);
+  }
+
+  async listConversationFiles(conversationId: string): Promise<any[]> {
+    return this.repository.listConversationFiles(conversationId);
   }
 }

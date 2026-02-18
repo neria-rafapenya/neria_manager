@@ -2,6 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      window.__ENV__ = window.__ENV__ || {
+        VITE_API_MANAGER: "%VITE_API_MANAGER%",
+        VITE_API_URL: "%VITE_API_URL%",
+        VITE_API_KEY: "%VITE_API_KEY%",
+        VITE_TENANT_ID: "%VITE_TENANT_ID%",
+        VITE_SERVICE_CODE: "%VITE_SERVICE_CODE%",
+        VITE_SERVICE_ID: "%VITE_SERVICE_ID%",
+        VITE_PROVIDER_ID: "%VITE_PROVIDER_ID%",
+        VITE_MODEL: "%VITE_MODEL%",
+        VITE_CHAT_ENDPOINT: "%VITE_CHAT_ENDPOINT%",
+        VITE_CHAT_AUTH_MODE: "%VITE_CHAT_AUTH_MODE%",
+        VITE_I18N_LANGS: "%VITE_I18N_LANGS%",
+        VITE_I18N_DEFAULT_LANG: "%VITE_I18N_DEFAULT_LANG%"
+      };
+    </script>
     <script src="/env.js"></script>
 
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />

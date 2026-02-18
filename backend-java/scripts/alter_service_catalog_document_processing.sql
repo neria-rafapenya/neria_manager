@@ -1,0 +1,4 @@
+ALTER TABLE service_catalog
+  ADD COLUMN documentProcessingEnabled TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN ocrEnabled TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN semanticSearchEnabled TINYINT(1) NOT NULL DEFAULT 0;

@@ -11,6 +11,7 @@ import { AuthService } from "../../core/application/services";
 import { AuthRepository } from "../repositories";
 import { getAuthToken, setAuthToken } from "../config/env";
 import { ApiError } from "../api/api";
+import i18n from "../i18n";
 
 const authRepository = new AuthRepository();
 const authService = new AuthService(authRepository);
@@ -60,24 +61,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error("[AuthContext] Error en login", err);
 
       if (err instanceof ApiError) {
+        const t = i18n.t.bind(i18n);
+        const lowerMessage = (err.message || "").toLowerCase();
         if (err.status === 0) {
-          setError(
-            "No se ha podido conectar con el servidor. Revisa que el backend esté levantado."
-          );
+          setError(t("login_error_network"));
         } else if (err.status === 401) {
-          setError(
-            "Credenciales incorrectas. Revisa el email y la contraseña."
-          );
+          setError(t("login_error_invalid"));
+        } else if (err.status === 403) {
+          if (lowerMessage.includes("pending activation")) {
+            setError(t("login_error_pending"));
+          } else if (lowerMessage.includes("service key mismatch")) {
+            setError(t("login_error_service_mismatch"));
+          } else if (lowerMessage.includes("service api key required")) {
+            setError(t("login_error_service_key_required"));
+          } else if (lowerMessage.includes("service code required")) {
+            setError(t("login_error_service_required"));
+          } else if (lowerMessage.includes("service not subscribed")) {
+            setError(t("login_error_not_subscribed"));
+          } else if (lowerMessage.includes("user not allowed")) {
+            setError(t("login_error_not_allowed"));
+          } else if (lowerMessage.includes("service is suspended")) {
+            setError(t("login_error_service_suspended"));
+          } else {
+            setError(t("login_error_forbidden"));
+          }
         } else {
           setError(
-            err.message ||
-              "No se ha podido iniciar sesión. Inténtalo de nuevo más tarde."
+            err.message || t("login_error_generic")
           );
         }
       } else {
-        setError(
-          "No se ha podido iniciar sesión. Inténtalo de nuevo más tarde."
-        );
+        setError(i18n.t("login_error_generic"));
       }
 
       setToken(null);

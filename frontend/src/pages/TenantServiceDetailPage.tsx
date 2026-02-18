@@ -20,6 +20,7 @@ import type {
   Policy,
   Provider,
   PricingEntry,
+  TenantServiceJiraSettings,
   TenantServiceEndpoint,
   TenantServiceOverview,
   TenantServiceStorage,
@@ -47,6 +48,8 @@ export function TenantServiceDetailPage() {
   const [serviceEndpoints, setServiceEndpoints] = useState<
     TenantServiceEndpoint[]
   >([]);
+
+  const endpointsEnabled = service?.endpointsEnabled !== false;
   const [serviceUsers, setServiceUsers] = useState<TenantServiceUser[]>([]);
   const [chatUserModalOpen, setChatUserModalOpen] = useState(false);
   const [newChatUser, setNewChatUser] = useState({
@@ -73,6 +76,11 @@ export function TenantServiceDetailPage() {
     policyId: "",
     humanHandoffEnabled: true,
     fileStorageEnabled: true,
+    documentProcessingEnabled: false,
+    ocrEnabled: false,
+    semanticSearchEnabled: false,
+    documentDomain: "",
+    documentOutputType: "markdown",
   });
   const [storageConfig, setStorageConfig] = useState<TenantServiceStorage | null>(
     null,
@@ -84,6 +92,22 @@ export function TenantServiceDetailPage() {
     usingDefault: true,
   });
   const [storageBusy, setStorageBusy] = useState(false);
+  const [jiraConfig, setJiraConfig] = useState<TenantServiceJiraSettings | null>(
+    null,
+  );
+  const [jiraDraft, setJiraDraft] = useState({
+    jiraEnabled: false,
+    jiraProjectKey: "",
+    jiraDefaultIssueType: "Task",
+    jiraAllowUserPriorityOverride: true,
+    jiraAutoLabelWithServiceName: true,
+    jiraBaseUrl: "",
+    jiraEmail: "",
+    jiraApiToken: "",
+    jiraCredentialsEnabled: false,
+    jiraHasToken: false,
+  });
+  const [jiraBusy, setJiraBusy] = useState(false);
   const [serviceRuntimeForm, setServiceRuntimeForm] = useState({
     providerId: "",
     model: "",
@@ -190,10 +214,26 @@ export function TenantServiceDetailPage() {
 
   const catalogHandoffEnabled = service?.catalogHumanHandoffEnabled !== false;
   const catalogStorageEnabled = service?.catalogFileStorageEnabled !== false;
+  const catalogDocumentEnabled =
+    service?.catalogDocumentProcessingEnabled !== false;
+  const catalogOcrEnabled = service?.catalogOcrEnabled !== false;
+  const catalogSemanticEnabled = service?.catalogSemanticSearchEnabled !== false;
   const effectiveHandoffEnabled =
     catalogHandoffEnabled && serviceConfigDraft.humanHandoffEnabled;
   const effectiveStorageEnabled =
     catalogStorageEnabled && serviceConfigDraft.fileStorageEnabled;
+  const effectiveDocumentEnabled =
+    catalogDocumentEnabled &&
+    effectiveStorageEnabled &&
+    serviceConfigDraft.documentProcessingEnabled;
+  const effectiveOcrEnabled =
+    effectiveDocumentEnabled &&
+    catalogOcrEnabled &&
+    serviceConfigDraft.ocrEnabled;
+  const effectiveSemanticEnabled =
+    effectiveDocumentEnabled &&
+    catalogSemanticEnabled &&
+    serviceConfigDraft.semanticSearchEnabled;
 
   useEffect(() => {
     if (!serviceCode) {
@@ -244,6 +284,7 @@ export function TenantServiceDetailPage() {
           api.listChatConversations(tenantId),
           api.listApiKeys(),
           canManagePolicies ? api.listPolicies() : api.getPolicy(tenantId),
+          api.getTenantServiceJira(tenantId, serviceCode),
           api.getTenantServiceStorage(tenantId, serviceCode),
         ]);
 
@@ -255,6 +296,7 @@ export function TenantServiceDetailPage() {
           chatConversationsList,
           apiKeyList,
           policyData,
+          jiraData,
           storageData,
         ] = results.map((result) =>
           result.status === "fulfilled" ? result.value : null,
@@ -322,7 +364,30 @@ export function TenantServiceDetailPage() {
               : match.tenantFileStorageEnabled ??
                 match.fileStorageEnabled ??
                 true,
+          documentProcessingEnabled:
+            match.catalogDocumentProcessingEnabled === false
+              ? false
+              : match.tenantDocumentProcessingEnabled ??
+                match.documentProcessingEnabled ??
+                false,
+          ocrEnabled:
+            match.catalogOcrEnabled === false
+              ? false
+              : match.tenantOcrEnabled ?? match.ocrEnabled ?? false,
+          semanticSearchEnabled:
+            match.catalogSemanticSearchEnabled === false
+              ? false
+              : match.tenantSemanticSearchEnabled ??
+                match.semanticSearchEnabled ??
+                false,
+          documentDomain: match.documentDomain || "",
+          documentOutputType: match.documentOutputType || "markdown",
         });
+        if (jiraData) {
+          applyJiraResponse(jiraData as TenantServiceJiraSettings);
+        } else {
+          applyJiraResponse(null);
+        }
         if (storageData) {
           const resolved = storageData as TenantServiceStorage;
           setStorageConfig(resolved);
@@ -426,6 +491,11 @@ export function TenantServiceDetailPage() {
         policyId: serviceConfigDraft.policyId,
         humanHandoffEnabled: serviceConfigDraft.humanHandoffEnabled,
         fileStorageEnabled: serviceConfigDraft.fileStorageEnabled,
+        documentProcessingEnabled: serviceConfigDraft.documentProcessingEnabled,
+        ocrEnabled: serviceConfigDraft.ocrEnabled,
+        semanticSearchEnabled: serviceConfigDraft.semanticSearchEnabled,
+        documentDomain: serviceConfigDraft.documentDomain,
+        documentOutputType: serviceConfigDraft.documentOutputType,
       });
       await refreshServiceSummary();
       emitToast(t("Configuración del servicio guardada."));
@@ -456,6 +526,38 @@ export function TenantServiceDetailPage() {
     });
   };
 
+  const applyJiraResponse = (data: TenantServiceJiraSettings | null) => {
+    if (!data) {
+      setJiraConfig(null);
+      setJiraDraft({
+        jiraEnabled: false,
+        jiraProjectKey: "",
+        jiraDefaultIssueType: "Task",
+        jiraAllowUserPriorityOverride: true,
+        jiraAutoLabelWithServiceName: true,
+        jiraBaseUrl: "",
+        jiraEmail: "",
+        jiraApiToken: "",
+        jiraCredentialsEnabled: false,
+        jiraHasToken: false,
+      });
+      return;
+    }
+    setJiraConfig(data);
+    setJiraDraft({
+      jiraEnabled: data.jiraEnabled ?? false,
+      jiraProjectKey: data.jiraProjectKey || "",
+      jiraDefaultIssueType: data.jiraDefaultIssueType || "Task",
+      jiraAllowUserPriorityOverride: data.jiraAllowUserPriorityOverride ?? true,
+      jiraAutoLabelWithServiceName: data.jiraAutoLabelWithServiceName ?? true,
+      jiraBaseUrl: data.jiraBaseUrl || "",
+      jiraEmail: data.jiraEmail || "",
+      jiraApiToken: "",
+      jiraCredentialsEnabled: data.jiraCredentialsEnabled ?? false,
+      jiraHasToken: data.jiraHasToken ?? false,
+    });
+  };
+
   const handleResetStorage = async () => {
     if (!tenantId || !serviceCode || !canManageServices) {
       return;
@@ -474,6 +576,58 @@ export function TenantServiceDetailPage() {
       setError(err.message || t("Error restableciendo almacenamiento"));
     } finally {
       setStorageBusy(false);
+    }
+  };
+
+  const handleSaveJira = async () => {
+    if (!tenantId || !serviceCode || !canManageServices) {
+      return;
+    }
+    if (jiraDraft.jiraEnabled && !jiraDraft.jiraProjectKey.trim()) {
+      emitToast(t("El project key de Jira es obligatorio."), "error");
+      return;
+    }
+    if (jiraDraft.jiraCredentialsEnabled) {
+      if (!jiraDraft.jiraBaseUrl.trim()) {
+        emitToast(t("La base URL de Jira es obligatoria."), "error");
+        return;
+      }
+      if (!jiraDraft.jiraEmail.trim()) {
+        emitToast(t("El email técnico de Jira es obligatorio."), "error");
+        return;
+      }
+      if (!jiraDraft.jiraHasToken && !jiraDraft.jiraApiToken.trim()) {
+        emitToast(t("El token de Jira es obligatorio."), "error");
+        return;
+      }
+    }
+    setJiraBusy(true);
+    try {
+      const payload: Record<string, any> = {
+        jiraEnabled: jiraDraft.jiraEnabled,
+        jiraProjectKey: jiraDraft.jiraProjectKey.trim() || null,
+        jiraDefaultIssueType: jiraDraft.jiraDefaultIssueType.trim() || null,
+        jiraAllowUserPriorityOverride: jiraDraft.jiraAllowUserPriorityOverride,
+        jiraAutoLabelWithServiceName: jiraDraft.jiraAutoLabelWithServiceName,
+        jiraBaseUrl: jiraDraft.jiraBaseUrl.trim() || null,
+        jiraEmail: jiraDraft.jiraEmail.trim() || null,
+        jiraCredentialsEnabled: jiraDraft.jiraCredentialsEnabled,
+      };
+      if (jiraDraft.jiraApiToken.trim()) {
+        payload.jiraApiToken = jiraDraft.jiraApiToken.trim();
+      }
+      const updated = (await api.updateTenantServiceJira(
+        tenantId,
+        serviceCode,
+        payload,
+      )) as TenantServiceJiraSettings;
+      applyJiraResponse(updated);
+      await refreshServiceSummary();
+      emitToast(t("Configuración Jira guardada."));
+    } catch (err: any) {
+      emitToast(err.message || t("No se pudo guardar Jira"), "error");
+    } finally {
+      setJiraBusy(false);
     }
   };
 
@@ -954,22 +1108,24 @@ export function TenantServiceDetailPage() {
                       </select>
                     </label>
                   </div>
-                  <div className="col-12">
-                    <label>
-                      {t("URL base de la API")}
-                      <input
-                        className="form-control"
-                        value={serviceConfigDraft.apiBaseUrl}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            apiBaseUrl: event.target.value,
-                          }))
-                        }
-                        placeholder={t("https://api.cliente.com")}
-                      />
-                    </label>
-                  </div>
+                  {endpointsEnabled && (
+                    <div className="col-12">
+                      <label>
+                        {t("URL base de la API")}
+                        <input
+                          className="form-control"
+                          value={serviceConfigDraft.apiBaseUrl}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              apiBaseUrl: event.target.value,
+                            }))
+                          }
+                          placeholder={t("https://api.cliente.com")}
+                        />
+                      </label>
+                    </div>
+                  )}
                   <div className="col-12">
                     <label>
                       <span className="label-with-tooltip">
@@ -1109,6 +1265,97 @@ export function TenantServiceDetailPage() {
                       {t("Permite adjuntos y almacenamiento")}
                     </label>
                   </div>
+                  {!catalogDocumentEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Procesamiento documental no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.documentProcessingEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentProcessingEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogDocumentEnabled || !effectiveStorageEnabled}
+                      />
+                      {t("Procesamiento documental (OCR + IA)")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.ocrEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            ocrEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogOcrEnabled || !effectiveDocumentEnabled}
+                      />
+                      {t("OCR habilitado")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.semanticSearchEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            semanticSearchEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogSemanticEnabled || !effectiveDocumentEnabled}
+                      />
+                      {t("IA semántica habilitada")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Dominio documental (opcional)")}
+                      <input
+                        className="form-control"
+                        value={serviceConfigDraft.documentDomain}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentDomain: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Ej: banca, sanidad, legal")}
+                        disabled={!effectiveDocumentEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Salida documental")}
+                      <select
+                        className="form-select"
+                        value={serviceConfigDraft.documentOutputType}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentOutputType: event.target.value,
+                          }))
+                        }
+                        disabled={!effectiveDocumentEnabled}
+                      >
+                        <option value="markdown">{t("Markdown")}</option>
+                        <option value="file">{t("Archivo")}</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
                 <div className="form-actions">
                   <button
@@ -1127,10 +1374,12 @@ export function TenantServiceDetailPage() {
                     <span>{t("Estado operativo")}</span>
                     <span>{serviceConfigDraft.status}</span>
                   </div>
-                  <div className="mini-row">
-                    <span>{t("URL base de la API")}</span>
-                    <span>{serviceConfigDraft.apiBaseUrl || "—"}</span>
-                  </div>
+                  {endpointsEnabled && (
+                    <div className="mini-row">
+                      <span>{t("URL base de la API")}</span>
+                      <span>{serviceConfigDraft.apiBaseUrl || "—"}</span>
+                    </div>
+                  )}
                   <div className="mini-row">
                     <span>{t("Provider")}</span>
                     <span>
@@ -1179,11 +1428,266 @@ export function TenantServiceDetailPage() {
                       {effectiveStorageEnabled ? t("Activo") : t("Inactivo")}
                     </span>
                   </div>
+                  <div className="mini-row">
+                    <span>{t("Procesamiento documental (OCR + IA)")}</span>
+                    <span>
+                      {effectiveDocumentEnabled ? t("Activo") : t("Inactivo")}
+                    </span>
+                  </div>
+                  <div className="mini-row">
+                    <span>{t("OCR habilitado")}</span>
+                    <span>
+                      {effectiveOcrEnabled ? t("Activo") : t("Inactivo")}
+                    </span>
+                  </div>
+                  <div className="mini-row">
+                    <span>{t("IA semántica habilitada")}</span>
+                    <span>
+                      {effectiveSemanticEnabled ? t("Activo") : t("Inactivo")}
+                    </span>
+                  </div>
+                  <div className="mini-row">
+                    <span>{t("Dominio documental (opcional)")}</span>
+                    <span>{serviceConfigDraft.documentDomain || "—"}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span>{t("Salida documental")}</span>
+                    <span>{serviceConfigDraft.documentOutputType || "—"}</span>
+                  </div>
                 </div>
                 <div className="code-block">
                   <pre>{serviceConfigDraft.systemPrompt || t("Sin prompt.")}</pre>
                 </div>
               </>
+            )}
+
+            <div className="section-divider" />
+
+            <h4>{t("Integración Jira")}</h4>
+            <p className="muted mb-3">
+              {t(
+                "Configura Jira para crear incidencias manuales desde el chatbot.",
+              )}
+            </p>
+            {canManageServices ? (
+              <>
+                <div className="row g-3 form-grid-13">
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={jiraDraft.jiraEnabled}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraEnabled: event.target.checked,
+                          }))
+                        }
+                      />
+                      {t("Habilitar Jira")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={jiraDraft.jiraCredentialsEnabled}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraCredentialsEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!jiraDraft.jiraEnabled}
+                      />
+                      {t("Credenciales activas")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Project key")}
+                      <input
+                        className="form-control"
+                        value={jiraDraft.jiraProjectKey}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraProjectKey: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Ej: NER")}
+                        disabled={!jiraDraft.jiraEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Tipo de issue por defecto")}
+                      <input
+                        className="form-control"
+                        value={jiraDraft.jiraDefaultIssueType}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraDefaultIssueType: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Task, Bug, Story")}
+                        disabled={!jiraDraft.jiraEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={jiraDraft.jiraAllowUserPriorityOverride}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraAllowUserPriorityOverride: event.target.checked,
+                          }))
+                        }
+                        disabled={!jiraDraft.jiraEnabled}
+                      />
+                      {t("Permitir prioridad definida por el usuario")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={jiraDraft.jiraAutoLabelWithServiceName}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraAutoLabelWithServiceName: event.target.checked,
+                          }))
+                        }
+                        disabled={!jiraDraft.jiraEnabled}
+                      />
+                      {t("Etiquetar con el nombre del servicio")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Base URL de Jira")}
+                      <input
+                        className="form-control"
+                        value={jiraDraft.jiraBaseUrl}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraBaseUrl: event.target.value,
+                          }))
+                        }
+                        placeholder="https://tu-dominio.atlassian.net"
+                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Email técnico de Jira")}
+                      <input
+                        className="form-control"
+                        value={jiraDraft.jiraEmail}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraEmail: event.target.value,
+                          }))
+                        }
+                        placeholder="ops@tuempresa.com"
+                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("API token de Jira")}
+                      <input
+                        className="form-control"
+                        type="password"
+                        value={jiraDraft.jiraApiToken}
+                        onChange={(event) =>
+                          setJiraDraft((prev) => ({
+                            ...prev,
+                            jiraApiToken: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Introduce un token nuevo")}
+                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
+                      />
+                    </label>
+                    {jiraDraft.jiraHasToken && !jiraDraft.jiraApiToken.trim() && (
+                      <div className="muted">{t("Token guardado")}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={handleSaveJira}
+                    disabled={jiraBusy}
+                  >
+                    {jiraBusy ? t("Guardando...") : t("Guardar Jira")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="mini-list">
+                <div className="mini-row">
+                  <span>{t("Habilitar Jira")}</span>
+                  <span>
+                    {jiraConfig?.jiraEnabled ? t("Activo") : t("Inactivo")}
+                  </span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Project key")}</span>
+                  <span>{jiraConfig?.jiraProjectKey || "—"}</span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Tipo de issue por defecto")}</span>
+                  <span>{jiraConfig?.jiraDefaultIssueType || "—"}</span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Permitir prioridad definida por el usuario")}</span>
+                  <span>
+                    {jiraConfig?.jiraAllowUserPriorityOverride
+                      ? t("Activo")
+                      : t("Inactivo")}
+                  </span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Etiquetar con el nombre del servicio")}</span>
+                  <span>
+                    {jiraConfig?.jiraAutoLabelWithServiceName
+                      ? t("Activo")
+                      : t("Inactivo")}
+                  </span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Base URL de Jira")}</span>
+                  <span>{jiraConfig?.jiraBaseUrl || "—"}</span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Email técnico de Jira")}</span>
+                  <span>{jiraConfig?.jiraEmail || "—"}</span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Credenciales activas")}</span>
+                  <span>
+                    {jiraConfig?.jiraCredentialsEnabled
+                      ? t("Activo")
+                      : t("Inactivo")}
+                  </span>
+                </div>
+                <div className="mini-row">
+                  <span>{t("Token guardado")}</span>
+                  <span>{jiraConfig?.jiraHasToken ? t("Sí") : t("No")}</span>
+                </div>
+              </div>
             )}
 
             <div className="section-divider" />
@@ -1581,6 +2085,97 @@ export function TenantServiceDetailPage() {
                         disabled={!catalogStorageEnabled}
                       />
                       {t("Permite adjuntos y almacenamiento")}
+                    </label>
+                  </div>
+                  {!catalogDocumentEnabled && (
+                    <div className="col-12">
+                      <div className="info-banner">
+                        {t("Procesamiento documental no disponible para este servicio.")}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.documentProcessingEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentProcessingEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogDocumentEnabled || !effectiveStorageEnabled}
+                      />
+                      {t("Procesamiento documental (OCR + IA)")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.ocrEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            ocrEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogOcrEnabled || !effectiveDocumentEnabled}
+                      />
+                      {t("OCR habilitado")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceConfigDraft.semanticSearchEnabled}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            semanticSearchEnabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!catalogSemanticEnabled || !effectiveDocumentEnabled}
+                      />
+                      {t("IA semántica habilitada")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Dominio documental (opcional)")}
+                      <input
+                        className="form-control"
+                        value={serviceConfigDraft.documentDomain}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentDomain: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Ej: banca, sanidad, legal")}
+                        disabled={!effectiveDocumentEnabled}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Salida documental")}
+                      <select
+                        className="form-select"
+                        value={serviceConfigDraft.documentOutputType}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            documentOutputType: event.target.value,
+                          }))
+                        }
+                        disabled={!effectiveDocumentEnabled}
+                      >
+                        <option value="markdown">{t("Markdown")}</option>
+                        <option value="file">{t("Archivo")}</option>
+                      </select>
                     </label>
                   </div>
                 </div>

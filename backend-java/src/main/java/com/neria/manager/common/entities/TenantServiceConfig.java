@@ -47,6 +47,36 @@ public class TenantServiceConfig {
   @Column(name = "fileStorageEnabled")
   private Boolean fileStorageEnabled;
 
+  @Column(name = "documentProcessingEnabled")
+  private Boolean documentProcessingEnabled;
+
+  @Column(name = "ocrEnabled")
+  private Boolean ocrEnabled;
+
+  @Column(name = "semanticSearchEnabled")
+  private Boolean semanticSearchEnabled;
+
+  @Column(name = "documentDomain", length = 120)
+  private String documentDomain;
+
+  @Column(name = "documentOutputType", length = 32)
+  private String documentOutputType;
+
+  @Column(name = "jiraEnabled")
+  private Boolean jiraEnabled;
+
+  @Column(name = "jiraProjectKey", length = 32)
+  private String jiraProjectKey;
+
+  @Column(name = "jiraDefaultIssueType", length = 64)
+  private String jiraDefaultIssueType;
+
+  @Column(name = "jiraAllowUserPriorityOverride")
+  private Boolean jiraAllowUserPriorityOverride;
+
+  @Column(name = "jiraAutoLabelWithServiceName")
+  private Boolean jiraAutoLabelWithServiceName;
+
   @Column(name = "createdAt")
   private LocalDateTime createdAt;
 
