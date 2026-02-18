@@ -521,6 +521,8 @@
   "Seleccionar cliente": "Seleccionar client",
   "Service ID": "Service ID",
   "Service ID no disponible.": "Service ID no disponible.",
+  "Service code": "Codi del servei",
+  "Service code no disponible.": "Codi del servei no disponible.",
   "Service account debe ser JSON válido.": "Service account ha de ser un JSON vàlid.",
   "Servicio": "Servei",
   "Servicio a añadir": "Servei a afegir",
