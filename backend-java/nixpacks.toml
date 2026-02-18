@@ -1,5 +1,13 @@
 [phases.setup]
-aptPkgs = ["tesseract-ocr", "tesseract-ocr-spa", "tesseract-ocr-cat", "tesseract-ocr-eng"]
+aptPkgs = [
+  "tesseract-ocr",
+  "tesseract-ocr-spa",
+  "tesseract-ocr-cat",
+  "tesseract-ocr-eng",
+  "liblept5",
+  "libtesseract5",
+  "libarchive13"
+]
 
 [phases.build]
 cmds = ["mvn -q -DskipTests package"]
