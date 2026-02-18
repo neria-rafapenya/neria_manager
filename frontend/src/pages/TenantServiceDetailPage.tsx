@@ -1216,6 +1216,14 @@ export function TenantServiceDetailPage() {
     await copyToClipboard(service.tenantServiceId, "Service ID");
   };
 
+  const handleCopyServiceCode = async () => {
+    if (!serviceCode) {
+      emitToast(t("Service code no disponible."), "error");
+      return;
+    }
+    await copyToClipboard(serviceCode, "Service code");
+  };
+
   const handleCreateServiceChatUser = async () => {
     if (!tenantId || !serviceCode) {
       return;
@@ -1546,143 +1554,129 @@ export function TenantServiceDetailPage() {
                       </select>
                     </label>
                   </div>
-                  {!catalogHandoffEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Atención humana no disponible para este servicio.")}
-                      </div>
+                  {catalogHandoffEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.humanHandoffEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              humanHandoffEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Permite atención humana")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.humanHandoffEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            humanHandoffEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogHandoffEnabled}
-                      />
-                      {t("Permite atención humana")}
-                    </label>
-                  </div>
-                  {!catalogStorageEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Almacenamiento no disponible para este servicio.")}
-                      </div>
+                  {catalogStorageEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.fileStorageEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              fileStorageEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Permite adjuntos y almacenamiento")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.fileStorageEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            fileStorageEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogStorageEnabled}
-                      />
-                      {t("Permite adjuntos y almacenamiento")}
-                    </label>
-                  </div>
-                  {!catalogDocumentEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Procesamiento documental no disponible para este servicio.")}
-                      </div>
+                  {catalogDocumentEnabled && effectiveStorageEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.documentProcessingEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentProcessingEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Procesamiento documental (OCR + IA)")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.documentProcessingEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentProcessingEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogDocumentEnabled || !effectiveStorageEnabled}
-                      />
-                      {t("Procesamiento documental (OCR + IA)")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.ocrEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            ocrEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogOcrEnabled || !effectiveDocumentEnabled}
-                      />
-                      {t("OCR habilitado")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.semanticSearchEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            semanticSearchEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogSemanticEnabled || !effectiveDocumentEnabled}
-                      />
-                      {t("IA semántica habilitada")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Dominio documental (opcional)")}
-                      <input
-                        className="form-control"
-                        value={serviceConfigDraft.documentDomain}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentDomain: event.target.value,
-                          }))
-                        }
-                        placeholder={t("Ej: banca, sanidad, legal")}
-                        disabled={!effectiveDocumentEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Salida documental")}
-                      <select
-                        className="form-select"
-                        value={serviceConfigDraft.documentOutputType}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentOutputType: event.target.value,
-                          }))
-                        }
-                        disabled={!effectiveDocumentEnabled}
-                      >
-                        <option value="markdown">{t("Markdown")}</option>
-                        <option value="file">{t("Archivo")}</option>
-                      </select>
-                    </label>
-                  </div>
+                  {catalogOcrEnabled && effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.ocrEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              ocrEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("OCR habilitado")}
+                      </label>
+                    </div>
+                  )}
+                  {catalogSemanticEnabled && effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.semanticSearchEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              semanticSearchEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("IA semántica habilitada")}
+                      </label>
+                    </div>
+                  )}
+                  {effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label>
+                        {t("Dominio documental (opcional)")}
+                        <input
+                          className="form-control"
+                          value={serviceConfigDraft.documentDomain}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentDomain: event.target.value,
+                            }))
+                          }
+                          placeholder={t("Ej: banca, sanidad, legal")}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label>
+                        {t("Salida documental")}
+                        <select
+                          className="form-select"
+                          value={serviceConfigDraft.documentOutputType}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentOutputType: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="markdown">{t("Markdown")}</option>
+                          <option value="file">{t("Archivo")}</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
                 </div>
                 <div className="form-actions">
                   <button
@@ -2276,11 +2270,7 @@ export function TenantServiceDetailPage() {
               <div className="section-divider" />
             )}
 
-            {!catalogStorageEnabled ? (
-              <div className="info-banner">
-                {t("Almacenamiento no disponible para este servicio.")}
-              </div>
-            ) : (
+            {catalogStorageEnabled && (
               <>
                 <h4>{t("Almacenamiento de archivos")}</h4>
                 <p className="muted mb-3">
@@ -2625,143 +2615,129 @@ export function TenantServiceDetailPage() {
                       />
                     </label>
                   </div>
-                  {!catalogHandoffEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Atención humana no disponible para este servicio.")}
-                      </div>
+                  {catalogHandoffEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.humanHandoffEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              humanHandoffEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Permite atención humana")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.humanHandoffEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            humanHandoffEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogHandoffEnabled}
-                      />
-                      {t("Permite atención humana")}
-                    </label>
-                  </div>
-                  {!catalogStorageEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Almacenamiento no disponible para este servicio.")}
-                      </div>
+                  {catalogStorageEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.fileStorageEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              fileStorageEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Permite adjuntos y almacenamiento")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.fileStorageEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            fileStorageEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogStorageEnabled}
-                      />
-                      {t("Permite adjuntos y almacenamiento")}
-                    </label>
-                  </div>
-                  {!catalogDocumentEnabled && (
-                    <div className="col-12">
-                      <div className="info-banner">
-                        {t("Procesamiento documental no disponible para este servicio.")}
-                      </div>
+                  {catalogDocumentEnabled && effectiveStorageEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.documentProcessingEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentProcessingEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("Procesamiento documental (OCR + IA)")}
+                      </label>
                     </div>
                   )}
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.documentProcessingEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentProcessingEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogDocumentEnabled || !effectiveStorageEnabled}
-                      />
-                      {t("Procesamiento documental (OCR + IA)")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.ocrEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            ocrEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogOcrEnabled || !effectiveDocumentEnabled}
-                      />
-                      {t("OCR habilitado")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={serviceConfigDraft.semanticSearchEnabled}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            semanticSearchEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!catalogSemanticEnabled || !effectiveDocumentEnabled}
-                      />
-                      {t("IA semántica habilitada")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Dominio documental (opcional)")}
-                      <input
-                        className="form-control"
-                        value={serviceConfigDraft.documentDomain}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentDomain: event.target.value,
-                          }))
-                        }
-                        placeholder={t("Ej: banca, sanidad, legal")}
-                        disabled={!effectiveDocumentEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Salida documental")}
-                      <select
-                        className="form-select"
-                        value={serviceConfigDraft.documentOutputType}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            documentOutputType: event.target.value,
-                          }))
-                        }
-                        disabled={!effectiveDocumentEnabled}
-                      >
-                        <option value="markdown">{t("Markdown")}</option>
-                        <option value="file">{t("Archivo")}</option>
-                      </select>
-                    </label>
-                  </div>
+                  {catalogOcrEnabled && effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.ocrEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              ocrEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("OCR habilitado")}
+                      </label>
+                    </div>
+                  )}
+                  {catalogSemanticEnabled && effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={serviceConfigDraft.semanticSearchEnabled}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              semanticSearchEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        {t("IA semántica habilitada")}
+                      </label>
+                    </div>
+                  )}
+                  {effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label>
+                        {t("Dominio documental (opcional)")}
+                        <input
+                          className="form-control"
+                          value={serviceConfigDraft.documentDomain}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentDomain: event.target.value,
+                            }))
+                          }
+                          placeholder={t("Ej: banca, sanidad, legal")}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {effectiveDocumentEnabled && (
+                    <div className="col-12 col-md-6">
+                      <label>
+                        {t("Salida documental")}
+                        <select
+                          className="form-select"
+                          value={serviceConfigDraft.documentOutputType}
+                          onChange={(event) =>
+                            setServiceConfigDraft((prev) => ({
+                              ...prev,
+                              documentOutputType: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="markdown">{t("Markdown")}</option>
+                          <option value="file">{t("Archivo")}</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
                 </div>
                 <div className="form-actions">
                   <button
@@ -2906,6 +2882,15 @@ export function TenantServiceDetailPage() {
               <div className="kv-item">
                 <span className="kv-label">{t("Tenant ID")}</span>
                 <span className="kv-value">{tenantId || "—"}</span>
+              </div>
+              <div className="kv-item">
+                <span className="kv-label">{t("Service code")}</span>
+                <div className="kv-row">
+                  <span className="kv-text">{serviceCode || "—"}</span>
+                  <button className="link" onClick={handleCopyServiceCode}>
+                    {t("Copiar")}
+                  </button>
+                </div>
               </div>
               <div className="kv-item">
                 <span className="kv-label">{t("Service ID")}</span>

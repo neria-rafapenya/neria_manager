@@ -317,6 +317,8 @@
   "La base URL de Jira es obligatoria.": "La base URL de Jira es obligatoria.",
   "El email técnico de Jira es obligatorio.": "El email técnico de Jira es obligatorio.",
   "El token de Jira es obligatorio.": "El token de Jira es obligatorio.",
+  "Service code": "Código del servicio",
+  "Service code no disponible.": "Código del servicio no disponible.",
   "Sí": "Sí",
   "No": "No"
 }

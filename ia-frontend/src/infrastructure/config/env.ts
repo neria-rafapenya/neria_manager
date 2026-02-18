@@ -10,16 +10,28 @@ const getRuntimeEnv = (): RuntimeEnv => {
   return ((window as any).__ENV__ ?? {}) as RuntimeEnv;
 };
 
+const sanitizeEnvValue = (value: string): string => {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
 // Helpers: runtime (Railway) > import.meta.env (local) > fallback
 const readEnv = (key: string, fallback = ""): string => {
   const runtime = getRuntimeEnv();
   const fromRuntime = runtime[key];
   if (typeof fromRuntime === "string" && fromRuntime.length > 0)
-    return fromRuntime;
+    return sanitizeEnvValue(fromRuntime);
 
   // import.meta.env solo existe en el bundle de Vite
   const fromVite = (import.meta as any)?.env?.[key];
-  if (typeof fromVite === "string" && fromVite.length > 0) return fromVite;
+  if (typeof fromVite === "string" && fromVite.length > 0)
+    return sanitizeEnvValue(fromVite);
 
   return fallback;
 };
