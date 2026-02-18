@@ -55,6 +55,13 @@ export const getModel = (): string => readEnv("VITE_MODEL", "");
 export const getChatEndpoint = (): string =>
   readEnv("VITE_CHAT_ENDPOINT", "persisted");
 
+export type ServiceMode = "chat" | "email";
+
+export const getServiceMode = (): ServiceMode => {
+  const raw = readEnv("VITE_SERVICE_MODE", "").trim().toLowerCase();
+  return raw === "email" ? "email" : "chat";
+};
+
 const isBrowser = (): boolean => typeof document !== "undefined";
 
 let memoryToken: string | null = null;

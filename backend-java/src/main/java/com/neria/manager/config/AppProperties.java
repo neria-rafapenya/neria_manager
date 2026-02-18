@@ -14,6 +14,7 @@ public class AppProperties {
   private Security security = new Security();
   private Cookies cookies = new Cookies();
   private Storage storage = new Storage();
+  private EmailAutomation emailAutomation = new EmailAutomation();
 
   @Getter
   @Setter
@@ -55,5 +56,11 @@ public class AppProperties {
   @Setter
   public static class Storage {
     private String cloudinaryUrl = "";
+  }
+
+  @Getter
+  @Setter
+  public static class EmailAutomation {
+    private long pollIntervalMs = 60000;
   }
 }

@@ -63,6 +63,10 @@ export const Chatbot = () => {
 
   // Ancla para el scroll automático
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
+  const lastMessageIdRef = useRef<string | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   const handleRequestHandoff = async () => {
     await requestHandoff();
@@ -99,11 +103,33 @@ export const Chatbot = () => {
     clearAttachments();
   };
 
+  const handleMessagesScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    shouldAutoScrollRef.current = distanceFromBottom < 80;
+  };
+
   // Scroll automático al final cuando cambian mensajes o streaming
   useEffect(() => {
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    const lastMessageId = lastMessage?.id ?? null;
+    const newMessageAdded =
+      messages.length !== lastMessageCountRef.current ||
+      (lastMessageId && lastMessageId !== lastMessageIdRef.current);
+
+    lastMessageCountRef.current = messages.length;
+    lastMessageIdRef.current = lastMessageId;
+
+    if (!newMessageAdded && !isStreaming) {
+      return;
+    }
+    if (!shouldAutoScrollRef.current && !isStreaming) {
+      return;
+    }
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
-        behavior: "smooth",
+        behavior: isStreaming ? "auto" : "smooth",
         block: "end",
       });
     }
@@ -165,7 +191,11 @@ export const Chatbot = () => {
         )}
       </div>
 
-      <div className="ia-chatbot-messages">
+      <div
+        className="ia-chatbot-messages"
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+      >
         {messages
           .filter((msg) => msg.role !== "system")
           .map((msg) =>

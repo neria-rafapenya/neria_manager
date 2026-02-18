@@ -33,6 +33,7 @@ export function ServiceEditorPage() {
     documentProcessingEnabled: false,
     ocrEnabled: false,
     semanticSearchEnabled: false,
+    emailAutomationEnabled: false,
     jiraEnabled: false,
     jiraProjectKey: "",
     jiraDefaultIssueType: "Task",
@@ -77,6 +78,7 @@ export function ServiceEditorPage() {
           documentProcessingEnabled: match.documentProcessingEnabled ?? false,
           ocrEnabled: match.ocrEnabled ?? false,
           semanticSearchEnabled: match.semanticSearchEnabled ?? false,
+          emailAutomationEnabled: match.emailAutomationEnabled ?? false,
           jiraEnabled: match.jiraEnabled ?? false,
           jiraProjectKey: match.jiraProjectKey || "",
           jiraDefaultIssueType: match.jiraDefaultIssueType || "Task",
@@ -112,6 +114,11 @@ export function ServiceEditorPage() {
     try {
       setSaving(true);
       setError(null);
+      if (form.emailAutomationEnabled && !form.jiraProjectKey.trim()) {
+        setError(t("El project key de Jira es obligatorio."));
+        setSaving(false);
+        return;
+      }
       const payload = {
         code: form.code.trim(),
         name: form.name.trim(),
@@ -126,7 +133,8 @@ export function ServiceEditorPage() {
         documentProcessingEnabled: form.documentProcessingEnabled,
         ocrEnabled: form.ocrEnabled,
         semanticSearchEnabled: form.semanticSearchEnabled,
-        jiraEnabled: form.jiraEnabled,
+        emailAutomationEnabled: form.emailAutomationEnabled,
+        jiraEnabled: form.emailAutomationEnabled ? true : form.jiraEnabled,
         jiraProjectKey: form.jiraProjectKey.trim() || null,
         jiraDefaultIssueType: form.jiraDefaultIssueType.trim() || null,
         jiraAllowUserPriorityOverride: form.jiraAllowUserPriorityOverride,
@@ -345,6 +353,28 @@ export function ServiceEditorPage() {
                 {t("IA semántica habilitada")}
               </label>
             </FieldWithHelp>
+            <FieldWithHelp help="serviceEmailAutomationEnabled">
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.emailAutomationEnabled}
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setForm({
+                      ...form,
+                      emailAutomationEnabled: enabled,
+                      jiraEnabled: enabled ? true : form.jiraEnabled,
+                    });
+                  }}
+                />
+                {t("Automatización inteligente de correos y tickets")}
+              </label>
+            </FieldWithHelp>
+            {form.emailAutomationEnabled && (
+              <div className="info-banner full-row">
+                {t("Jira es obligatorio para la automatización de correos.")}
+              </div>
+            )}
             <div className="section-divider full-row" />
             <div className="full-row">
               <strong>{t("Integración Jira")}</strong>
@@ -360,6 +390,7 @@ export function ServiceEditorPage() {
                       jiraEnabled: event.target.checked,
                     })
                   }
+                  disabled={form.emailAutomationEnabled}
                 />
                 {t("Habilitar Jira")}
               </label>
@@ -371,7 +402,7 @@ export function ServiceEditorPage() {
                 onChange={(event) =>
                   setForm({ ...form, jiraProjectKey: event.target.value })
                 }
-                disabled={!form.jiraEnabled}
+                disabled={!form.jiraEnabled && !form.emailAutomationEnabled}
               />
             </FieldWithHelp>
             <FieldWithHelp help="serviceJiraDefaultIssueType">
@@ -384,7 +415,7 @@ export function ServiceEditorPage() {
                     jiraDefaultIssueType: event.target.value,
                   })
                 }
-                disabled={!form.jiraEnabled}
+                disabled={!form.jiraEnabled && !form.emailAutomationEnabled}
               />
             </FieldWithHelp>
             <FieldWithHelp help="serviceJiraAllowUserPriorityOverride">
@@ -398,7 +429,7 @@ export function ServiceEditorPage() {
                       jiraAllowUserPriorityOverride: event.target.checked,
                     })
                   }
-                  disabled={!form.jiraEnabled}
+                  disabled={!form.jiraEnabled && !form.emailAutomationEnabled}
                 />
                 {t("Permitir prioridad definida por el usuario")}
               </label>
@@ -414,7 +445,7 @@ export function ServiceEditorPage() {
                       jiraAutoLabelWithServiceName: event.target.checked,
                     })
                   }
-                  disabled={!form.jiraEnabled}
+                  disabled={!form.jiraEnabled && !form.emailAutomationEnabled}
                 />
                 {t("Etiquetar con el nombre del servicio")}
               </label>

@@ -57,6 +57,8 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantPricing.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceApiKey.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceConfig.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEmailAccount.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEmailMessage.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEmbedding.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEndpoint.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceFile.java
@@ -92,6 +94,8 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceApiKeyRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceConfigRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEmailAccountRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEmailMessageRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEmbeddingRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEndpointRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceFileRepository.java
@@ -115,10 +119,14 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/config/SecurityConfig.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/dbconnections/DbConnectionsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/dbconnections/DbConnectionsService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/diagnostics/AdminDiagnosticsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/docs/DocsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/docs/DocsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/documents/DocumentProcessingService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/documents/EmbeddingsService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/emailautomation/EmailAutomationScheduler.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/emailautomation/TenantServiceEmailController.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/emailautomation/TenantServiceEmailService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/JiraIssuesService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/TenantServiceJiraService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/notifications/NotificationsController.java

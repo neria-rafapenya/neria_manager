@@ -255,6 +255,7 @@ public class TenantServicesService {
       summary.priceMonthlyEur = service.getPriceMonthlyEur();
       summary.priceAnnualEur = service.getPriceAnnualEur();
       summary.endpointsEnabled = service.isEndpointsEnabled();
+      summary.emailAutomationEnabled = service.isEmailAutomationEnabled();
       Boolean tenantHandoff = config != null ? config.getHumanHandoffEnabled() : null;
       Boolean tenantStorage = config != null ? config.getFileStorageEnabled() : null;
       Boolean tenantDoc = config != null ? config.getDocumentProcessingEnabled() : null;
@@ -352,6 +353,7 @@ public class TenantServicesService {
       config.setPolicyId(trimmed.isEmpty() ? null : trimmed);
     }
     ServiceCatalog catalog = requireService(normalized);
+    boolean emailAutomationEnabled = catalog.isEmailAutomationEnabled();
     if (humanHandoffEnabled != null) {
       if (!catalog.isHumanHandoffEnabled()) {
         config.setHumanHandoffEnabled(false);
@@ -400,7 +402,9 @@ public class TenantServicesService {
       }
     }
     if (jiraEnabled != null) {
-      if (!catalog.isJiraEnabled()) {
+      if (emailAutomationEnabled) {
+        config.setJiraEnabled(true);
+      } else if (!catalog.isJiraEnabled()) {
         config.setJiraEnabled(false);
       } else {
         config.setJiraEnabled(jiraEnabled);
@@ -428,6 +432,21 @@ public class TenantServicesService {
     if (!resolveCapability(config.getDocumentProcessingEnabled(), catalog.isDocumentProcessingEnabled())) {
       config.setOcrEnabled(false);
       config.setSemanticSearchEnabled(false);
+    }
+    if (emailAutomationEnabled) {
+      if (config.getJiraEnabled() == null || !config.getJiraEnabled()) {
+        config.setJiraEnabled(true);
+      }
+      if (config.getJiraProjectKey() == null || config.getJiraProjectKey().isBlank()) {
+        config.setJiraProjectKey(catalog.getJiraProjectKey());
+      }
+      if (config.getJiraDefaultIssueType() == null || config.getJiraDefaultIssueType().isBlank()) {
+        String fallback =
+            catalog.getJiraDefaultIssueType() != null && !catalog.getJiraDefaultIssueType().isBlank()
+                ? catalog.getJiraDefaultIssueType()
+                : "Task";
+        config.setJiraDefaultIssueType(fallback);
+      }
     }
     config.setUpdatedAt(LocalDateTime.now());
     return configRepository.save(config);
@@ -475,9 +494,12 @@ public class TenantServicesService {
     String normalized = normalizeServiceCode(serviceCode);
     TenantServiceConfig config = ensureConfig(tenantId, normalized);
     ServiceCatalog catalog = requireService(normalized);
+    boolean emailAutomationEnabled = catalog.isEmailAutomationEnabled();
 
     if (payload.jiraEnabled != null) {
-      if (!catalog.isJiraEnabled()) {
+      if (emailAutomationEnabled) {
+        config.setJiraEnabled(true);
+      } else if (!catalog.isJiraEnabled()) {
         config.setJiraEnabled(false);
       } else {
         config.setJiraEnabled(payload.jiraEnabled);
@@ -496,6 +518,21 @@ public class TenantServicesService {
     }
     if (payload.jiraAutoLabelWithServiceName != null) {
       config.setJiraAutoLabelWithServiceName(payload.jiraAutoLabelWithServiceName);
+    }
+    if (emailAutomationEnabled) {
+      if (config.getJiraEnabled() == null || !config.getJiraEnabled()) {
+        config.setJiraEnabled(true);
+      }
+      if (config.getJiraProjectKey() == null || config.getJiraProjectKey().isBlank()) {
+        config.setJiraProjectKey(catalog.getJiraProjectKey());
+      }
+      if (config.getJiraDefaultIssueType() == null || config.getJiraDefaultIssueType().isBlank()) {
+        String fallback =
+            catalog.getJiraDefaultIssueType() != null && !catalog.getJiraDefaultIssueType().isBlank()
+                ? catalog.getJiraDefaultIssueType()
+                : "Task";
+        config.setJiraDefaultIssueType(fallback);
+      }
     }
     config.setUpdatedAt(LocalDateTime.now());
     configRepository.save(config);
@@ -868,6 +905,7 @@ public class TenantServicesService {
     public java.math.BigDecimal priceMonthlyEur;
     public java.math.BigDecimal priceAnnualEur;
     public boolean endpointsEnabled;
+    public boolean emailAutomationEnabled;
     public boolean catalogHumanHandoffEnabled;
     public boolean catalogFileStorageEnabled;
     public boolean catalogDocumentProcessingEnabled;

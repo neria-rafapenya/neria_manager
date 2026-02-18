@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api";
 import type { ServiceCatalogItem } from "../types";
 import { PageWithDocs } from "../components/PageWithDocs";
@@ -10,6 +10,8 @@ import { useI18n } from "../i18n/I18nProvider";
 
 export function ServicesPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -72,9 +74,11 @@ export function ServicesPage() {
       confirmButtonText: t("Eliminar"),
       cancelButtonText: t("Cancelar"),
     });
+
     if (!result.isConfirmed) {
       return;
     }
+
     try {
       setBusyId(service.id);
       await api.deleteServiceCatalog(service.id);
@@ -109,62 +113,81 @@ export function ServicesPage() {
               </Link>
             </div>
           </div>
-          <div className="data-table-controls">
-            <input
-              placeholder={t("Buscar por nombre o código")}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          <div className="table table-services">
-            <div className="table-header">
-              <span>{t("Servicio")}</span>
-              <span>{t("Código")}</span>
-              <span>{t("Precio mensual")}</span>
-              <span>{t("Precio anual")}</span>
-              <span>{t("Endpoints")}</span>
-              <span>{t("Estado")}</span>
-              <span>{t("Acciones")}</span>
-            </div>
-            {filtered.map((service) => (
-              <div className="table-row mb-3" key={service.id}>
-                <div className="cell-stack">
-                  <span>{service.name}</span>
-                  <span className="muted">{service.description}</span>
+
+          {filtered.map((service) => (
+            <div className="row servicetable-row" key={service.id}>
+              <div className="col-12">
+                <div className="d-flex justify-content-between mb-3">
+                  <h4>{service.name}</h4>
+                  <div
+                    className={`status ${service.enabled ? "active" : "disabled"}`}
+                  >
+                    {service.enabled ? t("activo") : t("inactivo")}
+                  </div>
                 </div>
-                <span className="muted">{service.code}</span>
-                <span>{formatEur(service.priceMonthlyEur)}</span>
-                <span>{formatEur(service.priceAnnualEur)}</span>
-                <span className="muted">
-                  {service.endpointsEnabled !== false ? t("sí") : t("no")}
-                </span>
-                <span
-                  className={`status ${service.enabled ? "active" : "disabled"}`}
-                >
-                  {service.enabled ? t("activo") : t("inactivo")}
-                </span>
-                <div className="row-actions">
-                  <Link className="link" to={`/services/${service.id}`}>
-                    {t("Editar")}
-                  </Link>
-                  <button
-                    className="link"
-                    onClick={() => handleToggle(service)}
-                    disabled={busyId === service.id}
-                  >
-                    {service.enabled ? t("Desactivar") : t("Activar")}
-                  </button>
-                  <button
-                    className="link"
-                    onClick={() => handleDelete(service)}
-                    disabled={busyId === service.id}
-                  >
-                    {t("Eliminar")}
-                  </button>
+
+                <p>{service.description}</p>
+              </div>
+
+              <div className="col-12">
+                <div className="d-flex justify-content-between">
+                  <div>
+                    Código servicio: <strong>{service.code}</strong>
+                  </div>
+                  <div>
+                    <span>
+                      Importe mensual:{" "}
+                      <strong>{formatEur(service.priceMonthlyEur)}</strong>
+                    </span>{" "}
+                    -{" "}
+                    <span>
+                      Importe anual:{" "}
+                      <strong>{formatEur(service.priceAnnualEur)}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-between mt-4">
+                  <div>
+                    Endpoints activados:{" "}
+                    <strong>
+                      {service.endpointsEnabled !== false ? t("sí") : t("no")}
+                    </strong>
+                  </div>
+
+                  <div className="row-actions">
+                    {/* 👇 AHORA ES UN BUTTON REAL */}
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => navigate(`/services/${service.id}`)}
+                    >
+                      {t("Editar")}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="link2"
+                      onClick={() => handleToggle(service)}
+                      disabled={busyId === service.id}
+                    >
+                      {service.enabled ? t("Desactivar") : t("Activar")}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="link3"
+                      onClick={() => handleDelete(service)}
+                      disabled={busyId === service.id}
+                    >
+                      {t("Eliminar")}
+                    </button>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+
           {filtered.length === 0 && (
             <div className="muted">{t("No hay servicios disponibles.")}</div>
           )}

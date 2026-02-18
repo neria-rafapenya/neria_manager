@@ -112,6 +112,8 @@ export const fieldHelp = {
     'Permite extraer texto de documentos e imágenes cargadas en este servicio.',
   serviceSemanticEnabled:
     'Activa el análisis semántico y resumen automático de los documentos OCR.',
+  serviceEmailAutomationEnabled:
+    'Activa la automatización inteligente de correos y tickets. Requiere Jira configurado.',
   serviceJiraEnabled: 'Activa la integración Jira para este servicio (se configura por tenant).',
   serviceJiraProjectKey: 'Project key de Jira que se usará por defecto al crear incidencias.',
   serviceJiraDefaultIssueType: 'Tipo de issue por defecto (Task, Bug, Story...).',
