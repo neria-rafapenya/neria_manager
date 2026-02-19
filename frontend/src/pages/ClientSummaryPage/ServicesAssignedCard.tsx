@@ -188,6 +188,20 @@ export function ServicesAssignedCard({
                       navigate(`/clients/${tenantId}/financial-simulations`),
                   });
                 }
+                if (service.serviceCode === "asistente-operativo") {
+                  actions.push({
+                    key: "operational-support",
+                    label: t("Abrir soporte operativo"),
+                    onClick: () => navigate(`/clients/${tenantId}/operational-support`),
+                  });
+                }
+                if (service.serviceCode === "pre-evaluacion") {
+                  actions.push({
+                    key: "pre-evaluation",
+                    label: t("Abrir pre-evaluaciones"),
+                    onClick: () => navigate(`/clients/${tenantId}/pre-evaluations`),
+                  });
+                }
                 if (service.serviceCode === "autoevalucion") {
                   actions.push({
                     key: "self-assessment",

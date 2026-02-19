@@ -121,6 +121,11 @@ public class TenantServicesService {
                   catalog.isJiraAllowUserPriorityOverride());
               config.setJiraAutoLabelWithServiceName(
                   catalog.isJiraAutoLabelWithServiceName());
+              if (isOperationalSupportService(serviceCode)) {
+                config.setInternalDocsEnabled(true);
+                config.setInternalPoliciesEnabled(true);
+                config.setInternalTemplatesEnabled(true);
+              }
               config.setCreatedAt(LocalDateTime.now());
               config.setUpdatedAt(LocalDateTime.now());
               return configRepository.save(config);
@@ -139,6 +144,10 @@ public class TenantServicesService {
       return true;
     }
     return override;
+  }
+
+  private boolean isOperationalSupportService(String serviceCode) {
+    return "asistente-operativo".equals(serviceCode);
   }
 
   private boolean forceAutoEvalCapabilities(String serviceCode) {
@@ -265,6 +274,9 @@ public class TenantServicesService {
       Boolean tenantDoc = config != null ? config.getDocumentProcessingEnabled() : null;
       Boolean tenantOcr = config != null ? config.getOcrEnabled() : null;
       Boolean tenantSemantic = config != null ? config.getSemanticSearchEnabled() : null;
+      Boolean tenantInternalDocs = config != null ? config.getInternalDocsEnabled() : null;
+      Boolean tenantInternalPolicies = config != null ? config.getInternalPoliciesEnabled() : null;
+      Boolean tenantInternalTemplates = config != null ? config.getInternalTemplatesEnabled() : null;
       Boolean tenantJira = config != null ? config.getJiraEnabled() : null;
       summary.catalogHumanHandoffEnabled = service.isHumanHandoffEnabled();
       summary.catalogFileStorageEnabled = service.isFileStorageEnabled();
@@ -276,6 +288,21 @@ public class TenantServicesService {
       summary.tenantDocumentProcessingEnabled = tenantDoc;
       summary.tenantOcrEnabled = tenantOcr;
       summary.tenantSemanticSearchEnabled = tenantSemantic;
+      summary.tenantInternalDocsEnabled = tenantInternalDocs;
+      summary.tenantInternalPoliciesEnabled = tenantInternalPolicies;
+      summary.tenantInternalTemplatesEnabled = tenantInternalTemplates;
+      summary.internalDocsEnabled =
+          tenantInternalDocs != null
+              ? tenantInternalDocs
+              : isOperationalSupportService(service.getCode());
+      summary.internalPoliciesEnabled =
+          tenantInternalPolicies != null
+              ? tenantInternalPolicies
+              : isOperationalSupportService(service.getCode());
+      summary.internalTemplatesEnabled =
+          tenantInternalTemplates != null
+              ? tenantInternalTemplates
+              : isOperationalSupportService(service.getCode());
       summary.humanHandoffEnabled = resolveCapability(tenantHandoff, service.isHumanHandoffEnabled());
       summary.fileStorageEnabled = resolveCapability(tenantStorage, service.isFileStorageEnabled());
       summary.documentProcessingEnabled =
@@ -323,6 +350,9 @@ public class TenantServicesService {
       Boolean documentProcessingEnabled,
       Boolean ocrEnabled,
       Boolean semanticSearchEnabled,
+      Boolean internalDocsEnabled,
+      Boolean internalPoliciesEnabled,
+      Boolean internalTemplatesEnabled,
       String documentDomain,
       String documentOutputType,
       Boolean jiraEnabled,
@@ -392,6 +422,16 @@ public class TenantServicesService {
       } else {
         config.setSemanticSearchEnabled(semanticSearchEnabled);
       }
+    }
+
+    if (internalDocsEnabled != null) {
+      config.setInternalDocsEnabled(internalDocsEnabled);
+    }
+    if (internalPoliciesEnabled != null) {
+      config.setInternalPoliciesEnabled(internalPoliciesEnabled);
+    }
+    if (internalTemplatesEnabled != null) {
+      config.setInternalTemplatesEnabled(internalTemplatesEnabled);
     }
     if (forceAutoEvalCapabilities(normalized)) {
       config.setFileStorageEnabled(true);
@@ -926,6 +966,12 @@ public class TenantServicesService {
     public Boolean tenantDocumentProcessingEnabled;
     public Boolean tenantOcrEnabled;
     public Boolean tenantSemanticSearchEnabled;
+    public Boolean tenantInternalDocsEnabled;
+    public Boolean tenantInternalPoliciesEnabled;
+    public Boolean tenantInternalTemplatesEnabled;
+    public boolean internalDocsEnabled;
+    public boolean internalPoliciesEnabled;
+    public boolean internalTemplatesEnabled;
     public boolean humanHandoffEnabled;
     public boolean fileStorageEnabled;
     public boolean documentProcessingEnabled;

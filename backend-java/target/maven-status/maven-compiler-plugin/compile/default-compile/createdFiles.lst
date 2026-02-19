@@ -1,10 +1,13 @@
 com/neria/manager/runtime/ExecuteRequest.class
 com/neria/manager/billing/TenantInvoicesController.class
 com/neria/manager/common/repos/TenantServiceSelfAssessmentRepository.class
+com/neria/manager/preevaluation/PreEvaluationsController.class
 com/neria/manager/tenantservices/TenantServicesController.class
 com/neria/manager/auth/AdminUsersService$CreateAdminUserRequest.class
+com/neria/manager/preevaluation/PreEvaluationsService.class
 com/neria/manager/ocr/OcrDocumentsService.class
 com/neria/manager/auth/ApiKeysController$CreateApiKeyRequest.class
+com/neria/manager/common/repos/TenantServicePreEvaluationRepository.class
 com/neria/manager/surveys/SurveysService$SurveyInsightResponse.class
 com/neria/manager/auth/ApiKeysService.class
 com/neria/manager/common/entities/AdminUser.class
@@ -26,6 +29,7 @@ com/neria/manager/BackendJavaApplication.class
 com/neria/manager/subscriptions/AdminSubscriptionsController.class
 com/neria/manager/tenantservices/TenantServicesService$JiraSettings.class
 com/neria/manager/emailautomation/EmailAutomationScheduler.class
+com/neria/manager/operationsupport/OperationalSupportService$AiDraftOutput.class
 com/neria/manager/auth/ApiKeysService$ApiKeyCreateResult.class
 com/neria/manager/subscriptions/SubscriptionsService$TaxBreakdown.class
 com/neria/manager/surveys/SurveysService$SurveySubmissionRequest.class
@@ -39,6 +43,7 @@ com/neria/manager/config/AppProperties$Storage.class
 com/neria/manager/auth/AuthController.class
 com/neria/manager/emailautomation/TenantServiceEmailService$EmailMessageResponse.class
 com/neria/manager/surveys/SurveysService$SurveyRequest.class
+com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportRequest.class
 com/neria/manager/servicecatalog/ServiceCatalogService$UpdateServiceCatalogRequest.class
 com/neria/manager/subscriptions/SubscriptionsService.class
 com/neria/manager/config/SecurityConfig.class
@@ -51,10 +56,12 @@ com/neria/manager/auth/AdminPasswordResetService$ResetResult.class
 com/neria/manager/selfassessment/SelfAssessmentsService$SelfAssessmentRequest.class
 com/neria/manager/config/AppProperties$EmailAutomation.class
 com/neria/manager/providers/ProvidersService$CreateProviderRequest.class
+com/neria/manager/common/entities/TenantServicePreEvaluation.class
 com/neria/manager/common/entities/TenantServiceStorage.class
 com/neria/manager/common/entities/SubscriptionService.class
 com/neria/manager/policies/PoliciesService$UpdatePolicyRequest.class
 com/neria/manager/audit/AuditController.class
+com/neria/manager/common/repos/TenantServiceOperationalSupportRepository.class
 com/neria/manager/surveys/SurveysService$AnswerValue.class
 com/neria/manager/pricing/PricingService$CreatePricingRequest.class
 com/neria/manager/storage/StorageUploadService.class
@@ -93,6 +100,7 @@ com/neria/manager/financialsim/FinancialSimulationsController.class
 com/neria/manager/common/security/AuthContext.class
 com/neria/manager/config/AppConfig.class
 com/neria/manager/subscriptions/SubscriptionsService$UpdateSubscriptionRequest.class
+com/neria/manager/preevaluation/PreEvaluationsService$AiPreEvaluationOutput.class
 com/neria/manager/jira/JiraIssuesService$2.class
 com/neria/manager/chat/ChatService.class
 com/neria/manager/common/services/EmailService.class
@@ -177,6 +185,7 @@ com/neria/manager/config/AppProperties$Cookies.class
 com/neria/manager/storage/TenantServiceStorageService$StorageResponse.class
 com/neria/manager/common/services/KillSwitchService$CacheEntry.class
 com/neria/manager/chatbots/ChatbotsController.class
+com/neria/manager/preevaluation/PreEvaluationsService$PreEvaluationInput.class
 com/neria/manager/common/entities/TenantServiceEmailAccount.class
 com/neria/manager/webhooks/WebhooksService$CreateWebhookRequest.class
 com/neria/manager/adapters/GoogleVertexAdapter.class
@@ -206,6 +215,8 @@ com/neria/manager/selfassessment/SelfAssessmentsController.class
 com/neria/manager/jira/TenantServiceJiraService$1.class
 com/neria/manager/chat/ChatService$CreateChatUserRequest.class
 com/neria/manager/usage/UsageAlertsService$UsageAlert.class
+com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportInput.class
+com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportSummary.class
 com/neria/manager/chat/ChatService$CreateMessageRequest.class
 com/neria/manager/tenantpricing/TenantPricingService$TenantPricingResponse.class
 com/neria/manager/common/repos/PricingModelRepository.class
@@ -224,10 +235,12 @@ com/neria/manager/jira/JiraIssuesService$CreateJiraIssueRequest.class
 com/neria/manager/common/entities/TenantServiceSurveyInsight.class
 com/neria/manager/common/repos/TenantServiceFinancialSimulationRepository.class
 com/neria/manager/pricing/PricingService$UpdatePricingRequest.class
+com/neria/manager/preevaluation/PreEvaluationsService$PreEvaluationRequest.class
 com/neria/manager/dbconnections/DbConnectionsService$UpdateDbConnectionRequest.class
 com/neria/manager/common/repos/TenantServiceJiraRepository.class
 com/neria/manager/chat/ChatAuthService$LoginChatUserRequest.class
 com/neria/manager/usage/UsageService.class
+com/neria/manager/preevaluation/PreEvaluationsService$PreEvaluationItem.class
 com/neria/manager/tenantservices/TenantServicesController$UpdateConfigRequest.class
 com/neria/manager/emailautomation/TenantServiceEmailService$JiraIssueClient$1.class
 com/neria/manager/chat/ChatTokenService.class
@@ -238,9 +251,14 @@ com/neria/manager/webhooks/WebhooksController.class
 com/neria/manager/notifications/NotificationsService$UpdateChannelRequest.class
 com/neria/manager/tenants/TenantsService.class
 com/neria/manager/common/entities/TenantServiceUser.class
+com/neria/manager/common/entities/TenantServiceOperationalSupport.class
+com/neria/manager/preevaluation/PreEvaluationsService$PreEvaluationSummary.class
+com/neria/manager/preevaluation/PreEvaluationsService$PreEvaluationDetail.class
 com/neria/manager/common/repos/DbConnectionRepository.class
+com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportDetail.class
 com/neria/manager/surveys/SurveysController.class
 com/neria/manager/tenants/TenantsController.class
+com/neria/manager/selfassessment/SelfAssessmentsService$AiAssessmentOutput.class
 com/neria/manager/common/repos/TenantServiceSurveyAnswerRepository.class
 com/neria/manager/common/repos/TenantRepository.class
 com/neria/manager/settings/SettingsService.class
@@ -307,6 +325,7 @@ com/neria/manager/common/repos/TenantPricingRepository.class
 com/neria/manager/common/entities/NotificationChannel.class
 com/neria/manager/documents/EmbeddingsService$EmbeddingResult.class
 com/neria/manager/tenantservices/TenantServicesController$TenantServiceUserRequest.class
+com/neria/manager/operationsupport/OperationalSupportService.class
 com/neria/manager/pricing/PricingService.class
 com/neria/manager/common/repos/TenantServiceEmailMessageRepository.class
 com/neria/manager/selfassessment/SelfAssessmentsService.class
@@ -324,3 +343,4 @@ com/neria/manager/settings/SettingsController$ToggleRequest.class
 com/neria/manager/settings/SettingsController$AlertsScheduleRequest.class
 com/neria/manager/common/entities/Tenant.class
 com/neria/manager/adapters/AzureOpenAIAdapter.class
+com/neria/manager/operationsupport/OperationalSupportController.class

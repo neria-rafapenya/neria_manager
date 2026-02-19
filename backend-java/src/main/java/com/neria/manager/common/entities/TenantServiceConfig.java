@@ -56,6 +56,15 @@ public class TenantServiceConfig {
   @Column(name = "semanticSearchEnabled")
   private Boolean semanticSearchEnabled;
 
+  @Column(name = "internalDocsEnabled")
+  private Boolean internalDocsEnabled;
+
+  @Column(name = "internalPoliciesEnabled")
+  private Boolean internalPoliciesEnabled;
+
+  @Column(name = "internalTemplatesEnabled")
+  private Boolean internalTemplatesEnabled;
+
   @Column(name = "documentDomain", length = 120)
   private String documentDomain;
 

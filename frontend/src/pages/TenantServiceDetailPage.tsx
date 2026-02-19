@@ -41,6 +41,8 @@ export function TenantServiceDetailPage() {
   const canManageEmailAutomation = role === "admin" || role === "tenant";
   const isFinancialService = serviceCode === "simulador-financiero";
   const isSelfAssessmentService = serviceCode === "autoevalucion";
+  const isPreEvaluationService = serviceCode === "pre-evaluacion";
+  const isOperationalSupportService = serviceCode === "asistente-operativo";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +86,9 @@ export function TenantServiceDetailPage() {
     documentProcessingEnabled: false,
     ocrEnabled: false,
     semanticSearchEnabled: false,
+    internalDocsEnabled: true,
+    internalPoliciesEnabled: true,
+    internalTemplatesEnabled: true,
     documentDomain: "",
     documentOutputType: "markdown",
   });
@@ -410,6 +415,12 @@ export function TenantServiceDetailPage() {
               : match.tenantSemanticSearchEnabled ??
                 match.semanticSearchEnabled ??
                 false,
+          internalDocsEnabled:
+            match.tenantInternalDocsEnabled ?? match.internalDocsEnabled ?? true,
+          internalPoliciesEnabled:
+            match.tenantInternalPoliciesEnabled ?? match.internalPoliciesEnabled ?? true,
+          internalTemplatesEnabled:
+            match.tenantInternalTemplatesEnabled ?? match.internalTemplatesEnabled ?? true,
           documentDomain: match.documentDomain || "",
           documentOutputType: match.documentOutputType || "markdown",
         });
@@ -536,6 +547,9 @@ export function TenantServiceDetailPage() {
         documentProcessingEnabled: serviceConfigDraft.documentProcessingEnabled,
         ocrEnabled: serviceConfigDraft.ocrEnabled,
         semanticSearchEnabled: serviceConfigDraft.semanticSearchEnabled,
+        internalDocsEnabled: serviceConfigDraft.internalDocsEnabled,
+        internalPoliciesEnabled: serviceConfigDraft.internalPoliciesEnabled,
+        internalTemplatesEnabled: serviceConfigDraft.internalTemplatesEnabled,
         documentDomain: serviceConfigDraft.documentDomain,
         documentOutputType: serviceConfigDraft.documentOutputType,
       });
@@ -1625,6 +1639,55 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
+                  {isOperationalSupportService && (
+                    <>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalDocsEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalDocsEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: documentacion")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalPoliciesEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalPoliciesEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: normativas")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalTemplatesEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalTemplatesEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: plantillas")}
+                        </label>
+                      </div>
+                    </>
+                  )}
                   {catalogSemanticEnabled && effectiveDocumentEnabled && (
                     <div className="col-12 col-md-6">
                       <label className="checkbox">
@@ -2295,6 +2358,50 @@ export function TenantServiceDetailPage() {
               </>
             )}
 
+
+            {isOperationalSupportService && (
+              <>
+                <h4>{t("Soporte operativo")}</h4>
+                <p className="muted mb-3">
+                  {t(
+                    "Gestiona borradores y plantillas internas para soporte operativo.",
+                  )}
+                </p>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/operational-support`)
+                    }
+                  >
+                    {t("Abrir panel de soporte operativo")}
+                  </button>
+                </div>
+                <div className="section-divider" />
+              </>
+            )}
+
+            {isPreEvaluationService && (
+              <>
+                <h4>{t("Pre-evaluacion")}</h4>
+                <p className="muted mb-3">
+                  {t(
+                    "Simula pre-evaluaciones con preguntas generales, probabilidad estimada y factores explicativos.",
+                  )}
+                </p>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/pre-evaluations`)
+                    }
+                  >
+                    {t("Abrir panel de pre-evaluaciones")}
+                  </button>
+                </div>
+                <div className="section-divider" />
+              </>
+            )}
             {isSelfAssessmentService && (
               <>
                 <h4>{t("Autoevaluacion inteligente")}</h4>
@@ -2728,6 +2835,55 @@ export function TenantServiceDetailPage() {
                         {t("OCR habilitado")}
                       </label>
                     </div>
+                  )}
+                  {isOperationalSupportService && (
+                    <>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalDocsEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalDocsEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: documentacion")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalPoliciesEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalPoliciesEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: normativas")}
+                        </label>
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={serviceConfigDraft.internalTemplatesEnabled}
+                            onChange={(event) =>
+                              setServiceConfigDraft((prev) => ({
+                                ...prev,
+                                internalTemplatesEnabled: event.target.checked,
+                              }))
+                            }
+                          />
+                          {t("Fuentes internas: plantillas")}
+                        </label>
+                      </div>
+                    </>
                   )}
                   {catalogSemanticEnabled && effectiveDocumentEnabled && (
                     <div className="col-12 col-md-6">

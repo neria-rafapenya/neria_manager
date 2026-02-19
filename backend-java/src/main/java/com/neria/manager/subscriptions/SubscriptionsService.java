@@ -500,7 +500,13 @@ public class SubscriptionsService {
     if (!codes.isEmpty()) {
       List<ServiceCatalog> catalog = catalogRepository.findAllByCodeIn(List.copyOf(codes));
       if (catalog.size() != codes.size()) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "One or more services not found");
+        Set<String> found =
+            catalog.stream().map(ServiceCatalog::getCode).collect(Collectors.toSet());
+        Set<String> missing =
+            codes.stream().filter(code -> !found.contains(code)).collect(Collectors.toSet());
+        throw new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "One or more services not found: " + String.join(", ", missing));
       }
     }
 
@@ -718,7 +724,13 @@ public class SubscriptionsService {
       List<ServiceCatalog> catalog =
           codes.isEmpty() ? List.of() : catalogRepository.findAllByCodeIn(List.copyOf(codes));
       if (catalog.size() != codes.size()) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "One or more services not found");
+        Set<String> found =
+            catalog.stream().map(ServiceCatalog::getCode).collect(Collectors.toSet());
+        Set<String> missing =
+            codes.stream().filter(code -> !found.contains(code)).collect(Collectors.toSet());
+        throw new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "One or more services not found: " + String.join(", ", missing));
       }
 
       List<SubscriptionService> existing = subscriptionServiceRepository.findBySubscriptionId(subscription.getId());

@@ -151,6 +151,12 @@ export type TenantServiceOverview = {
   tenantDocumentProcessingEnabled?: boolean | null;
   tenantOcrEnabled?: boolean | null;
   tenantSemanticSearchEnabled?: boolean | null;
+  tenantInternalDocsEnabled?: boolean | null;
+  tenantInternalPoliciesEnabled?: boolean | null;
+  tenantInternalTemplatesEnabled?: boolean | null;
+  internalDocsEnabled?: boolean;
+  internalPoliciesEnabled?: boolean;
+  internalTemplatesEnabled?: boolean;
   humanHandoffEnabled?: boolean;
   fileStorageEnabled?: boolean;
   documentProcessingEnabled?: boolean;
@@ -321,6 +327,45 @@ export type FinancialSimulationDetail = {
 };
 
 
+
+export type PreEvaluationSummary = {
+  id: string;
+  title: string;
+  productType: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  result?: Record<string, any> | null;
+};
+
+export type PreEvaluationDetail = {
+  summary: PreEvaluationSummary;
+  input: Record<string, any> | null;
+  result: Record<string, any> | null;
+  report?: string | null;
+  model?: string | null;
+  providerId?: string | null;
+};
+
+export type OperationalSupportSummary = {
+  id: string;
+  title: string;
+  entryType: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  result?: Record<string, any> | null;
+};
+
+export type OperationalSupportDetail = {
+  summary: OperationalSupportSummary;
+  input: Record<string, any> | null;
+  result: Record<string, any> | null;
+  report?: string | null;
+  model?: string | null;
+  providerId?: string | null;
+};
+
 export type SelfAssessmentSummary = {
   id: string;
   title: string;
@@ -367,6 +412,12 @@ export type ServiceCatalogItem = {
   tenantDocumentProcessingEnabled?: boolean | null;
   tenantOcrEnabled?: boolean | null;
   tenantSemanticSearchEnabled?: boolean | null;
+  tenantInternalDocsEnabled?: boolean | null;
+  tenantInternalPoliciesEnabled?: boolean | null;
+  tenantInternalTemplatesEnabled?: boolean | null;
+  internalDocsEnabled?: boolean;
+  internalPoliciesEnabled?: boolean;
+  internalTemplatesEnabled?: boolean;
   humanHandoffEnabled?: boolean;
   fileStorageEnabled?: boolean;
   documentProcessingEnabled?: boolean;

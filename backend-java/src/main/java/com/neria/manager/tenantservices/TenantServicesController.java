@@ -55,6 +55,9 @@ public class TenantServicesController {
         dto.documentProcessingEnabled,
         dto.ocrEnabled,
         dto.semanticSearchEnabled,
+        dto.internalDocsEnabled,
+        dto.internalPoliciesEnabled,
+        dto.internalTemplatesEnabled,
         dto.documentDomain,
         dto.documentOutputType,
         dto.jiraEnabled,
@@ -180,6 +183,9 @@ public class TenantServicesController {
     public Boolean documentProcessingEnabled;
     public Boolean ocrEnabled;
     public Boolean semanticSearchEnabled;
+    public Boolean internalDocsEnabled;
+    public Boolean internalPoliciesEnabled;
+    public Boolean internalTemplatesEnabled;
     public String documentDomain;
     public String documentOutputType;
     public Boolean jiraEnabled;

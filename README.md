@@ -1,6 +1,10 @@
 # neria_manager
 Neria Manager
 
+
+## arranque maven en localhost
+backend-java/scripts/run-local.sh
+
 ## OCR (Tesseract)
 
 ### Instalación

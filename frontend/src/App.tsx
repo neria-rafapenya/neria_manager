@@ -37,6 +37,8 @@ import { TenantServiceDetailPage } from "./pages/TenantServiceDetailPage";
 import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
 import { TenantServiceFinancialSimulationsPage } from "./pages/TenantServiceFinancialSimulationsPage";
 import { TenantServiceSelfAssessmentsPage } from "./pages/TenantServiceSelfAssessmentsPage";
+import { TenantServiceOperationalSupportPage } from "./pages/TenantServiceOperationalSupportPage";
+import { TenantServicePreEvaluationsPage } from "./pages/TenantServicePreEvaluationsPage";
 import { PublicSurveyPage } from "./pages/PublicSurveyPage";
 
 function App() {
@@ -104,6 +106,22 @@ function App() {
                     element={
                       <TenantServiceSelfAssessmentsPage
                         defaultServiceCode="autoevalucion"
+                      />
+                    }
+                  />
+                  <Route
+                    path="clients/:tenantId/pre-evaluations"
+                    element={
+                      <TenantServicePreEvaluationsPage
+                        defaultServiceCode="pre-evaluacion"
+                      />
+                    }
+                  />
+                  <Route
+                    path="clients/:tenantId/operational-support"
+                    element={
+                      <TenantServiceOperationalSupportPage
+                        defaultServiceCode="asistente-operativo"
                       />
                     }
                   />
