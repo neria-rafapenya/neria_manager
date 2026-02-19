@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "Neria Sandbox",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Chat SQL - Listar productos",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/chat-sql/productos?categoria=Coches"
+      }
+    },
+    {
+      "name": "Chat SQL - Producto por SKU",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/chat-sql/productos/CAR-001"
+      }
+    },
+    {
+      "name": "Soporte Operativo - Documentos",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/asistente-operativo/documentos"
+      }
+    },
+    {
+      "name": "Soporte Operativo - Plantillas",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/asistente-operativo/plantillas"
+      }
+    },
+    {
+      "name": "Simulador - Productos",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/simulador-financiero/productos"
+      }
+    },
+    {
+      "name": "Simulador - Simular",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"hipoteca-hogar\",\n  \"amount\": 120000,\n  \"termMonths\": 240,\n  \"downPayment\": 20000\n}"
+        },
+        "url": "{{baseUrl}}/simulador-financiero/simular"
+      }
+    },
+    {
+      "name": "Gestion Citas - Slots",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/gestion-citas/slots?date=2026-03-05"
+      }
+    },
+    {
+      "name": "Gestion Citas - Reservar",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"slotId\": \"c1a1f64f-cc12-4d7f-82a2-7d3dcb7c4e01\",\n  \"customerName\": \"Rafa\",\n  \"customerEmail\": \"rafa@cliente.com\",\n  \"notes\": \"Preferencia por la manana\"\n}"
+        },
+        "url": "{{baseUrl}}/gestion-citas/reservas"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://backend-sandbox-production.up.railway.app"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
