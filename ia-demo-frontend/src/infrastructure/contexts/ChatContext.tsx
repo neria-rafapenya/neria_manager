@@ -604,7 +604,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       const previousList = conversations;
       const index = previousList.findIndex((c) => c.id === id);
 
-      await conversationService.deleteConversation(id);
+      // await conversationService.deleteConversation(id);
 
       const newList = previousList.filter((c) => c.id !== id);
       setConversations(newList);

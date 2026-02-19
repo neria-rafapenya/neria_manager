@@ -6,8 +6,6 @@ import type {
   ConversationWithMessages,
 } from "../../../interfaces";
 
-const DEFAULT_CHANNEL = "widget-web";
-
 export class ConversationService {
   private readonly repository: ConversationRepository;
 
@@ -23,16 +21,12 @@ export class ConversationService {
     return this.repository.getWithMessages(id);
   }
 
-  /**
-   * Crea una conversación usando siempre el canal por defecto del widget.
-   * Desde fuera solo hace falta pasar el título.
-   */
   createConversation(title: string): Promise<Conversation> {
     const trimmedTitle = title.trim();
-    return this.repository.create(trimmedTitle, DEFAULT_CHANNEL);
+    return this.repository.create(trimmedTitle);
   }
 
-  deleteConversation(id: string): Promise<void> {
-    return this.repository.delete(id);
-  }
+  // deleteConversation(id: string): Promise<void> {
+  //   return this.repository.delete(id);
+  // }
 }
