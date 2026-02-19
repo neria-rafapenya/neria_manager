@@ -69,8 +69,16 @@ const emptyQuestionForm: QuestionFormState = {
   scaleMaxLabel: "",
 };
 
-export function TenantServiceSurveysPage() {
-  const { tenantId, serviceCode } = useParams();
+type TenantServiceSurveysPageProps = {
+  defaultServiceCode?: string;
+};
+
+export function TenantServiceSurveysPage({
+  defaultServiceCode,
+}: TenantServiceSurveysPageProps = {}) {
+  const params = useParams();
+  const tenantId = params.tenantId;
+  const serviceCode = params.serviceCode ?? defaultServiceCode;
   const navigate = useNavigate();
   const { t } = useI18n();
   const [surveys, setSurveys] = useState<SurveySummary[]>([]);

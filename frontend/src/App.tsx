@@ -81,6 +81,14 @@ function App() {
                     element={<TenantServiceDetailPage />}
                   />
                   <Route
+                    path="clients/:tenantId/surveys"
+                    element={
+                      <TenantServiceSurveysPage
+                        defaultServiceCode="sistema-encuestas"
+                      />
+                    }
+                  />
+                  <Route
                     path="clients/:tenantId/services/:serviceCode/surveys"
                     element={<TenantServiceSurveysPage />}
                   />
