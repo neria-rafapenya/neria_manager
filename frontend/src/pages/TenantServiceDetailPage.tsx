@@ -39,6 +39,7 @@ export function TenantServiceDetailPage() {
   const canManagePolicies = role === "admin";
   const canManageConversations = role === "admin";
   const canManageEmailAutomation = role === "admin" || role === "tenant";
+  const isFinancialService = serviceCode === "simulador-financiero";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1571,6 +1572,7 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
+
                   {catalogStorageEnabled && (
                     <div className="col-12 col-md-6">
                       <label className="checkbox">
@@ -2270,6 +2272,28 @@ export function TenantServiceDetailPage() {
               <div className="section-divider" />
             )}
 
+            {isFinancialService && (
+              <>
+                <h4>{t("Simulador financiero")}</h4>
+                <p className="muted mb-3">
+                  {t(
+                    "Gestiona simulaciones financieras y revisa resultados con IA. Usa el provider y el prompt configurados en este servicio.",
+                  )}
+                </p>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/financial-simulations`)
+                    }
+                  >
+                    {t("Abrir panel de simulaciones")}
+                  </button>
+                </div>
+                <div className="section-divider" />
+              </>
+            )}
+
             {catalogStorageEnabled && (
               <>
                 <h4>{t("Almacenamiento de archivos")}</h4>
@@ -2632,6 +2656,7 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
+
                   {catalogStorageEnabled && (
                     <div className="col-12 col-md-6">
                       <label className="checkbox">

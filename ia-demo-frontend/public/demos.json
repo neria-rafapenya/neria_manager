@@ -3,7 +3,7 @@
     {
       "code": "correos-tickets",
       "name": "Automatizacion Inteligente de Correos y Tickets",
-      "description": "Clasifica correos, detecta intenci\u00f3n y crea tickets autom\u00e1ticamente.",
+      "description": "Clasifica correos, detecta intención y crea tickets automáticamente.",
       "mode": "email",
       "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
       "apiKey": "4ddecac1dad8c0e2f6adb04e6617b913697144ed3ef7809b879e8d98f6610ce2",
@@ -48,7 +48,7 @@
     {
       "code": "sistema-encuestas",
       "name": "Sistema de Encuestas Inteligentes",
-      "description": "Recoge respuestas y genera insights autom\u00e1ticamente.",
+      "description": "Recoge respuestas y genera insights automáticamente.",
       "mode": "surveys",
       "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
       "apiKey": "f07dee7eac50a870fadf5c23907096ceef9e3de98627d9c785f5028c5ac39ec8",
@@ -59,6 +59,22 @@
       "serviceId": "be6761dc-eaf8-45bd-9919-ba5628a83d6a",
       "chatEndpoint": "persisted",
       "chatAuthMode": "local"
+    },
+    {
+      "code": "simulador-financiero",
+      "name": "Simulador Inteligente de Productos Financieros",
+      "description": "Simula préstamos, hipotecas y planes de ahorro con explicaciones claras.",
+      "mode": "financial",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "abfedf080653d59914171a73e9d7cf565da6e3a7135605ed7b48e0bf7d089e87",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "simulador-financiero",
+      "serviceId": "56a1f720-43c3-443e-955b-4622716df17e",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local",
+      "serviceMode": "financial"
     }
   ]
 }

@@ -67,11 +67,13 @@ export const getModel = (): string => readEnv("VITE_MODEL", "");
 export const getChatEndpoint = (): string =>
   readEnv("VITE_CHAT_ENDPOINT", "persisted");
 
-export type ServiceMode = "chat" | "email";
+export type ServiceMode = "chat" | "email" | "financial";
 
 export const getServiceMode = (): ServiceMode => {
   const raw = readEnv("VITE_SERVICE_MODE", "").trim().toLowerCase();
-  return raw === "email" ? "email" : "chat";
+  if (raw === "email") return "email";
+  if (["financial", "finance", "simulador-financiero"].includes(raw)) return "financial";
+  return "chat";
 };
 
 const isBrowser = (): boolean => typeof document !== "undefined";
