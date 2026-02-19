@@ -1,0 +1,173 @@
+// src/adapters/ui/react/auth/login.scss
+
+.iachat-login-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background-color: #f9fafb; // en línea con bodyBg del tema
+
+  @media (max-width: 640px) {
+    padding: 1rem;
+  }
+}
+
+.iachat-login-form {
+  width: 100%;
+  max-width: 360px;
+  background-color: #f9fafb;
+  border: 0px;
+  box-shadow: none;
+  padding-top: 0px;
+  padding-left: 50px;
+  padding-right: 50px;
+  padding-bottom: 50px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Cabecera con avatar + textos */
+.iachat-login-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.iachat-login-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.96),
+    rgba(56, 189, 248, 0.96)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.iachat-login-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.iachat-login-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.iachat-login-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Campos de formulario */
+.iachat-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.iachat-login-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.iachat-login-input {
+  border-radius: 999px; // bordes bien redondos tipo píldora
+  border: 1px solid rgb(193, 219, 229);
+  padding: 0.9rem 0.9rem;
+  font-size: 0.875rem;
+  outline: none;
+  background-color: rgb(193, 219, 229); // color 193,219,229
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+
+  &::placeholder {
+    color: #64748b;
+  }
+
+  &:hover {
+    background-color: rgba(193, 219, 229, 0.9);
+  }
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+    background-color: rgb(193, 219, 229);
+  }
+}
+
+/* Error */
+.iachat-login-error {
+  margin: 0;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #fee2e2;
+}
+
+/* Botón */
+.iachat-login-button {
+  margin-top: 0.5rem;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  color: #ffffff; // texto blanco
+  background-color: rgb(10, 70, 115); // azul 10,70,115 plano
+
+  box-shadow: 0 6px 10px rgba(15, 23, 42, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(15, 23, 42, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+  }
+}
+
+/* Nota inferior */
+.iachat-login-hint {
+  margin: 0;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: center;
+}
