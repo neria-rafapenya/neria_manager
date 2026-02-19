@@ -505,6 +505,12 @@ export function ClientSummaryPage() {
     [contractedServices],
   );
 
+  const financialService = useMemo(
+    () => contractedServices.find((service) => service.serviceCode === "simulador-financiero"),
+    [contractedServices],
+  );
+
+
   const pricingOptions = useMemo(
     () =>
       pricing.map((entry) => ({
@@ -2894,6 +2900,35 @@ export function ClientSummaryPage() {
               ) : (
                 <div className="muted tight">
                   {t("El servicio de encuestas no está asignado a este tenant.")}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h2>{t("Simulador financiero")}</h2>
+              <p className="muted tight">
+                {t(
+                  "Gestiona simulaciones de préstamos, hipotecas y ahorro con IA.",
+                )}
+              </p>
+              {financialService ? (
+                canManageServices ? (
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/financial-simulations`)
+                    }
+                  >
+                    {t("Abrir simulador financiero")}
+                  </button>
+                ) : (
+                  <div className="muted tight">
+                    {t("No tienes permisos para gestionar simulaciones.")}
+                  </div>
+                )
+              ) : (
+                <div className="muted tight">
+                  {t("El simulador financiero no está asignado a este tenant.")}
                 </div>
               )}
             </div>

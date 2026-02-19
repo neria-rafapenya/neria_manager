@@ -35,6 +35,7 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { ServiceEditorPage } from "./pages/ServiceEditorPage";
 import { TenantServiceDetailPage } from "./pages/TenantServiceDetailPage";
 import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
+import { TenantServiceFinancialSimulationsPage } from "./pages/TenantServiceFinancialSimulationsPage";
 import { PublicSurveyPage } from "./pages/PublicSurveyPage";
 
 function App() {
@@ -85,6 +86,14 @@ function App() {
                     element={
                       <TenantServiceSurveysPage
                         defaultServiceCode="sistema-encuestas"
+                      />
+                    }
+                  />
+                  <Route
+                    path="clients/:tenantId/financial-simulations"
+                    element={
+                      <TenantServiceFinancialSimulationsPage
+                        defaultServiceCode="simulador-financiero"
                       />
                     }
                   />

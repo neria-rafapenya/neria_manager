@@ -299,6 +299,27 @@ export type PublicSurvey = {
 };
 
 
+
+export type FinancialSimulationSummary = {
+  id: string;
+  title: string;
+  type: string;
+  currency: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  result?: Record<string, any> | null;
+};
+
+export type FinancialSimulationDetail = {
+  summary: FinancialSimulationSummary;
+  input: Record<string, any> | null;
+  result: Record<string, any> | null;
+  explanation?: string | null;
+  model?: string | null;
+  providerId?: string | null;
+};
+
 export type TenantServiceUser = {
   userId: string;
   status: 'active' | 'suspended';

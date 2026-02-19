@@ -5,6 +5,7 @@ import type { DemoConfig } from "./types";
 import { setRuntimeConfig } from "../infrastructure/config/runtimeConfig";
 import { ChatbotApp } from "../adapters/ui/components/ChatbotApp";
 import { EmailAutomationApp } from "../adapters/ui/components/EmailAutomationApp";
+import { FinancialSimulatorApp } from "../adapters/ui/components/FinancialSimulatorApp";
 import { SurveyDemoPage } from "./SurveyDemoPage";
 
 export const DemoRunnerPage = () => {
@@ -45,7 +46,13 @@ export const DemoRunnerPage = () => {
       name: demo.name,
       description: demo.description || undefined,
       mode: demo.mode || "chat",
-      serviceMode: demo.serviceMode || (demo.mode === "email" ? "email" : "chat"),
+      serviceMode:
+        demo.serviceMode ||
+        (demo.mode === "email"
+          ? "email"
+          : demo.mode === "financial"
+            ? "financial"
+            : "chat"),
       apiBaseUrl: demo.apiBaseUrl || undefined,
       apiUrl: demo.apiUrl || undefined,
       apiKey: demo.apiKey || undefined,
@@ -95,6 +102,9 @@ export const DemoRunnerPage = () => {
     }
     if (mode === "email") {
       return <EmailAutomationApp />;
+    }
+    if (mode === "financial") {
+      return <FinancialSimulatorApp />;
     }
     return <ChatbotApp />;
   };
