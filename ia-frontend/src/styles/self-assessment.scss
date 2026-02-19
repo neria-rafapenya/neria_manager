@@ -1,0 +1,243 @@
+.assessment-root {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #f5f4ef, #fdfbf6 60%, #f7f6f2);
+  color: #1f1b16;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+.assessment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px clamp(16px, 5vw, 48px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.assessment-brand {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.assessment-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #1f1b16;
+  color: #fff;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.assessment-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.assessment-select {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.assessment-main {
+  padding: 32px clamp(16px, 5vw, 48px) 48px;
+}
+
+.assessment-page {
+  display: grid;
+  gap: 24px;
+}
+
+.assessment-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #111, #3a2b20);
+  color: #fefcf8;
+}
+
+.assessment-pill {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.assessment-grid {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 1100px) {
+  .assessment-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: start;
+  }
+}
+
+.assessment-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 18px 40px rgba(20, 12, 6, 0.08);
+  display: grid;
+  gap: 16px;
+}
+
+.assessment-form,
+.assessment-items,
+.assessment-list {
+  display: grid;
+  gap: 12px;
+}
+
+.assessment-field {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.assessment-field input,
+.assessment-field textarea,
+.assessment-field select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.assessment-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.assessment-row .grow {
+  flex: 1;
+}
+
+.assessment-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  background: #faf9f7;
+}
+
+.assessment-divider {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 4px 0;
+}
+
+.assess-btn {
+  border-radius: 999px;
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.assess-btn.primary {
+  background: #1f1b16;
+  color: #fff;
+  border: none;
+}
+
+.assess-btn.ghost {
+  background: transparent;
+  border: none;
+  color: #1f1b16;
+}
+
+.assessment-checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.assessment-list-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.assessment-tag {
+  background: #f0ede8;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.assessment-result {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.assessment-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.assessment-report pre {
+  white-space: pre-wrap;
+  background: #f6f4ef;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.assessment-attachments {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.assessment-files {
+  display: grid;
+  gap: 8px;
+}
+
+.assessment-file {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #fff;
+}
+
+.assessment-error {
+  background: #ffeceb;
+  color: #8a2e1f;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.55);
+}

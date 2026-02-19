@@ -320,6 +320,26 @@ export type FinancialSimulationDetail = {
   providerId?: string | null;
 };
 
+
+export type SelfAssessmentSummary = {
+  id: string;
+  title: string;
+  assessmentType: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  result?: Record<string, any> | null;
+};
+
+export type SelfAssessmentDetail = {
+  summary: SelfAssessmentSummary;
+  input: Record<string, any> | null;
+  result: Record<string, any> | null;
+  report?: string | null;
+  model?: string | null;
+  providerId?: string | null;
+};
+
 export type TenantServiceUser = {
   userId: string;
   status: 'active' | 'suspended';

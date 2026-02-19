@@ -1,0 +1,31 @@
+# 1) Dump SIN CREATE/USE database
+MYSQL_PWD="HGMFzyaCRfCcSAZPxRHlmoBvHidAKGAu" \
+/Applications/XAMPP/xamppfiles/bin/mysqldump \
+  --ssl \
+  -h trolley.proxy.rlwy.net \
+  -P 22764 \
+  -u root \
+  --single-transaction \
+  --routines \
+  --triggers \
+  --add-drop-table \
+  railway \
+  > ~/Downloads/railway_prod.sql
+
+# 2) Fix collation (MySQL8 -> MariaDB)
+sed -i '' \
+  -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' \
+  -e 's/utf8mb4_0900_as_ci/utf8mb4_unicode_ci/g' \
+  ~/Downloads/railway_prod.sql
+
+# 3) Re-crear DB local y reimportar
+MYSQL_PWD="pimpamtomalacasitos" \
+/Applications/XAMPP/xamppfiles/bin/mysql \
+  -u rpenya \
+  -e "DROP DATABASE IF EXISTS provider_manager; CREATE DATABASE provider_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+MYSQL_PWD="pimpamtomalacasitos" \
+/Applications/XAMPP/xamppfiles/bin/mysql \
+  -u rpenya \
+  provider_manager \
+  < ~/Downloads/railway_prod.sql

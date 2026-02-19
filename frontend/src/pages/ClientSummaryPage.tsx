@@ -486,7 +486,7 @@ export function ClientSummaryPage() {
         : [{ name: "Sin servicios", value: 1 }];
     return {
       tooltip: { trigger: "item" },
-      legend: { bottom: 0, textStyle: { color: "#6d6b67", fontSize: 12 } },
+      legend: { show: false },
       series: [
         {
           type: "pie",
@@ -507,6 +507,11 @@ export function ClientSummaryPage() {
 
   const financialService = useMemo(
     () => contractedServices.find((service) => service.serviceCode === "simulador-financiero"),
+    [contractedServices],
+  );
+
+  const selfAssessmentService = useMemo(
+    () => contractedServices.find((service) => service.serviceCode === "autoevalucion"),
     [contractedServices],
   );
 
@@ -2860,6 +2865,15 @@ export function ClientSummaryPage() {
               <div className="chart-block">
                 <Chart option={serviceOption} height={200} />
               </div>
+              {contractedServices.length > 0 && (
+                <div className="service-legend">
+                  {contractedServices.map((service) => (
+                    <span key={service.serviceCode} className="service-pill">
+                      {service.name}
+                    </span>
+                  ))}
+                </div>
+              )}
               {contractedServices.length === 0 && (
                 <div className="muted tight">
                   {t(
@@ -2929,6 +2943,33 @@ export function ClientSummaryPage() {
               ) : (
                 <div className="muted tight">
                   {t("El simulador financiero no está asignado a este tenant.")}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h2>{t("Autoevaluacion inteligente")}</h2>
+              <p className="muted tight">
+                {t("Genera informes de cumplimiento y madurez con IA.")}
+              </p>
+              {selfAssessmentService ? (
+                canManageServices ? (
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/self-assessments`)
+                    }
+                  >
+                    {t("Abrir autoevaluaciones")}
+                  </button>
+                ) : (
+                  <div className="muted tight">
+                    {t("No tienes permisos para gestionar autoevaluaciones.")}
+                  </div>
+                )
+              ) : (
+                <div className="muted tight">
+                  {t("El servicio de autoevaluacion no está asignado a este tenant.")}
                 </div>
               )}
             </div>
