@@ -232,6 +232,8 @@ export function ClientSummaryPage() {
     cancelAtPeriodEnd: false,
   });
   const [subscriptionBusy, setSubscriptionBusy] = useState(false);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [approvalBusy, setApprovalBusy] = useState(false);
   const [subscriptionCreating, setSubscriptionCreating] = useState(false);
   const [subscriptionReviewOpen, setSubscriptionReviewOpen] = useState(false);
   const [addonServiceCode, setAddonServiceCode] = useState("");
@@ -361,11 +363,18 @@ export function ClientSummaryPage() {
           : service.priceMonthlyEur;
       return sum + Number(price || 0);
     }, 0);
-    return Number(subscriptionForm.basePriceEur || 0) + servicesTotal;
+    const subtotal = Number(subscriptionForm.basePriceEur || 0) + servicesTotal;
+    const taxRate =
+      typeof subscriptionSummary?.totals?.taxRate === "number"
+        ? subscriptionSummary.totals.taxRate
+        : 0.21;
+    const tax = subtotal * taxRate;
+    return subtotal + tax;
   }, [
     selectedServices,
     subscriptionForm.period,
     subscriptionForm.basePriceEur,
+    subscriptionSummary?.totals?.taxRate,
   ]);
   const canReactivateSubscription = useMemo(() => {
     if (!subscription || !subscription.cancelAtPeriodEnd) {
@@ -1840,6 +1849,62 @@ export function ClientSummaryPage() {
     }
   };
 
+  const handleToggleSubscriptionStatus = async () => {
+    if (!tenantId || !subscription) {
+      return;
+    }
+    if (!canManageSubscription) {
+      return;
+    }
+    try {
+      setApprovalBusy(true);
+      setSubscriptionBusy(true);
+      const nextStatus =
+        subscription.status === "active" ? "pending" : "active";
+      const updated = await api.updateTenantSubscription(tenantId, {
+        status: nextStatus,
+      });
+      setSubscriptionSummary(updated as SubscriptionSummary);
+      if ((updated as any)?.subscription) {
+        setSubscriptionForm({
+          period: updated.subscription.period,
+          basePriceEur: Number(updated.subscription.basePriceEur || 0),
+          serviceCodes: (updated.services || [])
+            .filter((item: any) => item.status !== "pending_removal")
+            .map((item: any) => item.serviceCode),
+          cancelAtPeriodEnd: Boolean(updated.subscription.cancelAtPeriodEnd),
+        });
+      }
+      await refreshTenantServices();
+      const invoiceList = await api.getTenantInvoices(tenantId);
+      setTenantInvoices(invoiceList as TenantInvoiceEntry[]);
+      emitToast(t("Suscripción actualizada"));
+    } catch (err: any) {
+      setError(err.message || t("Error aprobando pago"));
+    } finally {
+      setApprovalBusy(false);
+      setSubscriptionBusy(false);
+    }
+  };
+
+  const handleOpenStripePortal = async () => {
+    if (!tenantId) {
+      return;
+    }
+    try {
+      setPortalBusy(true);
+      const response = await api.createStripePortalSession(tenantId);
+      if (!response?.url) {
+        throw new Error("No se pudo abrir el portal de pagos");
+      }
+      window.location.href = response.url;
+    } catch (err: any) {
+      emitToast(err.message || t("No se pudo abrir el portal de pagos"));
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
   const handleCopy = async (value: string, label: string) => {
     await copyToClipboard(value, label);
   };
@@ -2558,9 +2623,16 @@ export function ClientSummaryPage() {
     const subtotal =
       lineItems.reduce((sum, [, amount]) => sum + amount, 0) ||
       Number(invoice.totalEur || 0);
-    const taxRate = 0.21;
-    const tax = subtotal * taxRate;
-    const total = subtotal + tax;
+    const fallbackTaxRate = 0.21;
+    const taxRate =
+      typeof invoice.taxRate === "number"
+        ? invoice.taxRate
+        : typeof invoice.taxEur === "number" && subtotal > 0
+          ? invoice.taxEur / subtotal
+          : fallbackTaxRate;
+    const tax =
+      typeof invoice.taxEur === "number" ? invoice.taxEur : subtotal * taxRate;
+    const total = Number(invoice.totalEur || subtotal + tax);
 
     y += 6;
     doc.setDrawColor(220);
@@ -3468,60 +3540,75 @@ export function ClientSummaryPage() {
                             </div>
                           </div>
                           <div className="form-actions">
-                            <button
-                              className="btn primary"
-                              onClick={() =>
-                                subscription
-                                  ? handleSaveSubscription()
-                                  : setSubscriptionReviewOpen(true)
-                              }
-                              disabled={
-                                !canEditSubscription ||
-                                (subscription
-                                  ? subscriptionBusy
-                                  : !canReviewSubscription)
-                              }
-                            >
-                              {subscription
-                                ? t("Guardar suscripción")
-                                : t("Revisar y confirmar")}
-                            </button>
-                            {subscription && (
-                              <>
+                            <div className="subscription-action-row">
+                              <div className="subscription-action-left">
                                 <button
-                                  className="btn"
+                                  className="btn primary"
                                   onClick={() =>
-                                    handleCancelSubscription("period")
+                                    subscription
+                                      ? handleSaveSubscription()
+                                      : setSubscriptionReviewOpen(true)
                                   }
                                   disabled={
-                                    subscriptionBusy ||
-                                    subscription.cancelAtPeriodEnd
+                                    !canEditSubscription ||
+                                    (subscription
+                                      ? subscriptionBusy
+                                      : !canReviewSubscription)
                                   }
                                 >
-                                  {t("Cancelar al final")}
+                                  {subscription
+                                    ? t("Guardar suscripción")
+                                    : t("Revisar y confirmar")}
                                 </button>
-                                {subscription.cancelAtPeriodEnd && (
-                                  <button
-                                    className="btn"
-                                    onClick={handleReactivateSubscription}
-                                    disabled={
-                                      subscriptionBusy ||
-                                      !canReactivateSubscription
-                                    }
-                                  >
-                                    {t("Reactivar")}
-                                  </button>
+                                {subscription && (
+                                  <>
+                                    {/*
+                                    <button
+                                      className="btn"
+                                      onClick={handleOpenStripePortal}
+                                      disabled={portalBusy}
+                                    >
+                                      {t("Gestionar pagos")}
+                                    </button>
+                                    */}
+                                    <button
+                                      className="btn"
+                                      onClick={() =>
+                                        handleCancelSubscription("period")
+                                      }
+                                      disabled={
+                                        subscriptionBusy ||
+                                        subscription.cancelAtPeriodEnd
+                                      }
+                                    >
+                                      {t("Cancelar al final")}
+                                    </button>
+                                    {subscription.cancelAtPeriodEnd && (
+                                      <button
+                                        className="btn"
+                                        onClick={handleReactivateSubscription}
+                                        disabled={
+                                          subscriptionBusy ||
+                                          !canReactivateSubscription
+                                        }
+                                      >
+                                        {t("Reactivar")}
+                                      </button>
+                                    )}
+                                    <button
+                                      className="btn danger"
+                                      onClick={() =>
+                                        handleCancelSubscription("now")
+                                      }
+                                      disabled={subscriptionBusy}
+                                    >
+                                      {t("Dar de baja")}
+                                    </button>
+                                  </>
                                 )}
-                                <button
-                                  className="btn danger"
-                                  onClick={() =>
-                                    handleCancelSubscription("now")
-                                  }
-                                  disabled={subscriptionBusy}
-                                >
-                                  {t("Dar de baja")}
-                                </button>
-                                {canDeleteSubscription && (
+                              </div>
+                              {subscription && canDeleteSubscription && (
+                                <div className="subscription-action-right">
                                   <button
                                     className="btn danger"
                                     onClick={handleDeleteSubscription}
@@ -3529,9 +3616,33 @@ export function ClientSummaryPage() {
                                   >
                                     {t("Eliminar suscripción")}
                                   </button>
-                                )}
-                              </>
-                            )}
+                                  {["pending", "active"].includes(
+                                    subscription.status,
+                                  ) && (
+                                    <div className="toggle-cell">
+                                      <label className="toggle-switch">
+                                        <input
+                                          type="checkbox"
+                                          checked={
+                                            subscription.status === "active"
+                                          }
+                                          disabled={
+                                            approvalBusy
+                                          }
+                                          onChange={handleToggleSubscriptionStatus}
+                                        />
+                                        <span className="toggle-slider" />
+                                      </label>
+                                      <span className="muted">
+                                        {subscription.status === "active"
+                                          ? t("Activa")
+                                          : t("Pendiente")}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}
@@ -3557,6 +3668,15 @@ export function ClientSummaryPage() {
                               </div>
                             )}
                           <div className="form-actions">
+                            {/*
+                            <button
+                              className="btn"
+                              onClick={handleOpenStripePortal}
+                              disabled={portalBusy}
+                            >
+                              {t("Gestionar pagos")}
+                            </button>
+                            */}
                             <button
                               className="btn"
                               onClick={() => handleCancelSubscription("period")}

@@ -42,6 +42,12 @@ public class Subscription {
   @Column(name = "cancelAtPeriodEnd", nullable = false)
   private boolean cancelAtPeriodEnd;
 
+  @Column(name = "stripeCustomerId", length = 64)
+  private String stripeCustomerId;
+
+  @Column(name = "stripeSubscriptionId", length = 64)
+  private String stripeSubscriptionId;
+
   @Column(name = "createdAt")
   private LocalDateTime createdAt;
 

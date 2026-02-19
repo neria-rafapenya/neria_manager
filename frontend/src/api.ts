@@ -150,7 +150,22 @@ async function requestJson<T>(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`API error ${response.status}: ${text}`);
+    let message = `API error ${response.status}`;
+    try {
+      const data = JSON.parse(text) as { message?: string; error?: string };
+      if (data?.message) {
+        message = data.message;
+      } else if (data?.error) {
+        message = data.error;
+      } else if (text) {
+        message = text;
+      }
+    } catch (error) {
+      if (text) {
+        message = text;
+      }
+    }
+    throw new Error(message);
   }
 
   if (response.status === 204) {
@@ -584,6 +599,10 @@ export const api = {
     requestJson<any>(`/tenants/${tenantId}/subscription`, {
       method: "PATCH",
       body: JSON.stringify(payload),
+    }),
+  createStripePortalSession: (tenantId: string) =>
+    requestJson<{ url: string }>(`/tenants/${tenantId}/subscription/portal`, {
+      method: "POST",
     }),
   deleteTenantServiceAssignment: (tenantId: string, tenantServiceId: string) =>
     requestJson<any>(

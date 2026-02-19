@@ -31,13 +31,22 @@ public class SubscriptionsController {
 
   @PostMapping
   public Map<String, Object> create(
-      @PathVariable String tenantId, @RequestBody CreateSubscriptionRequest dto) {
+      @PathVariable String tenantId,
+      @RequestBody CreateSubscriptionRequest dto,
+      HttpServletRequest request) {
+    AuthContext auth = AuthUtils.requireAuth(request);
+    AuthUtils.requireAdmin(auth);
     return subscriptionsService.create(tenantId, dto);
   }
 
   @PatchMapping
   public Map<String, Object> update(
-      @PathVariable String tenantId, @RequestBody UpdateSubscriptionRequest dto) {
+      @PathVariable String tenantId,
+      @RequestBody UpdateSubscriptionRequest dto,
+      HttpServletRequest request) {
+    AuthContext auth = AuthUtils.requireAuth(request);
+    AuthUtils.requireAdmin(auth);
+    AuthUtils.requireTenantScope(auth, tenantId);
     return subscriptionsService.update(tenantId, dto);
   }
 
@@ -58,5 +67,14 @@ public class SubscriptionsController {
     AuthUtils.requireAdmin(auth);
     AuthUtils.requireTenantScope(auth, tenantId);
     return subscriptionsService.deleteServiceAssignment(tenantId, tenantServiceId);
+  }
+
+  @PostMapping("/portal")
+  public Map<String, Object> portal(
+      @PathVariable String tenantId,
+      HttpServletRequest request) {
+    AuthContext auth = AuthUtils.requireAuth(request);
+    AuthUtils.requireTenantScope(auth, tenantId);
+    return subscriptionsService.createStripePortalSession(tenantId);
   }
 }

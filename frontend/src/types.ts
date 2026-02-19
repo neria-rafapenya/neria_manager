@@ -274,7 +274,7 @@ export type TenantServiceJiraSettings = {
 export type Subscription = {
   id: string;
   tenantId: string;
-  status: 'active' | 'pending' | 'cancelled';
+  status: 'active' | 'pending' | 'cancelled' | 'past_due';
   period: 'monthly' | 'annual';
   basePriceEur: number;
   currency: string;
@@ -303,6 +303,9 @@ export type SubscriptionSummary = {
   totals: {
     basePriceEur: number;
     servicesPriceEur: number;
+    subtotalEur?: number;
+    taxRate?: number;
+    taxEur?: number;
     totalEur: number;
     billedSinceStartEur: number;
   } | null;
@@ -316,9 +319,13 @@ export type TenantInvoice = {
   period: string;
   basePriceEur: number;
   servicesPriceEur: number;
+  taxRate?: number | null;
+  taxEur?: number | null;
   totalEur: number;
   currency: string;
   status: 'pending' | 'paid' | 'void';
+  stripeInvoiceId?: string | null;
+  stripePaymentIntentId?: string | null;
   issuedAt: string;
   paidAt?: string | null;
   periodStart?: string | null;

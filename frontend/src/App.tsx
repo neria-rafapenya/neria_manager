@@ -30,6 +30,7 @@ import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { AdminSubscriptionsPage } from "./pages/AdminSubscriptionsPage";
 import { BillingConfirmPage } from "./pages/BillingConfirmPage";
 import { BillingSuccessPage } from "./pages/BillingSuccessPage";
+import { BillingCancelPage } from "./pages/BillingCancelPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ServiceEditorPage } from "./pages/ServiceEditorPage";
 import { TenantServiceDetailPage } from "./pages/TenantServiceDetailPage";
@@ -45,6 +46,7 @@ function App() {
               <Route path="/reset-password" element={<LoginPage />} />
               <Route path="/billing/confirm" element={<BillingConfirmPage />} />
               <Route path="/billing/success" element={<BillingSuccessPage />} />
+              <Route path="/billing/cancel" element={<BillingCancelPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route
                   element={

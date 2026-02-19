@@ -49,3 +49,36 @@ tesseract --list-langs
 - **Error de idiomas**: verifica que `tesseract --list-langs` incluya `spa`, `cat`, `eng`.
 - **No encuentra tessdata**: revisa `TESSDATA_PREFIX` y que la ruta contenga los `.traineddata`.
 - **OCR vacío en PDFs**: algunos PDFs escaneados requieren mejor DPI; se usa `OCR_DPI=200` por defecto en backend. Si necesitas ajustar, dímelo y lo hago configurable.
+
+## Suscripciones (Stripe)
+
+Requisitos para habilitar cobros recurrentes con Stripe Billing.
+
+### Variables de entorno
+Define estas variables en el backend (Railway / local):
+```
+STRIPE_PUBLISHABLE_KEY=pk_...
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SUCCESS_URL=https://tu-frontend/billing/success?session_id={CHECKOUT_SESSION_ID}
+STRIPE_CANCEL_URL=https://tu-frontend/billing/cancel
+STRIPE_PORTAL_RETURN_URL=https://tu-frontend/billing
+BILLING_TAX_RATE=0.21
+```
+
+Notas:
+- No hagas commit de claves en el repositorio.
+- Usa claves `test` en desarrollo y `live` en producción.
+
+## Emails (SMTP)
+
+Para enviar emails transaccionales (por ejemplo, links de pago):
+```
+SMTP_HOST=smtp.tu-proveedor.com
+SMTP_PORT=587
+SMTP_USERNAME=usuario
+SMTP_PASSWORD=clave
+SMTP_FROM=billing@tu-dominio.com
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+```

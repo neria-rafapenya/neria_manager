@@ -40,7 +40,8 @@ public class AuthFilter extends OncePerRequestFilter {
         || path.startsWith("/actuator/health")
         || path.startsWith("/actuator/info")
         || path.startsWith("/billing/confirm")
-        || path.startsWith("/billing/stripe/confirm")) {
+        || path.startsWith("/billing/stripe/confirm")
+        || path.startsWith("/billing/stripe/webhook")) {
       filterChain.doFilter(request, response);
       return;
     }

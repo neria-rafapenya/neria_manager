@@ -14,6 +14,7 @@ export function AdminSubscriptionsPage() {
   const { t } = useI18n();
   const [rows, setRows] = useState<AdminSubscriptionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busyTenantId, setBusyTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -27,13 +28,16 @@ export function AdminSubscriptionsPage() {
     load();
   }, [t]);
 
-  const handleApprove = async (tenantId: string) => {
+  const handleToggleStatus = async (tenantId: string, nextStatus: string) => {
     try {
-      await api.approveSubscriptionPayment(tenantId);
+      setBusyTenantId(tenantId);
+      await api.updateTenantSubscription(tenantId, { status: nextStatus });
       const list = await api.listAdminSubscriptions();
       setRows(list as AdminSubscriptionSummary[]);
     } catch (err: any) {
       setError(err.message || t('Error aprobando pago'));
+    } finally {
+      setBusyTenantId(null);
     }
   };
 
@@ -103,21 +107,33 @@ export function AdminSubscriptionsPage() {
       render: (row) => formatEur((row.billedSinceStartEur || 0) + (row.historyTotalEur || 0))
     },
     {
-      key: 'actions',
-      label: t('Acciones'),
-      render: (row) => (
-        <div className="icon-actions">
-          {row.subscription?.status === 'pending' && (
-            <button
-              className="btn"
-              type="button"
-              onClick={() => handleApprove(row.tenantId)}
-            >
-              {t('Aprobar (mock)')}
-            </button>
-          )}
-        </div>
-      )
+      key: 'approval',
+      label: t('Aprobación'),
+      render: (row) => {
+        const status = row.subscription?.status || 'disabled';
+        const isActive = status === 'active';
+        const isPending = status === 'pending';
+        if (!isActive && !isPending) {
+          return <span className="muted">-</span>;
+        }
+        const nextStatus = isActive ? "pending" : "active";
+        return (
+          <div className="toggle-cell">
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={isActive}
+                disabled={busyTenantId === row.tenantId}
+                onChange={() => handleToggleStatus(row.tenantId, nextStatus)}
+              />
+              <span className="toggle-slider" />
+            </label>
+            <span className="muted">
+              {isActive ? t('Activa') : t('Pendiente')}
+            </span>
+          </div>
+        );
+      }
     }
   ];
 
