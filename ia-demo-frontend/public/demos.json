@@ -91,6 +91,51 @@
       "chatEndpoint": "persisted",
       "chatAuthMode": "local",
       "serviceMode": "self-assessment"
+    },
+    {
+      "code": "asistente-operativo",
+      "name": "Asistente de Soporte Operativo",
+      "description": "Soporte interno con documentacion anonimizada para productos, normativas y borradores de respuesta.",
+      "mode": "chat",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "3a76d5bd1c7cc2f759d7c80369a978c36ffa00ebdd740c7768c4274e776aab96",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "asistente-operativo",
+      "serviceId": "f7c00736-aaff-420d-acfa-64e48b7c5be5",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
+    },
+    {
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local",
+      "code": "pre-evaluacion",
+      "name": "Motor de Reglas Simulado (Pre-evaluacion)",
+      "description": "Pre-evaluacion orientativa sin scoring real.",
+      "mode": "chat",
+      "apiKey": "d583f52c41d43859a5cbe3fc0cf8b3e062b57795e1c622bf1f08b7c6aae5fa26",
+      "serviceCode": "pre-evaluacion",
+      "serviceId": "d8950761-3821-457c-9ea9-4f9201d82921"
+    },
+    {
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local",
+      "code": "chat-generic",
+      "name": "Chatbot generico",
+      "description": "Servicio conversacional general para FAQ y soporte.",
+      "mode": "chat",
+      "apiKey": "21e973f27e5077b56ea78fe80212d7a7946d344c527556f6efa17a28d474f9b7",
+      "serviceCode": "chat-generic",
+      "serviceId": "c3918d1a-1c20-4806-a81d-bd4966843aff"
     }
   ]
 }

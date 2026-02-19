@@ -644,6 +644,50 @@ export const api = {
     requestJson<any>(
       `/tenants/${tenantId}/services/${serviceCode}/self-assessments/${assessmentId}`,
     ),
+  listTenantServicePreEvaluations: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/pre-evaluations`,
+    ),
+  createTenantServicePreEvaluation: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/pre-evaluations`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  getTenantServicePreEvaluation: (
+    tenantId: string,
+    serviceCode: string,
+    evaluationId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/pre-evaluations/${evaluationId}`,
+    ),
+
+  listTenantServiceOperationalSupport: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/operational-support`,
+    ),
+  createTenantServiceOperationalSupport: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/operational-support`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  getTenantServiceOperationalSupport: (
+    tenantId: string,
+    serviceCode: string,
+    entryId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/operational-support/${entryId}`,
+    ),
+
   publicGetSurvey: (publicCode: string) =>
     requestJsonPublic<any>(`/public/surveys/${publicCode}`),
   publicSubmitSurvey: (publicCode: string, payload: any) =>
