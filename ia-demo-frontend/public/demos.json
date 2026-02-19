@@ -1,0 +1,64 @@
+{
+  "demos": [
+    {
+      "code": "correos-tickets",
+      "name": "Automatizacion Inteligente de Correos y Tickets",
+      "description": "Clasifica correos, detecta intenci\u00f3n y crea tickets autom\u00e1ticamente.",
+      "mode": "email",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "4ddecac1dad8c0e2f6adb04e6617b913697144ed3ef7809b879e8d98f6610ce2",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "correos-tickets",
+      "serviceId": "00f82156-79c5-4062-9c63-8a731796b388",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
+    },
+    {
+      "code": "chat-sql",
+      "name": "Chat SQL",
+      "description": "Consulta bases de datos con lenguaje natural.",
+      "mode": "chat",
+      "apiBaseUrl": "https://ia-backend-develop.up.railway.app",
+      "apiKey": "7d26e17f8f4e04da8506a9e82f22c0a86a530d178d405034f38a5278f3a31baa",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4o-mini",
+      "serviceCode": "chat-sql",
+      "serviceId": "31424166-30d1-43bf-b0c1-4e3c9e33dde8",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
+    },
+    {
+      "code": "chat-ocr",
+      "name": "Chat OCR",
+      "description": "Consulta documentos con OCR.",
+      "mode": "chat",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "ca26232c65bcc5a42d149e529507651d38aea86df7484f06f89dbf0b53fdbb68",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "chat-ocr",
+      "serviceId": "1a9679a3-dcbf-483a-a196-56e49c6a5795",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
+    },
+    {
+      "code": "sistema-encuestas",
+      "name": "Sistema de Encuestas Inteligentes",
+      "description": "Recoge respuestas y genera insights autom\u00e1ticamente.",
+      "mode": "surveys",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "f07dee7eac50a870fadf5c23907096ceef9e3de98627d9c785f5028c5ac39ec8",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "sistema-encuestas",
+      "serviceId": "be6761dc-eaf8-45bd-9919-ba5628a83d6a",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
+    }
+  ]
+}
