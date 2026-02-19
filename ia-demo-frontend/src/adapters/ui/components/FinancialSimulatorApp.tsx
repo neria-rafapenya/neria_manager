@@ -1,6 +1,6 @@
 import { useAuthContext, AuthProvider } from "../../../infrastructure/contexts";
 import {
-  CHAT_AUTH_MODE,
+  getChatAuthMode,
   isAuthModeNone,
 } from "../../../infrastructure/config/chatConfig";
 import FinancialSimulatorLayout from "../layout/FinancialSimulatorLayout";
@@ -26,8 +26,8 @@ const FinancialWithAuth = () => {
 };
 
 export const FinancialSimulatorApp = () => {
-  if (isAuthModeNone) {
-    console.log("[FinancialSimulatorApp] CHAT_AUTH_MODE =", CHAT_AUTH_MODE, "(none)");
+  if (isAuthModeNone()) {
+    console.log("[FinancialSimulatorApp] CHAT_AUTH_MODE =", getChatAuthMode(), "(none)");
     return (
       <FinancialSimulatorLayout>
         <FinancialSimulatorPage />
@@ -35,7 +35,7 @@ export const FinancialSimulatorApp = () => {
     );
   }
 
-  console.log("[FinancialSimulatorApp] CHAT_AUTH_MODE =", CHAT_AUTH_MODE);
+  console.log("[FinancialSimulatorApp] CHAT_AUTH_MODE =", getChatAuthMode());
   return (
     <AuthProvider>
       <FinancialWithAuth />
