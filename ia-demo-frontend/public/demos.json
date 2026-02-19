@@ -20,7 +20,7 @@
       "name": "Chat SQL",
       "description": "Consulta bases de datos con lenguaje natural.",
       "mode": "chat",
-      "apiBaseUrl": "https://ia-backend-develop.up.railway.app",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
       "apiKey": "7d26e17f8f4e04da8506a9e82f22c0a86a530d178d405034f38a5278f3a31baa",
       "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
       "providerId": "500672f6-0365-4cae-a026-129f871875f9",
