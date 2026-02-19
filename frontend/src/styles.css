@@ -895,7 +895,7 @@ h1 {
 .pre-wrap {
   white-space: pre-wrap;
   font-size: 0.85rem;
-  color: var(--text);
+  color: var(--ink);
   background: rgba(0, 0, 0, 0.04);
   padding: 12px;
   border-radius: var(--radius-md);
@@ -2094,6 +2094,24 @@ label input[type="radio"] {
 
 .chart-block .echarts-for-react {
   width: 100%;
+}
+
+.service-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.service-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 20, 20, 0.08);
+  background: rgba(20, 20, 20, 0.04);
+  color: var(--ink);
+  font-size: 12px;
 }
 
 .chart-row {

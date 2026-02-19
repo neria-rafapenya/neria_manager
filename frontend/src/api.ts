@@ -622,6 +622,28 @@ export const api = {
     requestJson<any>(
       `/tenants/${tenantId}/services/${serviceCode}/financial-simulations/${simulationId}`,
     ),
+
+  listTenantServiceSelfAssessments: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/self-assessments`,
+    ),
+  createTenantServiceSelfAssessment: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/self-assessments`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  getTenantServiceSelfAssessment: (
+    tenantId: string,
+    serviceCode: string,
+    assessmentId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/self-assessments/${assessmentId}`,
+    ),
   publicGetSurvey: (publicCode: string) =>
     requestJsonPublic<any>(`/public/surveys/${publicCode}`),
   publicSubmitSurvey: (publicCode: string, payload: any) =>

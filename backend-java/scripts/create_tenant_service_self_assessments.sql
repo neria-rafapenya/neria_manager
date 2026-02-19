@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS tenant_service_self_assessments (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  serviceCode VARCHAR(64) NOT NULL,
+  title VARCHAR(160) NULL,
+  assessmentType VARCHAR(64) NOT NULL,
+  status VARCHAR(16) NOT NULL,
+  model VARCHAR(64) NULL,
+  providerId VARCHAR(36) NULL,
+  inputJson TEXT,
+  resultJson TEXT,
+  reportText TEXT,
+  createdAt DATETIME,
+  updatedAt DATETIME,
+  INDEX idx_tenant_service_self_assessments (tenantId, serviceCode),
+  INDEX idx_tenant_self_assessments_created (tenantId, createdAt)
+);

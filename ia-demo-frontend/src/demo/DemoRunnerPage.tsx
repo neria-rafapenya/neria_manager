@@ -6,6 +6,7 @@ import { setRuntimeConfig } from "../infrastructure/config/runtimeConfig";
 import { ChatbotApp } from "../adapters/ui/components/ChatbotApp";
 import { EmailAutomationApp } from "../adapters/ui/components/EmailAutomationApp";
 import { FinancialSimulatorApp } from "../adapters/ui/components/FinancialSimulatorApp";
+import { SelfAssessmentApp } from "../adapters/ui/components/SelfAssessmentApp";
 import { SurveyDemoPage } from "./SurveyDemoPage";
 
 export const DemoRunnerPage = () => {
@@ -52,7 +53,9 @@ export const DemoRunnerPage = () => {
           ? "email"
           : demo.mode === "financial"
             ? "financial"
-            : "chat"),
+            : demo.mode === "self-assessment"
+              ? "self-assessment"
+              : "chat"),
       apiBaseUrl: demo.apiBaseUrl || undefined,
       apiUrl: demo.apiUrl || undefined,
       apiKey: demo.apiKey || undefined,
@@ -105,6 +108,9 @@ export const DemoRunnerPage = () => {
     }
     if (mode === "financial") {
       return <FinancialSimulatorApp />;
+    }
+    if (mode === "self-assessment") {
+      return <SelfAssessmentApp />;
     }
     return <ChatbotApp />;
   };

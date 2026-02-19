@@ -141,6 +141,10 @@ public class TenantServicesService {
     return override;
   }
 
+  private boolean forceAutoEvalCapabilities(String serviceCode) {
+    return "autoevalucion".equals(serviceCode);
+  }
+
   private ServiceCatalog requireService(String serviceCode) {
     return serviceCatalogRepository
         .findByCode(serviceCode)
@@ -388,6 +392,12 @@ public class TenantServicesService {
       } else {
         config.setSemanticSearchEnabled(semanticSearchEnabled);
       }
+    }
+    if (forceAutoEvalCapabilities(normalized)) {
+      config.setFileStorageEnabled(true);
+      config.setDocumentProcessingEnabled(true);
+      config.setOcrEnabled(true);
+      config.setSemanticSearchEnabled(true);
     }
     if (documentDomain != null) {
       String trimmed = documentDomain.trim();

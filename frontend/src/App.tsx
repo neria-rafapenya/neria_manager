@@ -36,6 +36,7 @@ import { ServiceEditorPage } from "./pages/ServiceEditorPage";
 import { TenantServiceDetailPage } from "./pages/TenantServiceDetailPage";
 import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
 import { TenantServiceFinancialSimulationsPage } from "./pages/TenantServiceFinancialSimulationsPage";
+import { TenantServiceSelfAssessmentsPage } from "./pages/TenantServiceSelfAssessmentsPage";
 import { PublicSurveyPage } from "./pages/PublicSurveyPage";
 
 function App() {
@@ -94,6 +95,15 @@ function App() {
                     element={
                       <TenantServiceFinancialSimulationsPage
                         defaultServiceCode="simulador-financiero"
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="clients/:tenantId/self-assessments"
+                    element={
+                      <TenantServiceSelfAssessmentsPage
+                        defaultServiceCode="autoevalucion"
                       />
                     }
                   />

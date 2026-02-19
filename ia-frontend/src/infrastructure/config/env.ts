@@ -67,7 +67,7 @@ export const getModel = (): string => readEnv("VITE_MODEL", "");
 export const getChatEndpoint = (): string =>
   readEnv("VITE_CHAT_ENDPOINT", "persisted");
 
-export type ServiceMode = "chat" | "email" | "financial";
+export type ServiceMode = "chat" | "email" | "financial" | "self-assessment";
 
 export const getServiceMode = (): ServiceMode => {
   const raw = readEnv("VITE_SERVICE_MODE", "").trim().toLowerCase();

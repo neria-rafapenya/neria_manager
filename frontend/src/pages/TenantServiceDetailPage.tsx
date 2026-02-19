@@ -40,6 +40,7 @@ export function TenantServiceDetailPage() {
   const canManageConversations = role === "admin";
   const canManageEmailAutomation = role === "admin" || role === "tenant";
   const isFinancialService = serviceCode === "simulador-financiero";
+  const isSelfAssessmentService = serviceCode === "autoevalucion";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -2288,6 +2289,26 @@ export function TenantServiceDetailPage() {
                     }
                   >
                     {t("Abrir panel de simulaciones")}
+                  </button>
+                </div>
+                <div className="section-divider" />
+              </>
+            )}
+
+            {isSelfAssessmentService && (
+              <>
+                <h4>{t("Autoevaluacion inteligente")}</h4>
+                <p className="muted mb-3">
+                  {t("Gestiona autoevaluaciones y genera informes de cumplimiento con IA.")}
+                </p>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      navigate(`/clients/${tenantId}/self-assessments`)
+                    }
+                  >
+                    {t("Abrir panel de autoevaluaciones")}
                   </button>
                 </div>
                 <div className="section-divider" />

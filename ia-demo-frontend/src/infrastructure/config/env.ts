@@ -116,7 +116,7 @@ export const getChatEndpoint = (): string => {
   return runtimeValue || readEnv("VITE_CHAT_ENDPOINT", "persisted");
 };
 
-export type ServiceMode = "chat" | "email" | "financial";
+export type ServiceMode = "chat" | "email" | "financial" | "self-assessment";
 
 export const getServiceMode = (): ServiceMode => {
   const runtime = getRuntimeConfig();

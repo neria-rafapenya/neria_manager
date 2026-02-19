@@ -75,6 +75,22 @@
       "chatEndpoint": "persisted",
       "chatAuthMode": "local",
       "serviceMode": "financial"
+    },
+    {
+      "code": "autoevalucion",
+      "name": "Sistema de Autoevaluacion Inteligente",
+      "description": "Evalua cumplimiento y madurez con cuestionarios y recomendaciones IA.",
+      "mode": "self-assessment",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": "aeb9e1fd4e3eb98fe23f1fc57273751599450a86c79b95e0b56f3a57bc189730",
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "autoevalucion",
+      "serviceId": "e261c4a0-94c5-41f9-bec8-996037aa56e8",
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local",
+      "serviceMode": "self-assessment"
     }
   ]
 }
