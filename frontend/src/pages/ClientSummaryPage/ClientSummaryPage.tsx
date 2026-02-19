@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../api";
-import { Chart, Sparkline } from "../components/charts/Charts";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
-import { PageWithDocs } from "../components/PageWithDocs";
-import { LoaderComponent } from "../components/LoaderComponent";
-import { StatusBadgeIcon } from "../components/StatusBadgeIcon";
-import { InfoTooltip } from "../components/InfoTooltip";
-import { useAuth } from "../auth";
-import { useDashboard } from "../dashboard";
-import { emitToast } from "../toast";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "../../api";
+
+import { DataTable, type DataTableColumn } from "../../components/DataTable";
+import { PageWithDocs } from "../../components/PageWithDocs";
+import { LoaderComponent } from "../../components/LoaderComponent";
+import { StatusBadgeIcon } from "../../components/StatusBadgeIcon";
+import { InfoTooltip } from "../../components/InfoTooltip";
+import { useAuth } from "../../auth";
+import { useDashboard } from "../../dashboard";
+import { emitToast } from "../../toast";
 import Swal from "sweetalert2";
-import { MultiSelectDropdown } from "../components/MultiSelectDropdown";
+import { MultiSelectDropdown } from "../../components/MultiSelectDropdown";
 import { jsPDF } from "jspdf";
 import type {
   ApiKeySummary,
@@ -29,13 +29,20 @@ import type {
   TenantInvoiceEntry,
   UsageEvent,
   UsageSummary,
-} from "../types";
-import { buildDailyUsage } from "../utils/chartData";
-import { formatEur, formatUsdWithEur } from "../utils/currency";
-import { copyToClipboard } from "../utils/clipboard";
-import { getTenantApiKey, storeTenantApiKey } from "../utils/apiKeyStorage";
-import { Z2_EMPHASIS_LIFT } from "echarts/types/src/util/states.js";
-import { useI18n } from "../i18n/I18nProvider";
+} from "../../types";
+import { buildDailyUsage } from "../../utils/chartData";
+import { formatEur, formatUsdWithEur } from "../../utils/currency";
+import { copyToClipboard } from "../../utils/clipboard";
+import { getTenantApiKey, storeTenantApiKey } from "../../utils/apiKeyStorage";
+
+import { useI18n } from "../../i18n/I18nProvider";
+import { AuditCard } from "./AuditCard";
+import { ChatUsersCard } from "./ChatUsersCard";
+import { ServicesAssignedCard } from "./ServicesAssignedCard";
+import { ServicesOverviewCard } from "./ServicesOverviewCard";
+import { TenantSummaryCard } from "./TenantSummaryCard";
+import { UsageCards } from "./UsageCards";
+import type { RenderEditableRow, TenantFieldKey, TenantFormState } from "./types";
 
 export function ClientSummaryPage() {
   const { tenantId } = useParams();
@@ -61,26 +68,6 @@ export function ClientSummaryPage() {
   const canManagePolicies = role === "admin";
   const { selectedTenantId, setSelectedTenantId } = useDashboard();
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  type TenantFormState = {
-    name: string;
-    billingEmail: string;
-    companyName: string;
-    contactName: string;
-    phone: string;
-    addressLine1: string;
-    addressLine2: string;
-    city: string;
-    postalCode: string;
-    country: string;
-    billingAddressLine1: string;
-    billingAddressLine2: string;
-    billingCity: string;
-    billingPostalCode: string;
-    billingCountry: string;
-    taxId: string;
-    website: string;
-  };
-  type TenantFieldKey = keyof TenantFormState;
   const [editingField, setEditingField] = useState<TenantFieldKey | null>(null);
   const [editingDraft, setEditingDraft] = useState("");
   const skipBlurConfirmRef = useRef(false);
@@ -1628,7 +1615,7 @@ export function ClientSummaryPage() {
     }
   };
 
-  const renderEditableRow = (
+  const renderEditableRow: RenderEditableRow = (
     label: string,
     field: TenantFieldKey,
     displayValue: string,
@@ -2708,374 +2695,35 @@ export function ClientSummaryPage() {
       {error && <div className="error-banner">{error}</div>}
       <div className="tenant-detail-layout row">
         <div className="tenant-detail-summary col-md-3 col-xxl-4">
-          <div className="card">
-            <div>
-              <h2>{t("Resumen")}</h2>
-              <p className="muted">{t("Datos generales del cliente.")}</p>
-            </div>
-            {!tenant?.billingEmail && (
-              <div className="info-banner">
-                {t(
-                  "Falta el email de facturación. Algunas acciones quedarán bloqueadas hasta completarlo.",
-                )}
-              </div>
-            )}
-            <div className="mini-list summary-list">
-              <div className="mini-row">
-                <span>ID</span>
-                <span>{tenant?.id || tenantId}</span>
-              </div>
-              {renderEditableRow(
-                t("Nombre"),
-                "name",
-                tenantForm.name,
-                t("Nombre del cliente"),
-              )}
-              <div className="mini-row summary-inline-row">
-                <span>{t("Estado")}</span>
-                <StatusBadgeIcon status={tenant?.status || "active"} />
-              </div>
-              <div className="mini-row summary-inline-row">
-                <span>{t("Kill switch")}</span>
-                <span>{tenant?.killSwitch ? t("ON") : t("OFF")}</span>
-              </div>
-              {renderEditableRow(
-                t("Email facturación"),
-                "billingEmail",
-                tenantForm.billingEmail || t("No definido"),
-                t("billing@cliente.com"),
-                "email",
-              )}
-              {renderEditableRow(
-                t("Empresa"),
-                "companyName",
-                tenantForm.companyName,
-                t("Razón social"),
-              )}
-              {renderEditableRow(
-                t("Responsable"),
-                "contactName",
-                tenantForm.contactName,
-                t("Nombre del responsable"),
-              )}
-              {renderEditableRow(
-                t("Teléfono"),
-                "phone",
-                tenantForm.phone,
-                t("+34 600 000 000"),
-                "tel",
-              )}
-              {renderEditableRow(
-                t("Web"),
-                "website",
-                tenantForm.website,
-                t("https://cliente.com"),
-              )}
-              {renderEditableRow(
-                t("CIF/NIF"),
-                "taxId",
-                tenantForm.taxId,
-                t("B12345678"),
-              )}
-              {renderEditableRow(
-                t("Dirección"),
-                "addressLine1",
-                tenantForm.addressLine1,
-                t("Calle, número"),
-              )}
-              {renderEditableRow(
-                t("Dirección (2)"),
-                "addressLine2",
-                tenantForm.addressLine2,
-                t("Piso, puerta"),
-              )}
-              {renderEditableRow(
-                t("Ciudad"),
-                "city",
-                tenantForm.city,
-                t("Madrid"),
-              )}
-              {renderEditableRow(
-                t("Código postal"),
-                "postalCode",
-                tenantForm.postalCode,
-                t("28001"),
-              )}
-              {renderEditableRow(
-                t("País"),
-                "country",
-                tenantForm.country,
-                t("España"),
-              )}
-              {renderEditableRow(
-                t("Dirección facturación"),
-                "billingAddressLine1",
-                tenantForm.billingAddressLine1,
-                t("Calle, número"),
-              )}
-              {renderEditableRow(
-                t("Dirección facturación (2)"),
-                "billingAddressLine2",
-                tenantForm.billingAddressLine2,
-                t("Piso, puerta"),
-              )}
-              {renderEditableRow(
-                t("Ciudad facturación"),
-                "billingCity",
-                tenantForm.billingCity,
-                t("Madrid"),
-              )}
-              {renderEditableRow(
-                t("CP facturación"),
-                "billingPostalCode",
-                tenantForm.billingPostalCode,
-                t("28001"),
-              )}
-              {renderEditableRow(
-                t("País facturación"),
-                "billingCountry",
-                tenantForm.billingCountry,
-                t("España"),
-              )}
-            </div>
-          </div>
+          <TenantSummaryCard
+            tenant={tenant}
+            tenantId={tenantId}
+            tenantForm={tenantForm}
+            renderEditableRow={renderEditableRow}
+            t={t}
+          />
         </div>
 
         <div className="tenant-detail-content col-md-9 col-xxl-8">
           <section className="masonry tenant-detail-masonry">
-            <div className="card">
-              <h2>{t("Servicios habilitados")}</h2>
-              <p className="muted tight">
-                {t("Servicios incluidos en la suscripción actual.")}
-              </p>
-              <div className="chart-block">
-                <Chart option={serviceOption} height={200} />
-              </div>
-              {contractedServices.length > 0 && (
-                <div className="service-legend">
-                  {contractedServices.map((service) => (
-                    <span key={service.serviceCode} className="service-pill">
-                      {service.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {contractedServices.length === 0 && (
-                <div className="muted tight">
-                  {t(
-                    "No hay servicios contratados. Crea una suscripción para activar servicios.",
-                  )}
-                </div>
-              )}
-              {canManageSubscription && (
-                <div className="mt-3">
-                  <button
-                    className="btn primary"
-                    onClick={() => setAssignServicesModalOpen(true)}
-                  >
-                    {t("Asignar servicios")}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* {!(isTenant && pricingSelection.length === 0) && (
-              <div className="card">
-                <div>
-                  <h2>API Keys</h2>
-                  <p className="muted ">Keys asociadas a este tenant.</p>
-                </div>
-
-                {canManageApiKeys && !canCreateApiKey && (
-                  <div className="muted">
-                    Para crear una API key necesitas tener provider, política y
-                    pricing configurados.
-                  </div>
-                )}
-                <div className="mini-list">
-                  {apiKeys.map((key) => (
-                    <div className="mini-row api-keys-row" key={key.id}>
-                      <div className="row align-items-center">
-                        <div className="col-9">
-                          <div>{key.name}</div>
-                        </div>
-                        <div className="col-3 d-flex align-items-center justify-content-end">
-                          <StatusBadgeIcon status={key.status} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {apiKeys.length === 0 && (
-                  <div className="muted">Sin API keys.</div>
-                )}
-                <div className="form-grid">
-                  <label>
-                    API key actual
-                    <div className="input-with-action">
-                      <input
-                        value={storedApiKey || "No disponible"}
-                        readOnly
-                      />
-                      <button className="btn" onClick={handleCopyStoredApiKey}>
-                        Copiar
-                      </button>
-                    </div>
-                  </label>
-                </div>
-
-                {canManageApiKeys && (
-                  <button
-                    className="btn primary"
-                    onClick={() => {
-                      setNewApiKeyName("");
-                      setCreatedApiKey(null);
-                      setApiKeyModalOpen(true);
-                    }}
-                    disabled={!canCreateApiKey}
-                  >
-                    Crear API key
-                  </button>
-                )}
-              </div>
-            )} */}
-
-            <div className="card">
-              <h2>{t("Tendencia de uso")}</h2>
-              <p className="muted tight">
-                {t("Tokens y coste por día (últimos 7 días).")}
-              </p>
-              <Chart option={usageTrendOption} height={220} />
-              <div className="chart-row">
-                <div className="chart-metric">
-                  <span className="muted">{t("Tokens 7d")}</span>
-                  <div className="metric">
-                    {dailyUsage.tokens
-                      .reduce((acc, value) => acc + value, 0)
-                      .toLocaleString()}
-                  </div>
-                  <Sparkline
-                    data={dailyUsage.labels.map((label, index) => ({
-                      label,
-                      value: dailyUsage.tokens[index] || 0,
-                    }))}
-                  />
-                </div>
-                <div className="chart-metric">
-                  <span className="muted">{t("Coste 7d (USD/EUR)")}</span>
-                  <div className="metric">
-                    {formatUsdWithEur(
-                      dailyUsage.cost.reduce((acc, value) => acc + value, 0),
-                    )}
-                  </div>
-                  <Sparkline
-                    data={dailyUsage.labels.map((label, index) => ({
-                      label,
-                      value: Number(dailyUsage.cost[index] || 0),
-                    }))}
-                    color="#d8512a"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <h2>{t("Uso (hoy)")}</h2>
-              <p className="muted tight">{t("Resumen de consumo diario.")}</p>
-              {usageSummary ? (
-                <div className="mini-list">
-                  <div className="mini-row usage-today-row">
-                    <div className="row align-items-center">
-                      <div className="col-6">{t("Tokens")}</div>
-                      <div className="col-6 text-end">
-                        {usageSummary.tokens}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mini-row usage-today-row">
-                    <div className="row align-items-center">
-                      <div className="col-6">{t("Coste USD")}</div>
-                      <div className="col-6 text-end">
-                        {formatUsdWithEur(usageSummary.costUsd)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="muted">{t("Sin datos de uso.")}</div>
-              )}
-            </div>
-
-            <div className="card">
-              <div>
-                <h2>{t("Logs de uso")}</h2>
-                <p className="muted">{t("Últimos eventos de consumo.")}</p>
-              </div>
-
-              <div className="mini-list usage-logs-list">
-                {usageEvents.map((event) => (
-                  <div className="mini-row usage-logs-row" key={event.id}>
-                    <div className="row align-items-center">
-                      <div className="col-6">
-                        <div>{event.model}</div>
-                        <div className="muted">
-                          {event.serviceCode
-                            ? serviceOverviewMap.get(event.serviceCode)?.name ||
-                              event.serviceCode
-                            : t("general")}
-                        </div>
-                      </div>
-                      <div className="col-6 text-end">
-                        <div>
-                          {t("{count} tokens", {
-                            count: event.tokensIn + event.tokensOut,
-                          })}
-                        </div>
-                        <div className="muted">
-                          {formatUsdWithEur(event.costUsd)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-12 muted">
-                        {new Date(event.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {usageEvents.length === 0 && (
-                <div className="muted">{t("Sin eventos de uso.")}</div>
-              )}
-              <a className="btn primary" href={`/clients/${tenantId}/usage`}>
-                {t("Ver Usage")}
-              </a>
-            </div>
-
-            <div className="card">
-              <h2>{t("Auditoría")}</h2>
-              <p className="muted tight">
-                {t("Eventos de auditoría más recientes.")}
-              </p>
-              <div className="audit-list audit-list-scroll">
-                {auditEvents.map((event) => (
-                  <div className="audit-item" key={event.id}>
-                    <div>
-                      <div className="audit-action">{event.action}</div>
-                      <div className="muted">
-                        {new Date(event.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    <span className={`status ${event.status}`}>
-                      {event.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {auditEvents.length === 0 && (
-                <div className="muted">{t("Sin auditoría.")}</div>
-              )}
-            </div>
+            <ServicesOverviewCard
+              contractedServices={contractedServices}
+              serviceOption={serviceOption}
+              canManageSubscription={canManageSubscription}
+              onAssignServices={() => setAssignServicesModalOpen(true)}
+              t={t}
+            />
+            <UsageCards
+              usageTrendOption={usageTrendOption}
+              dailyUsage={dailyUsage}
+              usageSummary={usageSummary}
+              usageEvents={usageEvents}
+              serviceOverviewMap={serviceOverviewMap}
+              tenantId={tenantId}
+              t={t}
+              formatUsdWithEur={formatUsdWithEur}
+            />
+            <AuditCard auditEvents={auditEvents} t={t} />
           </section>
         </div>
       </div>
@@ -3387,25 +3035,27 @@ export function ClientSummaryPage() {
                   {subscriptionCreating ? (
                     <LoaderComponent label={t("Procesando suscripción...")} />
                   ) : (
-                    <>
-                      {!subscription && (
-                        <>
-                          <div className="muted">
-                            {t("Este cliente aún no tiene suscripción.")}
-                            {canManageSubscription
-                              ? t(" Puedes crearla desde aquí.")
-                              : t(
-                                  " Contacta con un administrador para crearla.",
-                                )}
-                          </div>
-                          {canManageSubscription && (
-                            <div className="info-banner">
-                              {t(
-                                "Para crear la suscripción necesitas email de facturación, una API key activa y un precio base mayor que 0.",
-                              )}
-                            </div>
-                          )}
-                        </>
+        <>
+          <ServicesAssignedCard
+            contractedServices={contractedServices}
+            subscription={subscription}
+            canManageServices={canManageServices}
+            canManageSubscription={canManageSubscription}
+            canDeleteServiceAssignment={canDeleteServiceAssignment}
+            serviceRemoveBusy={serviceRemoveBusy}
+            tenantId={tenantId}
+            navigate={navigate}
+            formatEur={formatEur}
+            onUnassignService={handleUnassignService}
+            onDeleteServiceAssignment={handleDeleteServiceAssignment}
+            t={t}
+          />
+          <ChatUsersCard
+            chatUsers={chatUsers}
+            chatUserColumns={chatUserColumns}
+            t={t}
+          />
+        </>
                       )}
                       {subscription && (
                         <div className="mini-list">
