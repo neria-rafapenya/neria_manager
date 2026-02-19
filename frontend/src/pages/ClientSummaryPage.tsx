@@ -500,6 +500,11 @@ export function ClientSummaryPage() {
     };
   }, [contractedServices]);
 
+  const surveyService = useMemo(
+    () => contractedServices.find((service) => service.serviceCode === "sistema-encuestas"),
+    [contractedServices],
+  );
+
   const pricingOptions = useMemo(
     () =>
       pricing.map((entry) => ({
@@ -2868,6 +2873,31 @@ export function ClientSummaryPage() {
               )}
             </div>
 
+            <div className="card">
+              <h2>{t("Encuestas inteligentes")}</h2>
+              <p className="muted tight">
+                {t("Gestiona encuestas públicas y analiza resultados con IA.")}
+              </p>
+              {surveyService ? (
+                canManageServices ? (
+                  <button
+                    className="btn primary"
+                    onClick={() => navigate(`/clients/${tenantId}/surveys`)}
+                  >
+                    {t("Abrir gestor de encuestas")}
+                  </button>
+                ) : (
+                  <div className="muted tight">
+                    {t("No tienes permisos para gestionar encuestas.")}
+                  </div>
+                )
+              ) : (
+                <div className="muted tight">
+                  {t("El servicio de encuestas no está asignado a este tenant.")}
+                </div>
+              )}
+            </div>
+
             {/* {!(isTenant && pricingSelection.length === 0) && (
               <div className="card">
                 <div>
@@ -4210,9 +4240,7 @@ export function ClientSummaryPage() {
                             type="button"
                             onClick={() =>
                               navigate(
-                                service.serviceCode === "sistema-encuestas"
-                                  ? `/clients/${tenantId}/services/${service.serviceCode}/surveys`
-                                  : `/clients/${tenantId}/services/${service.serviceCode}`,
+                                `/clients/${tenantId}/services/${service.serviceCode}`,
                               )
                             }
                           >
