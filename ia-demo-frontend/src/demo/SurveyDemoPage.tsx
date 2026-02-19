@@ -30,7 +30,12 @@ const seedSurveys: SurveyItem[] = [
   },
 ];
 
-const mockQuestions = [
+type SurveyQuestion =
+  | { id: string; label: string; type: "rating"; scale: number }
+  | { id: string; label: string; type: "text" }
+  | { id: string; label: string; type: "multi" | "single"; options: string[] };
+
+const mockQuestions: SurveyQuestion[] = [
   {
     id: "q1",
     label: "¿Cómo valorarías la experiencia general?",
