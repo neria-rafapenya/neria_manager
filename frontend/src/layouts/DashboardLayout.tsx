@@ -39,7 +39,9 @@ export function DashboardLayout() {
   };
   const pageTitle =
     titleMap[location.pathname] ||
-    (location.pathname.startsWith("/services") ? t("Servicios") : "Neria Manager");
+    (location.pathname.startsWith("/services")
+      ? t("Servicios")
+      : "Neria Manager");
   const [activeEntry, setActiveEntry] = useState<DocumentationEntry | null>(
     null,
   );
@@ -47,8 +49,7 @@ export function DashboardLayout() {
   const isClientRoute = location.pathname.startsWith("/clients/");
   const isObservabilityRoute =
     isClientRoute && location.pathname.includes("/observability");
-  const isUsageRoute =
-    isClientRoute && location.pathname.includes("/usage");
+  const isUsageRoute = isClientRoute && location.pathname.includes("/usage");
   const navItems =
     role === "tenant"
       ? [
@@ -62,11 +63,15 @@ export function DashboardLayout() {
       : [
           { label: t("Resumen"), to: "/" },
           { label: t("Clientes"), to: "/tenants" },
-          ...(role === "admin" ? [{ label: t("Servicios"), to: "/services" }] : []),
+          ...(role === "admin"
+            ? [{ label: t("Servicios"), to: "/services" }]
+            : []),
           { label: t("Uso"), to: "/usage" },
           { label: t("Auditoría"), to: "/audit" },
           { label: t("Docs"), to: "/docs" },
-          ...(role === "admin" ? [{ label: t("Configuración"), to: "/settings" }] : []),
+          ...(role === "admin"
+            ? [{ label: t("Configuración"), to: "/settings" }]
+            : []),
           { label: t("Perfil"), to: "/profile" },
           ...(role === "admin"
             ? [
@@ -187,9 +192,9 @@ export function DashboardLayout() {
       <header className="app-header">
         <div className="header-inner">
           <div className="header-brand">
-            <span className="brand-mark">
-              <LogoNeria size={32} />
-            </span>
+            {/* <span className="brand-mark"> */}
+            <LogoNeria size={28} />
+            {/* </span> */}
             <div>
               <div className="brand-title">Neria Manager</div>
             </div>
@@ -225,7 +230,9 @@ export function DashboardLayout() {
                       {(name || user || "").trim().charAt(0).toUpperCase()}
                     </span>
                   </NavLink>
-                  <span>{t("Usuario: {name}", { name: name || user || "" })}</span>
+                  <span>
+                    {t("Usuario: {name}", { name: name || user || "" })}
+                  </span>
                 </div>
               )}
               <button className="btn btn-ghost" onClick={logout}>
@@ -287,15 +294,15 @@ export function DashboardLayout() {
                   className="btn"
                   onClick={() =>
                     selectedTenantId
-                  ? navigate(`/clients/${selectedTenantId}`)
-                  : navigate(-1)
-              }
-            >
-              {t("Volver")}
-            </button>
+                      ? navigate(`/clients/${selectedTenantId}`)
+                      : navigate(-1)
+                  }
+                >
+                  {t("Volver")}
+                </button>
+              )}
+            </>
           )}
-        </>
-      )}
         </div>
 
         <Outlet />
