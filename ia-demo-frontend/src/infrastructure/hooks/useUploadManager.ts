@@ -15,6 +15,7 @@ export interface UseUploadManager {
   openModal: () => void;
   closeModal: () => void;
   handleFilesSelected: (files: FileList | null) => Promise<void>;
+  uploadPending: () => Promise<ChatAttachment[]>;
   removeAttachment: (key: string) => void;
   clearAttachments: () => void;
 }
@@ -51,6 +52,10 @@ export const useUploadManager = (): UseUploadManager => {
     }
   };
 
+  const uploadPending = async () => {
+    return attachments;
+  };
+
   const removeAttachment = (key: string) => {
     setAttachments((prev) => prev.filter((att) => att.key !== key));
   };
@@ -68,6 +73,7 @@ export const useUploadManager = (): UseUploadManager => {
     openModal,
     closeModal,
     handleFilesSelected,
+    uploadPending,
     removeAttachment,
     clearAttachments,
   };

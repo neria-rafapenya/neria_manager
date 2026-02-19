@@ -1,6 +1,6 @@
 import { useAuthContext, AuthProvider } from "../../../infrastructure/contexts";
 import {
-  CHAT_AUTH_MODE,
+  getChatAuthMode,
   isAuthModeNone,
 } from "../../../infrastructure/config/chatConfig";
 import SelfAssessmentLayout from "../layout/SelfAssessmentLayout";
@@ -26,8 +26,8 @@ const AssessmentWithAuth = () => {
 };
 
 export const SelfAssessmentApp = () => {
-  if (isAuthModeNone) {
-    console.log("[SelfAssessmentApp] CHAT_AUTH_MODE =", CHAT_AUTH_MODE, "(none)");
+  if (isAuthModeNone()) {
+    console.log("[SelfAssessmentApp] CHAT_AUTH_MODE =", getChatAuthMode(), "(none)");
     return (
       <SelfAssessmentLayout>
         <SelfAssessmentPage />
@@ -35,7 +35,7 @@ export const SelfAssessmentApp = () => {
     );
   }
 
-  console.log("[SelfAssessmentApp] CHAT_AUTH_MODE =", CHAT_AUTH_MODE);
+  console.log("[SelfAssessmentApp] CHAT_AUTH_MODE =", getChatAuthMode());
   return (
     <AuthProvider>
       <AssessmentWithAuth />
