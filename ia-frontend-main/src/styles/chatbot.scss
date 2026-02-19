@@ -1,0 +1,1236 @@
+// chatbot.scss
+/* =========================
+   ROOT / CONTENEDOR GENERAL
+   ========================= */
+
+.ia-chatbot-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* deja pasar eventos salvo en panel / bubble-wrapper */
+  z-index: 9990;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  color: #111827;
+}
+
+/* ========================
+   PANEL PRINCIPAL DEL CHAT
+   ======================== */
+
+.ia-chatbot-panel {
+  pointer-events: auto;
+  z-index: 9997;
+
+  position: fixed;
+  right: 24px;
+  bottom: 20px;
+
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
+  overflow: hidden;
+
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out,
+    width 0.2s ease-out, height 0.2s ease-out;
+}
+
+/* Estados de animación de entrada/salida */
+.ia-chatbot-panel--enter {
+  animation: iachat-panel-enter 0.2s ease-out forwards;
+}
+
+.ia-chatbot-panel--exit {
+  animation: iachat-panel-exit 0.18s ease-in forwards;
+}
+
+@keyframes iachat-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iachat-panel-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+/* Ajuste responsive */
+@media (max-width: 640px) {
+  .ia-chatbot-panel {
+    right: 8px;
+    bottom: 90px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+}
+
+/* ==================
+   CABECERA DEL CHAT
+   ================== */
+
+.ia-chatbot-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column; // antes era row
+  justify-content: flex-start;
+  align-items: stretch;
+  z-index: 2;
+  position: relative; // ⬅️ importante para el ::before
+  background-color: rgba(0, 143, 200, 1); // color de fondo base
+  color: var(--ia-header-text, #ffffff);
+  overflow: visible;
+}
+
+.ia-chatbot-header::before {
+  content: "";
+  position: absolute;
+  inset: 0; // ocupa todo el header
+  background: url("/cenefa.svg") no-repeat;
+  background-size: 140% auto;
+  background-position: 30% 120%;
+  opacity: 0.5; // ⬅️ aquí la magia
+  pointer-events: none; // que no bloquee clicks
+  z-index: 0;
+}
+
+/* Asegúrate de que el contenido quede por encima */
+.ia-chatbot-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fila superior: logo + acciones */
+.ia-chatbot-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* solo cuando NO estamos loggeados (misma lógica que la anim de altura) */
+.ia-chatbot-header--expanded,
+.ia-chatbot-header--intro {
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+/* opcional, por claridad: header compacto (logged) sin esquinas */
+.ia-chatbot-header--compact {
+  border-radius: 0;
+}
+
+.ia-chatbot-header-title {
+  font-weight: 600;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-right: 1px solid #ffffff;
+  padding-right: 0.75rem;
+  margin-right: 0.45rem;
+}
+
+.ia-chatbot-header-logo {
+  font-size: 1rem;
+}
+
+.ia-chatbot-header-subtitle {
+  font-size: 0.75rem;
+  opacity: 0.92;
+  white-space: pre-line;
+}
+
+.ia-chatbot-header-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background-color: rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+.ia-chatbot-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Botón minimizar */
+.ia-chatbot-minimize-button {
+  border: none;
+  background: transparent;
+  padding: 0.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ia-chatbot-minimize-button:hover {
+  background-color: rgba(15, 23, 42, 0.25);
+}
+
+.ia-chatbot-minimize-icon {
+  display: block;
+}
+
+/* Botón logout */
+.ia-chatbot-logout-button {
+  border: none;
+  background: transparent;
+  padding: 0.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ia-chatbot-logout-button:hover {
+  background-color: rgba(15, 23, 42, 0.25);
+}
+
+.ia-chatbot-logout-icon {
+  display: block;
+}
+
+/* Grupo de acciones (settings + minimizar + expandir panel) */
+.ia-chatbot-header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Botón de settings / expand / minimize */
+.ia-chatbot-header-settings-button {
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 28px;
+  width: 28px;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ia-chatbot-header-settings-button:hover {
+  background-color: rgba(15, 23, 42, 0.25);
+}
+
+.ia-chatbot-header-settings-icon {
+  display: block;
+  line-height: 0;
+}
+
+/* Menú desplegable del header */
+.ia-chatbot-header-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 180px;
+  background-color: #ffffff;
+  color: #111827;
+  border-radius: 0.5rem;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.45);
+  padding: 0.5rem;
+  z-index: 3;
+}
+
+.ia-chatbot-header-menu-section {
+  margin-bottom: 0.4rem;
+}
+
+.ia-chatbot-header-menu-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.ia-chatbot-header-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ia-chatbot-header-menu-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.ia-chatbot-header-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.ia-chatbot-header-menu-item-active {
+  background-color: #e5edff;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.ia-chatbot-header-menu-item-label {
+  flex: 1;
+}
+
+/* Separador del menú */
+.ia-chatbot-header-menu-separator {
+  margin: 0.35rem 0;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+/* Logout dentro del menú */
+.ia-chatbot-header-menu-item-danger {
+  color: #b91c1c;
+}
+
+.ia-chatbot-header-menu-item-danger:hover {
+  background-color: #fee2e2;
+}
+
+/* =======================
+   CONTENIDO / MENSAJES
+   ======================= */
+
+.ia-chatbot-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ia-body-bg, #f9fafb);
+  min-height: 0;
+  z-index: 1;
+}
+
+.ia-chatbot-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Toolbar superior */
+
+.ia-chatbot-toolbar {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: var(--ia-toolbar-bg, #f3f4f6);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ia-chatbot-toolbar-label {
+  font-size: 0.75rem;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.ia-chatbot-select {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+}
+
+.ia-chatbot-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.ia-chatbot-new-conversation-button {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ia-chatbot-new-conversation-button:hover {
+  background-color: #f3f4f6;
+}
+
+.ia-chatbot-new-conversation-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Info del servicio */
+
+.ia-chatbot-service-info {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #fff;
+  font-size: 0.75rem;
+  color: #4b5563;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ia-chatbot-service-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ia-chatbot-endpoints {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+/* Área de mensajes */
+
+.ia-chatbot-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  min-height: 0;
+}
+
+.ia-chatbot-message-row {
+  margin-bottom: 0.35rem;
+  display: flex;
+}
+
+.ia-chatbot-message-row.user {
+  justify-content: flex-end;
+}
+
+.ia-chatbot-message-row.assistant {
+  justify-content: flex-start;
+}
+
+.ia-chatbot-message-bubble {
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  // border: 1px solid #d3d3d3;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  margin-block: 10px;
+}
+
+.ia-chatbot-message-bubble.user {
+  background-color: rgb(0, 132, 190);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Burbuja del bot: estilo card suave */
+.ia-chatbot-message-bubble.assistant {
+  background-color: transparent;
+  border-radius: 16px;
+  color: #6d6d6d;
+  padding: 10px 12px;
+  max-width: 90%;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* ===================
+   INPUT / TOOLBAR INFERIOR
+   =================== */
+
+/* Clip dentro de la pastilla, iconito blanco */
+.ia-chatbot-attach-button {
+  border: none;
+  background-color: transparent;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+/* Botón send: círculo blanco pegado al borde derecho */
+.ia-chatbot-send-button {
+  border: none;
+  background-color: #ffffff;
+  color: rgb(0, 143, 200);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.4);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.45);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.35);
+  }
+
+  &:disabled {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+/* Botones dentro del input */
+
+.ia-chatbot-input-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 0.5rem;
+  gap: 0.25rem;
+}
+
+.ia-chatbot-attach-button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.ia-chatbot-attach-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ia-chatbot-send-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Adjuntos */
+
+.ia-chatbot-attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.ia-chatbot-attachment-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background-color: #e5e7eb;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.ia-chatbot-attachment-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ia-chatbot-attachment-size {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.ia-chatbot-attachment-remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: #6b7280;
+}
+
+.ia-chatbot-attachment-remove:hover {
+  color: #111827;
+}
+
+.ia-chatbot-attachments-error {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  color: #b91c1c;
+}
+
+/* Estados */
+
+.ia-chatbot-error {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: #b91c1c;
+  border-top: 1px solid #fee2e2;
+  background-color: #fef2f2;
+}
+
+.ia-chatbot-streaming {
+  padding: 0.25rem 0.75rem 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Loading dots */
+
+.iachat-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iachat-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #9ca3af;
+  animation: iachat-loading-bounce 1s infinite ease-in-out;
+}
+
+.iachat-loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.iachat-loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes iachat-loading-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* =====================
+   MODALES GENERALES
+   ===================== */
+
+.ia-chatbot-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.ia-chatbot-modal {
+  width: 100%;
+  max-width: 360px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
+}
+
+.ia-chatbot-modal-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.ia-chatbot-modal-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.ia-chatbot-modal-input {
+  width: 100%;
+  margin-top: 0.25rem;
+  box-sizing: border-box;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+}
+
+.ia-chatbot-modal-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ia-chatbot-button {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+}
+
+.ia-chatbot-button-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.ia-chatbot-button-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.ia-chatbot-button-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* =======================
+   BURBUJA + BOCADILLO
+   ======================= */
+
+.ia-chatbot-bubble-wrapper {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* Bocadillo tipo cómic encima de la burbuja */
+
+.ia-chatbot-bubble-tooltip {
+  position: relative;
+  right: 80px;
+  max-width: 28ch;
+  padding: 1em;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+
+  --b: 0.8em;
+  --h: 0.4em;
+  --c: #acacac;
+
+  border-radius: 1em;
+  border-bottom-right-radius: 0;
+
+  clip-path: polygon(
+    100% 0,
+    0 0,
+    0 100%,
+    calc(100% - var(--b)) 100%,
+    calc(100% + var(--h)) calc(100% + var(--h)),
+    100% calc(100% - var(--b))
+  );
+  background: var(--c);
+  border-image: conic-gradient(var(--c) 0 0) 0 999 999 0 / 0
+    calc(var(--h) + var(--b)) calc(var(--h) + var(--b)) 0 / 0 var(--h) var(--h)
+    0;
+}
+
+/* Flecha del bocadillo apuntando a la burbuja */
+.ia-chatbot-bubble-tooltip::after {
+  content: "";
+  position: absolute;
+  right: 24px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: #acacac;
+  transform: rotate(45deg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+/* Burbuja circular del chatbot */
+
+.ia-chatbot-bubble {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #1e88ff, #3ac4ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  transition: transform 0.16s ease-out, box-shadow 0.16s ease-out;
+  color: #ffffff;
+  z-index: 1;
+}
+
+.ia-chatbot-bubble:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+}
+
+.ia-chatbot-bubble:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.ia-chatbot-bubble-icon {
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =======================
+   CAPTCHA / DISCLAIMER
+   ======================= */
+
+.ia-chatbot-captcha-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  pointer-events: auto;
+}
+
+.ia-chatbot-captcha-dialog {
+  width: 100%;
+  max-width: 390px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.ia-chatbot-captcha-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.ia-chatbot-captcha-placeholder {
+  border: 1px dashed #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+}
+
+.ia-chatbot-captcha-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.ia-chatbot-captcha-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.ia-chatbot-captcha-btn-cancel {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.ia-chatbot-captcha-btn-confirm {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+/* ======================
+   BADGE DE USO / LIMITE
+   ====================== */
+
+.ia-chatbot-usage-wrapper {
+  padding: 4px 16px 0;
+}
+
+.ia-chatbot-usage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.ia-chatbot-usage-badge--active {
+  background-color: rgba(0, 128, 0, 0.08);
+  border-color: rgba(0, 128, 0, 0.3);
+  color: #0b5d1e;
+}
+
+.ia-chatbot-usage-badge--cooldown {
+  background-color: rgba(210, 105, 30, 0.08);
+  border-color: rgba(210, 105, 30, 0.3);
+  color: #8a3b06;
+}
+
+.ia-chatbot-usage-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.ia-chatbot-usage-badge__text {
+  white-space: nowrap;
+}
+
+/* =======================
+   UTILIDADES TEXTO / MARKDOWN
+   ======================= */
+
+.iachat-product-image {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
+  display: block;
+}
+
+.iachat-text-paragraph {
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+.iachat-heading {
+  margin-top: 0;
+  margin-bottom: 2px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.iachat-spec-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.iachat-spec-list-item {
+  margin: 0;
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.1;
+}
+
+.iachat-spec-list-item + .iachat-spec-list-item {
+  margin-top: 1px;
+}
+
+.iachat-spec-list-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 10px;
+  color: #555;
+}
+
+.iachat-spec-list-item > p {
+  margin: 0;
+}
+
+.iachat-strong {
+  font-weight: 600;
+}
+
+.iachat-product-card-inline {
+  display: block;
+  margin-top: 6px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.iachat-product-card-image {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+}
+
+.iachat-link {
+  color: #0f62fe;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* =========================
+   CARD DE COCHE (CATÁLOGO)
+   ========================= */
+
+.iachat-car-card {
+  display: block;
+  // margin-left: 40px;
+  // border: 1px solid #c4c4c4;
+  padding: 15px;
+  border-radius: 20px;
+  width: 96%;
+  color: #000;
+  background-color: rgb(217, 231, 201);
+  // background-color: rgb(171, 255, 84);
+}
+
+.iachat-car-card-intro {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+}
+
+.iachat-car-card-body {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: flex-start;
+}
+
+.iachat-car-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.iachat-car-card-image {
+  display: block;
+  width: 100%;
+
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.iachat-link-container {
+  margin-top: 20px;
+  margin-bottom: 6px;
+  width: 100%;
+  display: flex; /* antes inline-flex */
+  justify-content: center; /* centramos el enlace dentro */
+}
+
+.iachat-car-card-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between; /* icono + texto centrados entre sí */
+  gap: 6px;
+  width: 100%;
+  /* QUITAR margin-right: auto; */
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: #111827;
+  font-size: 0.8rem;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
+}
+
+.iachat-car-card-link:hover {
+  background-color: #757576;
+}
+
+.iachat-car-card-link-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.iachat-car-card-right {
+  font-size: 0.86rem;
+}
+
+.iachat-car-card-title {
+  margin: 20px 0 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.iachat-car-card-list {
+  margin-top: 0;
+  padding-left: 16px;
+}
+
+.iachat-car-card-list li {
+  margin: 0 0 2px;
+}
+
+.ia-chatbot-panel--enter {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ia-chatbot-panel--exit {
+  transform: translateY(10px);
+  opacity: 0;
+}
+
+/* ===================
+   INPUT / TOOLBAR INFERIOR
+   =================== */
+
+/* Wrapper = pastilla azul que agrupa input + botones */
+.ia-chatbot-input-wrapper {
+  border-top: none;
+  padding: 0.35rem 0.6rem;
+  display: flex;
+  align-items: center; /* el textarea “apoya” abajo y crece hacia arriba */
+  gap: 0.5rem;
+  background-color: rgb(0, 143, 200); /* azul 0,143,200 */
+  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  margin-left: 15px;
+  margin-right: 15px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
+
+  /* CLAVES */
+  height: auto;
+  flex-shrink: 0; /* que no se colapse al crecer el textarea */
+}
+
+/* Contenedor principal del input (texto + chips) */
+.ia-chatbot-input-main {
+  flex: 1; /* ocupa todo el ancho disponible dentro de la pastilla */
+  /* display por defecto: block, no flex */
+}
+
+/* Textarea integrada, sin caja propia */
+.ia-chatbot-textarea {
+  width: 100%;
+  resize: none;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  /* altura mínima visual */
+  min-height: 38px;
+
+  padding: 10px 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  border-radius: 999px;
+  border: none;
+  background-color: transparent;
+  color: #ffffff;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+/* Chips de adjuntos dentro de la pastilla */
+.ia-chatbot-attachments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.iachat-car-card-image--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #9ad1c1;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+.ia-chatbot-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: move; /* indica que se puede arrastrar */
+  position: relative; /* 👈 necesario para posicionar el tooltip dentro */
+}
+
+/* Tooltip “Arrastra aquí para mover el chatbot” */
+.ia-chatbot-header-drag-tooltip {
+  position: absolute;
+  /* Dentro del header, pegado a la parte de abajo */
+  bottom: -24px; // 👈 antes -24px
+  left: 0;
+  transform: translateY(0);
+
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #f9fafb;
+  font-size: 11px;
+  white-space: nowrap;
+
+  pointer-events: none;
+  z-index: 25;
+  opacity: 1;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
