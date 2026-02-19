@@ -193,7 +193,12 @@ export function DashboardLayout() {
         <div className="header-inner">
           <div className="header-brand">
             {/* <span className="brand-mark"> */}
-            <LogoNeria size={28} />
+            <LogoNeria
+              size={28}
+              color1="#F7951F"
+              color2="#ffffff"
+              color3="#CE3434"
+            />
             {/* </span> */}
             <div>
               <div className="brand-title">Neria Manager</div>
