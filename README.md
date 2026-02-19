@@ -4,6 +4,8 @@ Neria Manager
 
 ## arranque maven en localhost
 backend-java/scripts/run-local.sh
+## arranque maven en localhost para backend-sandbox
+backend-sandbox/scripts/run-local.sh
 
 ## OCR (Tesseract)
 

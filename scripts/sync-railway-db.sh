@@ -26,36 +26,46 @@ if [[ ! -x "$MYSQL" || ! -x "$MYSQLDUMP" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCHEMA_DIR="$SCRIPT_DIR/../backend-java/scripts"
+
+if [[ ! -d "$SCHEMA_DIR" ]]; then
+  echo "No se encontro backend-java/scripts en $SCHEMA_DIR" >&2
+  exit 1
+fi
 
 build_schema_patch() {
   local output="$1"
-  local -a scripts
-  local -A compat
+  local -a scripts=()
+  local restore_nounset=0
+
+  case $- in
+    *u*)
+      restore_nounset=1
+      set +u
+      ;;
+  esac
 
   while IFS= read -r -d '' file; do
     scripts+=("$file")
-  done < <(find "$SCRIPT_DIR" -maxdepth 1 -type f -name 'create_*.sql' -print0)
+  done < <(find "$SCHEMA_DIR" -maxdepth 1 -type f -name 'create_*.sql' -print0)
 
   while IFS= read -r -d '' file; do
     if [[ "$file" == *_mysql_compat.sql ]]; then
-      local base="${file%_mysql_compat.sql}.sql"
-      compat["$base"]="$file"
+      scripts+=("$file")
       continue
     fi
     if [[ -f "${file%.sql}_mysql_compat.sql" ]]; then
       continue
     fi
     scripts+=("$file")
-  done < <(find "$SCRIPT_DIR" -maxdepth 1 -type f -name 'alter_*.sql' -print0)
+  done < <(find "$SCHEMA_DIR" -maxdepth 1 -type f -name 'alter_*.sql' -print0)
 
-  for base in "${!compat[@]}"; do
-    scripts+=("${compat[$base]}")
-  done
-
-  IFS=$'\n' read -r -d '' -a scripts <<< "$(printf '%s\n' "${scripts[@]}" | sort)" || true
+  if ((${#scripts[@]} > 0)); then
+    IFS=$'\n' read -r -d '' -a scripts <<< "$(printf '%s\n' "${scripts[@]}" | sort)" || true
+  fi
 
   {
-    echo "-- Schema patch generado desde $SCRIPT_DIR"
+    echo "-- Schema patch generado desde $SCHEMA_DIR"
     echo "-- $(date)"
     echo
     for file in "${scripts[@]}"; do
@@ -66,8 +76,29 @@ build_schema_patch() {
       echo
     done
   } > "$output"
+  if ((restore_nounset)); then
+    set -u
+  fi
 }
 
+
+apply_schema_patch() {
+  local host="$1"
+  local port="$2"
+  local password="$3"
+  local label="$4"
+
+  echo "
+[3/6] Aplicando patch de estructura en ${label}"
+  set +e
+  "$MYSQL"     --ssl     -h "$host"     -P "$port"     -u root --password="$password"     -e "CREATE DATABASE IF NOT EXISTS railway;"
+  "$MYSQL"     --ssl     -h "$host"     -P "$port"     -u root --password="$password"     --force railway     < "$SCHEMA_PATCH_PATH"
+  local status=$?
+  set -e
+  if [[ $status -ne 0 ]]; then
+    echo "Aviso: patch en ${label} aplico con errores (probablemente columnas/tablas ya existentes)."
+  fi
+}
 echo "Este script va a:"
 echo "1) Exportar $LOCAL_DB SOLO datos (INSERT IGNORE)"
 echo "2) Generar un patch de estructura (create/alter) desde backend-java/scripts"
@@ -100,7 +131,7 @@ echo "\n[1/6] Exportando datos locales a: $DATA_DUMP_PATH"
   -u "$LOCAL_USER" --password="$LOCAL_DB_PASSWORD" \
   --single-transaction --quick \
   --no-create-info --skip-triggers \
-  --insert-ignore \
+  --insert-ignore --complete-insert \
   "$LOCAL_DB" \
   > "$DATA_DUMP_PATH"
 
