@@ -39,11 +39,23 @@ public class TenantInvoice {
   @Column(name = "totalEur", precision = 10, scale = 2, nullable = false)
   private BigDecimal totalEur;
 
+  @Column(name = "taxRate", precision = 5, scale = 4)
+  private BigDecimal taxRate;
+
+  @Column(name = "taxEur", precision = 10, scale = 2)
+  private BigDecimal taxEur;
+
   @Column(length = 3, nullable = false)
   private String currency;
 
   @Column(length = 16, nullable = false)
   private String status;
+
+  @Column(name = "stripeInvoiceId", length = 64)
+  private String stripeInvoiceId;
+
+  @Column(name = "stripePaymentIntentId", length = 64)
+  private String stripePaymentIntentId;
 
   @Column(name = "issuedAt", nullable = false)
   private LocalDateTime issuedAt;

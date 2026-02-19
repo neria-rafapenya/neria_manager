@@ -1,0 +1,3 @@
+ALTER TABLE subscriptions
+  ADD COLUMN IF NOT EXISTS stripeCustomerId VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS stripeSubscriptionId VARCHAR(64) NULL;

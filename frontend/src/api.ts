@@ -150,6 +150,56 @@ async function requestJson<T>(
 
   if (!response.ok) {
     const text = await response.text();
+    let message = `API error ${response.status}`;
+    try {
+      const data = JSON.parse(text) as { message?: string; error?: string };
+      if (data?.message) {
+        message = data.message;
+      } else if (data?.error) {
+        message = data.error;
+      } else if (text) {
+        message = text;
+      }
+    } catch (error) {
+      if (text) {
+        message = text;
+      }
+    }
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error("Invalid JSON response");
+  }
+}
+
+async function requestJsonPublic<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const mergedHeaders: Record<string, string> = {
+    ...defaultHeaders,
+    ...normalizeHeaders(init?.headers),
+  };
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    credentials: "omit",
+    headers: mergedHeaders,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
     throw new Error(`API error ${response.status}: ${text}`);
   }
 
@@ -168,6 +218,8 @@ async function requestJson<T>(
     throw new Error("Invalid JSON response");
   }
 }
+
+
 
 export const api = {
   issueToken: (payload: { clientId: string; clientSecret: string }) =>
@@ -409,6 +461,152 @@ export const api = {
         method: "POST",
       },
     ),
+
+  listTenantServiceSurveys: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(`/tenants/${tenantId}/services/${serviceCode}/surveys`),
+  listTenantServiceSurveysExternal: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/external`,
+    ),
+  getTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+    ),
+  createTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/surveys`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    ),
+  deleteTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+      { method: "DELETE" },
+    ),
+  createTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    questionId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions/${questionId}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    ),
+  deleteTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    questionId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions/${questionId}`,
+      { method: "DELETE" },
+    ),
+  listTenantServiceSurveyResponses: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses`,
+    ),
+  listTenantServiceSurveyResponsesExternal: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/external`,
+    ),
+  getTenantServiceSurveyResponse: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    responseId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/${responseId}`,
+    ),
+  exportTenantServiceSurveyResponses: async (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) => {
+    const authToken = getStoredToken();
+    const response = await fetch(
+      `${baseUrl}/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/export`,
+      {
+        method: "GET",
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        credentials: "include",
+      },
+    );
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API error ${response.status}: ${text}`);
+    }
+    return response.blob();
+  },
+  listTenantServiceSurveyInsights: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/insights`,
+    ),
+  runTenantServiceSurveyInsights: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/insights`,
+      { method: "POST" },
+    ),
+  publicGetSurvey: (publicCode: string) =>
+    requestJsonPublic<any>(`/public/surveys/${publicCode}`),
+  publicSubmitSurvey: (publicCode: string, payload: any) =>
+    requestJsonPublic<any>(`/public/surveys/${publicCode}/responses`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   listTenantServiceEndpoints: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/endpoints`,
@@ -584,6 +782,10 @@ export const api = {
     requestJson<any>(`/tenants/${tenantId}/subscription`, {
       method: "PATCH",
       body: JSON.stringify(payload),
+    }),
+  createStripePortalSession: (tenantId: string) =>
+    requestJson<{ url: string }>(`/tenants/${tenantId}/subscription/portal`, {
+      method: "POST",
     }),
   deleteTenantServiceAssignment: (tenantId: string, tenantServiceId: string) =>
     requestJson<any>(

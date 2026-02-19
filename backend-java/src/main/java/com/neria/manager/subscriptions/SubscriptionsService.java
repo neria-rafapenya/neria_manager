@@ -21,9 +21,14 @@ import com.neria.manager.common.repos.TenantServiceUserRepository;
 import com.neria.manager.common.services.EmailService;
 import com.neria.manager.tenants.TenantsService;
 import com.stripe.Stripe;
+import com.stripe.model.Event;
+import com.stripe.model.Invoice;
+import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -37,6 +42,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -45,6 +52,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class SubscriptionsService {
+  private static final Logger log = LoggerFactory.getLogger(SubscriptionsService.class);
   private final SubscriptionRepository subscriptionRepository;
   private final SubscriptionServiceRepository subscriptionServiceRepository;
   private final SubscriptionHistoryRepository subscriptionHistoryRepository;
@@ -159,9 +167,14 @@ public class SubscriptionsService {
         services.stream()
             .filter(item -> "active".equals(item.getStatus()) || "pending_removal".equals(item.getStatus()))
             .toList();
-    double servicesTotal =
-        activeServices.stream().map(item -> item.getPriceEur().doubleValue()).reduce(0d, Double::sum);
-    double basePrice = subscription.getBasePriceEur().doubleValue();
+    BigDecimal servicesTotal =
+        activeServices.stream()
+            .map(item -> toMoney(item.getPriceEur()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal subtotal = basePrice.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, null);
+    BigDecimal totalWithTax = tax.totalEur();
     LocalDateTime endDate =
         "cancelled".equals(subscription.getStatus())
             ? subscription.getCurrentPeriodEnd()
@@ -170,7 +183,8 @@ public class SubscriptionsService {
         "pending".equals(subscription.getStatus())
             ? 0
             : countPeriods(subscription.getCurrentPeriodStart(), endDate, subscription.getPeriod());
-    double billedSinceStart = periods * (basePrice + servicesTotal);
+    BigDecimal billedSinceStart =
+        totalWithTax.multiply(BigDecimal.valueOf(periods)).setScale(2, RoundingMode.HALF_UP);
 
     List<Map<String, Object>> responseServices =
         services.stream()
@@ -197,8 +211,14 @@ public class SubscriptionsService {
             basePrice,
             "servicesPriceEur",
             servicesTotal,
+            "subtotalEur",
+            subtotal,
+            "taxRate",
+            tax.rate(),
+            "taxEur",
+            tax.taxEur(),
             "totalEur",
-            basePrice + servicesTotal,
+            totalWithTax,
             "billedSinceStartEur",
             billedSinceStart);
 
@@ -229,13 +249,62 @@ public class SubscriptionsService {
     }
   }
 
+  private BigDecimal resolveTaxRate() {
+    String raw = System.getenv().getOrDefault("BILLING_TAX_RATE", "0.21");
+    try {
+      BigDecimal rate = new BigDecimal(raw.trim());
+      if (rate.compareTo(BigDecimal.ONE) > 0) {
+        rate = rate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+      }
+      if (rate.compareTo(BigDecimal.ZERO) < 0) {
+        return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
+      }
+      return rate.setScale(4, RoundingMode.HALF_UP);
+    } catch (Exception ex) {
+      return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
+    }
+  }
+
+  private BigDecimal toMoney(BigDecimal value) {
+    if (value == null) {
+      return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    }
+    return value.setScale(2, RoundingMode.HALF_UP);
+  }
+
+  private long toStripeAmount(BigDecimal value) {
+    return toMoney(value).multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValue();
+  }
+
+  private TaxBreakdown computeTax(BigDecimal subtotal, BigDecimal totalOverride) {
+    BigDecimal safeSubtotal = toMoney(subtotal);
+    BigDecimal taxRate = resolveTaxRate();
+    BigDecimal taxEur;
+    BigDecimal total;
+    if (totalOverride != null) {
+      total = toMoney(totalOverride);
+      taxEur = toMoney(total.subtract(safeSubtotal).max(BigDecimal.ZERO));
+      if (safeSubtotal.compareTo(BigDecimal.ZERO) > 0) {
+        taxRate = taxEur.divide(safeSubtotal, 4, RoundingMode.HALF_UP);
+      }
+    } else {
+      taxEur = toMoney(safeSubtotal.multiply(taxRate));
+      total = toMoney(safeSubtotal.add(taxEur));
+    }
+    return new TaxBreakdown(taxRate, taxEur, total);
+  }
+
+  private record TaxBreakdown(BigDecimal rate, BigDecimal taxEur, BigDecimal totalEur) {}
+
   private Session createStripeCheckoutSession(
+      String tenantId,
       String tenantName,
       String email,
       String period,
-      double basePriceEur,
+      BigDecimal basePriceEur,
       List<ServiceSummary> services,
-      String paymentRequestId) {
+      String paymentRequestId,
+      String subscriptionId) {
     String secret = System.getenv("STRIPE_SECRET_KEY");
     if (secret == null || secret.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe not configured");
@@ -249,28 +318,48 @@ public class SubscriptionsService {
         System.getenv().getOrDefault(
             "STRIPE_CANCEL_URL", System.getenv("FRONTEND_BASE_URL") + "/billing/cancel");
 
+    BigDecimal base = toMoney(basePriceEur);
+    BigDecimal servicesTotal = servicesTotalAmount(services);
+    BigDecimal subtotal = base.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, null);
+
+    SessionCreateParams.LineItem.PriceData.Recurring.Interval interval =
+        "annual".equals(period)
+            ? SessionCreateParams.LineItem.PriceData.Recurring.Interval.YEAR
+            : SessionCreateParams.LineItem.PriceData.Recurring.Interval.MONTH;
+    SessionCreateParams.LineItem.PriceData.Recurring recurring =
+        SessionCreateParams.LineItem.PriceData.Recurring.builder().setInterval(interval).build();
+
     List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
-    lineItems.add(
-        SessionCreateParams.LineItem.builder()
-            .setQuantity(1L)
-            .setPriceData(
-                SessionCreateParams.LineItem.PriceData.builder()
-                    .setCurrency("eur")
-                    .setUnitAmount(Math.round(basePriceEur * 100))
-                    .setProductData(
-                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                            .setName("Suscripción base (" + period + ")")
-                            .build())
-                    .build())
-            .build());
-    for (ServiceSummary service : services) {
+    if (base.compareTo(BigDecimal.ZERO) > 0) {
       lineItems.add(
           SessionCreateParams.LineItem.builder()
               .setQuantity(1L)
               .setPriceData(
                   SessionCreateParams.LineItem.PriceData.builder()
                       .setCurrency("eur")
-                      .setUnitAmount(Math.round(service.priceEur * 100))
+                      .setUnitAmount(toStripeAmount(base))
+                      .setRecurring(recurring)
+                      .setProductData(
+                          SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                              .setName("Suscripción base (" + period + ")")
+                              .build())
+                      .build())
+              .build());
+    }
+    for (ServiceSummary service : services) {
+      BigDecimal price = toMoney(BigDecimal.valueOf(service.priceEur));
+      if (price.compareTo(BigDecimal.ZERO) <= 0) {
+        continue;
+      }
+      lineItems.add(
+          SessionCreateParams.LineItem.builder()
+              .setQuantity(1L)
+              .setPriceData(
+                  SessionCreateParams.LineItem.PriceData.builder()
+                      .setCurrency("eur")
+                      .setUnitAmount(toStripeAmount(price))
+                      .setRecurring(recurring)
                       .setProductData(
                           SessionCreateParams.LineItem.PriceData.ProductData.builder()
                               .setName(service.name)
@@ -278,16 +367,35 @@ public class SubscriptionsService {
                       .build())
               .build());
     }
+    if (tax.taxEur().compareTo(BigDecimal.ZERO) > 0) {
+      String taxLabel = "Impuesto (" + tax.rate().multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP) + "%)";
+      lineItems.add(
+          SessionCreateParams.LineItem.builder()
+              .setQuantity(1L)
+              .setPriceData(
+                  SessionCreateParams.LineItem.PriceData.builder()
+                      .setCurrency("eur")
+                      .setUnitAmount(toStripeAmount(tax.taxEur()))
+                      .setRecurring(recurring)
+                      .setProductData(
+                          SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                              .setName(taxLabel)
+                              .build())
+                      .build())
+              .build());
+    }
 
     SessionCreateParams params =
         SessionCreateParams.builder()
-            .setMode(SessionCreateParams.Mode.PAYMENT)
+            .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
             .setCustomerEmail(email)
             .setSuccessUrl(successUrl)
             .setCancelUrl(cancelUrl)
             .addAllLineItem(lineItems)
             .putMetadata("paymentRequestId", paymentRequestId)
             .putMetadata("tenantName", tenantName)
+            .putMetadata("tenantId", tenantId)
+            .putMetadata("subscriptionId", subscriptionId)
             .build();
 
     try {
@@ -301,10 +409,16 @@ public class SubscriptionsService {
       String tenantId,
       String subscriptionId,
       String email,
-      double amountEur,
+      BigDecimal basePriceEur,
       List<ServiceSummary> services,
       String tenantName,
       String period) {
+    BigDecimal base = toMoney(basePriceEur);
+    BigDecimal servicesTotal = servicesTotalAmount(services);
+    BigDecimal subtotal = base.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, null);
+    BigDecimal total = tax.totalEur();
+
     String token = UUID.randomUUID().toString().replace("-", "");
     String tokenHash = hashToken(token);
     String provider = getBillingMode();
@@ -316,7 +430,7 @@ public class SubscriptionsService {
     payment.setStatus("pending");
     payment.setProvider(provider);
     payment.setTokenHash(tokenHash);
-    payment.setAmountEur(BigDecimal.valueOf(amountEur));
+    payment.setAmountEur(total);
     payment.setExpiresAt(getPaymentExpiresAt());
     payment.setCreatedAt(LocalDateTime.now());
     payment.setUpdatedAt(LocalDateTime.now());
@@ -327,7 +441,15 @@ public class SubscriptionsService {
 
     if ("stripe".equals(provider)) {
       Session session =
-          createStripeCheckoutSession(tenantName, email, period, amountEur - servicesTotal(services), services, payment.getId());
+          createStripeCheckoutSession(
+              tenantId,
+              tenantName,
+              email,
+              period,
+              base,
+              services,
+              payment.getId(),
+              subscriptionId);
       payment.setProviderRef(session.getId());
       paymentRepository.save(payment);
       if (session.getUrl() != null) {
@@ -335,12 +457,18 @@ public class SubscriptionsService {
       }
     }
 
-    emailService.sendSubscriptionPaymentEmail(email, paymentUrl, tenantName, amountEur);
+    emailService.sendSubscriptionPaymentEmail(email, paymentUrl, tenantName, total.doubleValue());
     return payment;
   }
 
   private double servicesTotal(List<ServiceSummary> services) {
-    return services.stream().map(item -> item.priceEur).reduce(0d, Double::sum);
+    return servicesTotalAmount(services).doubleValue();
+  }
+
+  private BigDecimal servicesTotalAmount(List<ServiceSummary> services) {
+    return services.stream()
+        .map(item -> toMoney(BigDecimal.valueOf(item.priceEur)))
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   public Map<String, Object> getByTenantId(String tenantId) {
@@ -440,15 +568,12 @@ public class SubscriptionsService {
                                 ? service.getPriceAnnualEur().doubleValue()
                                 : service.getPriceMonthlyEur().doubleValue()))
                 .toList();
-    double amountEur =
-        dto.basePriceEur.doubleValue() + servicesTotal(servicesSummary);
-
     SubscriptionPaymentRequest payment =
         createPaymentRequest(
         tenantId,
         subscription.getId(),
         tenant.getBillingEmail(),
-        amountEur,
+        dto.basePriceEur,
         servicesSummary,
         tenant.getName(),
         dto.period);
@@ -464,6 +589,7 @@ public class SubscriptionsService {
             .findByTenantId(tenantId)
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+    String previousStatus = subscription.getStatus();
     boolean wasCancelAtPeriodEnd = subscription.isCancelAtPeriodEnd();
     LocalDateTime now = LocalDateTime.now();
     if (dto.cancelAtPeriodEnd != null
@@ -492,6 +618,43 @@ public class SubscriptionsService {
     }
     subscription.setUpdatedAt(LocalDateTime.now());
     subscriptionRepository.save(subscription);
+
+    if (dto.status != null && !dto.status.equals(previousStatus)) {
+      if ("pending".equals(dto.status)) {
+        List<SubscriptionService> allServices =
+            subscriptionServiceRepository.findBySubscriptionId(subscription.getId());
+        if (!allServices.isEmpty()) {
+          allServices.forEach(item -> {
+            item.setStatus("pending");
+            item.setActivateAt(null);
+            item.setDeactivateAt(null);
+            item.setUpdatedAt(LocalDateTime.now());
+          });
+          subscriptionServiceRepository.saveAll(allServices);
+        }
+      } else if ("active".equals(dto.status)) {
+        if (previousStatus == null || !"active".equals(previousStatus)) {
+          if (subscription.getCurrentPeriodEnd() == null || now.isAfter(subscription.getCurrentPeriodEnd())) {
+            subscription.setCurrentPeriodStart(now);
+            subscription.setCurrentPeriodEnd(buildPeriodEnd(now, subscription.getPeriod()));
+            subscription.setUpdatedAt(LocalDateTime.now());
+            subscriptionRepository.save(subscription);
+          }
+        }
+        List<SubscriptionService> toActivate =
+            subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
+                .filter(item -> "pending".equals(item.getStatus()))
+                .toList();
+        if (!toActivate.isEmpty()) {
+          toActivate.forEach(item -> {
+            item.setStatus("active");
+            item.setActivateAt(null);
+            item.setUpdatedAt(LocalDateTime.now());
+          });
+          subscriptionServiceRepository.saveAll(toActivate);
+        }
+      }
+    }
 
     if (dto.cancelAtPeriodEnd != null && dto.cancelAtPeriodEnd) {
       List<SubscriptionService> allServices =
@@ -674,9 +837,16 @@ public class SubscriptionsService {
     double servicesTotal =
         services.stream().map(item -> item.getPriceEur().doubleValue()).reduce(0d, Double::sum);
 
-    invoice.setBasePriceEur(subscription.getBasePriceEur());
-    invoice.setServicesPriceEur(BigDecimal.valueOf(servicesTotal));
-    invoice.setTotalEur(subscription.getBasePriceEur().add(BigDecimal.valueOf(servicesTotal)));
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal servicesTotalAmount = toMoney(BigDecimal.valueOf(servicesTotal));
+    BigDecimal subtotal = basePrice.add(servicesTotalAmount);
+    TaxBreakdown tax = computeTax(subtotal, null);
+
+    invoice.setBasePriceEur(basePrice);
+    invoice.setServicesPriceEur(servicesTotalAmount);
+    invoice.setTaxRate(tax.rate());
+    invoice.setTaxEur(tax.taxEur());
+    invoice.setTotalEur(tax.totalEur());
     invoiceRepository.save(invoice);
 
     List<TenantInvoiceItem> existingItems = invoiceItemRepository.findByInvoiceId(invoice.getId());
@@ -784,21 +954,27 @@ public class SubscriptionsService {
         subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
             .filter(item -> List.of("active", "pending_removal").contains(item.getStatus()))
             .toList();
-    double servicesTotal = services.stream().map(item -> item.getPriceEur().doubleValue()).reduce(0d, Double::sum);
-    double basePrice = subscription.getBasePriceEur().doubleValue();
+    BigDecimal servicesTotal =
+        services.stream()
+            .map(item -> toMoney(item.getPriceEur()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal subtotal = basePrice.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, null);
     LocalDateTime endDate =
         subscription.isCancelAtPeriodEnd() ? subscription.getCurrentPeriodEnd() : LocalDateTime.now();
     int periods = countPeriods(subscription.getCurrentPeriodStart(), endDate, subscription.getPeriod());
-    double totalBilled = periods * (basePrice + servicesTotal);
+    BigDecimal totalBilled =
+        tax.totalEur().multiply(BigDecimal.valueOf(periods)).setScale(2, RoundingMode.HALF_UP);
 
     SubscriptionHistory history = new SubscriptionHistory();
     history.setId(UUID.randomUUID().toString());
     history.setTenantId(subscription.getTenantId());
     history.setSubscriptionId(subscription.getId());
     history.setPeriod(subscription.getPeriod());
-    history.setBasePriceEur(BigDecimal.valueOf(basePrice));
-    history.setServicesPriceEur(BigDecimal.valueOf(servicesTotal));
-    history.setTotalBilledEur(BigDecimal.valueOf(totalBilled));
+    history.setBasePriceEur(basePrice);
+    history.setServicesPriceEur(servicesTotal);
+    history.setTotalBilledEur(totalBilled);
     history.setStartedAt(subscription.getCurrentPeriodStart());
     history.setEndedAt(endDate);
     history.setCreatedAt(LocalDateTime.now());
@@ -828,25 +1004,450 @@ public class SubscriptionsService {
     Stripe.apiKey = secret;
     try {
       Session session = Session.retrieve(sessionId);
-      if (!"paid".equals(session.getPaymentStatus())) {
+      if (!List.of("paid", "no_payment_required").contains(session.getPaymentStatus())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment not completed");
       }
       String paymentRequestId =
           session.getMetadata() != null ? session.getMetadata().get("paymentRequestId") : null;
-      if (paymentRequestId == null) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment request metadata missing");
+      SubscriptionPaymentRequest request = null;
+      if (paymentRequestId != null && !paymentRequestId.isBlank()) {
+        request =
+            paymentRepository.findById(paymentRequestId).orElse(null);
       }
-      SubscriptionPaymentRequest request =
-          paymentRepository.findById(paymentRequestId).orElseThrow(
-              () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment request not found"));
-      if (!"pending".equals(request.getStatus())) {
+      if (request == null) {
+        request = paymentRepository.findByProviderRef(session.getId()).orElse(null);
+      }
+      if (request == null) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment request not found");
       }
-      return activateSubscription(request);
+      Subscription subscription =
+          subscriptionRepository
+              .findById(request.getSubscriptionId())
+              .orElseThrow(
+                  () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+      applyStripeSession(subscription, session);
+      if (!"pending".equals(request.getStatus())) {
+        return buildResponse(subscription);
+      }
+      return activateSubscription(request, true, true);
     } catch (ResponseStatusException ex) {
       throw ex;
     } catch (Exception ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe session failed");
+    }
+  }
+
+  private void applyStripeSession(Subscription subscription, Session session) {
+    if (subscription == null || session == null) {
+      return;
+    }
+    if (session.getCustomer() != null) {
+      subscription.setStripeCustomerId(session.getCustomer());
+    }
+    if (session.getSubscription() != null) {
+      subscription.setStripeSubscriptionId(session.getSubscription());
+      try {
+        com.stripe.model.Subscription stripeSubscription =
+            com.stripe.model.Subscription.retrieve(session.getSubscription());
+        applyStripeSubscription(subscription, stripeSubscription);
+      } catch (Exception ex) {
+        log.warn("Failed to load stripe subscription {}: {}", session.getSubscription(), ex.getMessage());
+      }
+    }
+    subscription.setUpdatedAt(LocalDateTime.now());
+    subscriptionRepository.save(subscription);
+  }
+
+  private void applyStripeSubscription(
+      Subscription subscription, com.stripe.model.Subscription stripeSubscription) {
+    if (subscription == null || stripeSubscription == null) {
+      return;
+    }
+    LocalDateTime start = toLocalDateTime(stripeSubscription.getCurrentPeriodStart());
+    LocalDateTime end = toLocalDateTime(stripeSubscription.getCurrentPeriodEnd());
+    if (start != null) {
+      subscription.setCurrentPeriodStart(start);
+    }
+    if (end != null) {
+      subscription.setCurrentPeriodEnd(end);
+    }
+    if (stripeSubscription.getCancelAtPeriodEnd() != null) {
+      subscription.setCancelAtPeriodEnd(stripeSubscription.getCancelAtPeriodEnd());
+    }
+    String status = stripeSubscription.getStatus();
+    if ("active".equals(status)) {
+      subscription.setStatus("active");
+    } else if ("past_due".equals(status)) {
+      subscription.setStatus("past_due");
+    } else if ("unpaid".equals(status)) {
+      subscription.setStatus("past_due");
+    } else if ("canceled".equals(status)) {
+      subscription.setStatus("cancelled");
+    }
+  }
+
+  private LocalDateTime toLocalDateTime(Long epochSeconds) {
+    if (epochSeconds == null) {
+      return null;
+    }
+    return LocalDateTime.ofEpochSecond(epochSeconds, 0, ZoneOffset.UTC);
+  }
+
+  public Map<String, Object> handleStripeWebhook(String payload, String signature) {
+    String secret = System.getenv("STRIPE_WEBHOOK_SECRET");
+    if (secret == null || secret.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe webhook not configured");
+    }
+    if (signature == null || signature.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe signature missing");
+    }
+    Event event;
+    try {
+      event = Webhook.constructEvent(payload, signature, secret);
+    } catch (Exception ex) {
+      log.warn("Stripe webhook signature failed: {}", ex.getMessage());
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Stripe signature");
+    }
+
+    StripeObject stripeObject =
+        event.getDataObjectDeserializer().getObject().orElse(null);
+    if (stripeObject == null) {
+      log.warn("Stripe webhook missing object for type {}", event.getType());
+      return Map.of("received", true);
+    }
+
+    switch (event.getType()) {
+      case "checkout.session.completed" -> {
+        if (stripeObject instanceof Session session) {
+          handleStripeCheckoutCompleted(session);
+        }
+      }
+      case "invoice.paid" -> {
+        if (stripeObject instanceof Invoice invoice) {
+          handleStripeInvoicePaid(invoice);
+        }
+      }
+      case "invoice.payment_failed" -> {
+        if (stripeObject instanceof Invoice invoice) {
+          handleStripeInvoicePaymentFailed(invoice);
+        }
+      }
+      case "customer.subscription.updated" -> {
+        if (stripeObject instanceof com.stripe.model.Subscription stripeSubscription) {
+          handleStripeSubscriptionUpdated(stripeSubscription, false);
+        }
+      }
+      case "customer.subscription.deleted" -> {
+        if (stripeObject instanceof com.stripe.model.Subscription stripeSubscription) {
+          handleStripeSubscriptionUpdated(stripeSubscription, true);
+        }
+      }
+      default -> {
+        // ignore
+      }
+    }
+
+    return Map.of("received", true);
+  }
+
+  private void handleStripeCheckoutCompleted(Session session) {
+    if (session == null) {
+      return;
+    }
+    String paymentRequestId =
+        session.getMetadata() != null ? session.getMetadata().get("paymentRequestId") : null;
+    SubscriptionPaymentRequest request = null;
+    if (paymentRequestId != null && !paymentRequestId.isBlank()) {
+      request = paymentRepository.findById(paymentRequestId).orElse(null);
+    }
+    if (request == null) {
+      request = paymentRepository.findByProviderRef(session.getId()).orElse(null);
+    }
+    if (request == null) {
+      log.warn("Stripe checkout session without payment request {}", session.getId());
+      return;
+    }
+    Subscription subscription =
+        subscriptionRepository.findById(request.getSubscriptionId()).orElse(null);
+    if (subscription == null) {
+      log.warn("Stripe checkout session without subscription {}", session.getId());
+      return;
+    }
+    applyStripeSession(subscription, session);
+    if ("pending".equals(request.getStatus())) {
+      activateSubscription(request, true, true);
+    }
+  }
+
+  private void handleStripeInvoicePaid(Invoice invoice) {
+    if (invoice == null) {
+      return;
+    }
+    String stripeInvoiceId = invoice.getId();
+    if (stripeInvoiceId != null && invoiceRepository.findByStripeInvoiceId(stripeInvoiceId).isPresent()) {
+      return;
+    }
+    String stripeSubscriptionId = invoice.getSubscription();
+    if (stripeSubscriptionId == null || stripeSubscriptionId.isBlank()) {
+      return;
+    }
+    Subscription subscription =
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscriptionId).orElse(null);
+    if (subscription == null) {
+      log.warn("Stripe invoice {} not linked to subscription", stripeInvoiceId);
+      return;
+    }
+
+    subscription.setStatus("active");
+    LocalDateTime periodStart = toLocalDateTime(invoice.getPeriodStart());
+    LocalDateTime periodEnd = toLocalDateTime(invoice.getPeriodEnd());
+    if (periodStart != null) {
+      subscription.setCurrentPeriodStart(periodStart);
+    }
+    if (periodEnd != null) {
+      subscription.setCurrentPeriodEnd(periodEnd);
+    }
+    subscription.setUpdatedAt(LocalDateTime.now());
+    subscriptionRepository.save(subscription);
+
+    String paymentRequestId =
+        invoice.getMetadata() != null ? invoice.getMetadata().get("paymentRequestId") : null;
+    SubscriptionPaymentRequest request = null;
+    if (paymentRequestId != null && !paymentRequestId.isBlank()) {
+      request = paymentRepository.findById(paymentRequestId).orElse(null);
+    }
+    if (request != null && "pending".equals(request.getStatus())) {
+      request.setStatus("completed");
+      request.setCompletedAt(LocalDateTime.now());
+      request.setUpdatedAt(LocalDateTime.now());
+      paymentRepository.save(request);
+    }
+
+    TenantInvoice invoiceRecord =
+        invoiceRepository
+            .findBySubscriptionId(subscription.getId())
+            .stream()
+            .filter(item -> "pending".equals(item.getStatus()) && item.getStripeInvoiceId() == null)
+            .max(
+                Comparator.comparing(
+                    item -> item.getIssuedAt() != null ? item.getIssuedAt() : item.getCreatedAt()))
+            .orElse(null);
+
+    boolean isNew = false;
+    if (invoiceRecord == null) {
+      invoiceRecord = new TenantInvoice();
+      invoiceRecord.setId(UUID.randomUUID().toString());
+      invoiceRecord.setTenantId(subscription.getTenantId());
+      invoiceRecord.setSubscriptionId(subscription.getId());
+      if (paymentRequestId != null && !paymentRequestId.isBlank()) {
+        invoiceRecord.setPaymentRequestId(paymentRequestId);
+      }
+      invoiceRecord.setPeriod(subscription.getPeriod());
+      invoiceRecord.setIssuedAt(LocalDateTime.now());
+      invoiceRecord.setCreatedAt(LocalDateTime.now());
+      isNew = true;
+    }
+
+    long amountPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : 0L;
+    if (amountPaid <= 0 && invoice.getAmountDue() != null) {
+      amountPaid = invoice.getAmountDue();
+    }
+    BigDecimal totalEur =
+        toMoney(BigDecimal.valueOf(amountPaid).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+    List<SubscriptionService> services =
+        subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
+            .filter(item -> List.of("active", "pending_removal").contains(item.getStatus()))
+            .toList();
+    BigDecimal servicesTotal =
+        services.stream()
+            .map(item -> toMoney(item.getPriceEur()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal subtotal = basePrice.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, totalEur.compareTo(BigDecimal.ZERO) > 0 ? totalEur : null);
+
+    invoiceRecord.setBasePriceEur(basePrice);
+    invoiceRecord.setServicesPriceEur(servicesTotal);
+    invoiceRecord.setTaxRate(tax.rate());
+    invoiceRecord.setTaxEur(tax.taxEur());
+    invoiceRecord.setTotalEur(tax.totalEur());
+    invoiceRecord.setCurrency(subscription.getCurrency() != null ? subscription.getCurrency() : "EUR");
+    invoiceRecord.setStatus("paid");
+    invoiceRecord.setStripeInvoiceId(stripeInvoiceId);
+    invoiceRecord.setStripePaymentIntentId(invoice.getPaymentIntent());
+    invoiceRecord.setPaidAt(LocalDateTime.now());
+    invoiceRecord.setPeriodStart(periodStart);
+    invoiceRecord.setPeriodEnd(periodEnd);
+    invoiceRepository.save(invoiceRecord);
+
+    if (isNew) {
+      final String invoiceId = invoiceRecord.getId();
+      List<TenantInvoiceItem> items =
+          services.stream()
+              .map(
+                  service -> {
+                    TenantInvoiceItem item = new TenantInvoiceItem();
+                    item.setId(UUID.randomUUID().toString());
+                    item.setInvoiceId(invoiceId);
+                    item.setServiceCode(service.getServiceCode());
+                    item.setDescription("Servicio " + service.getServiceCode());
+                    item.setPriceEur(service.getPriceEur());
+                    item.setStatus(service.getStatus());
+                    item.setCreatedAt(LocalDateTime.now());
+                    return item;
+                  })
+              .toList();
+      if (!items.isEmpty()) {
+        invoiceItemRepository.saveAll(items);
+      }
+    }
+  }
+
+  private void handleStripeInvoicePaymentFailed(Invoice invoice) {
+    if (invoice == null) {
+      return;
+    }
+    String stripeSubscriptionId = invoice.getSubscription();
+    if (stripeSubscriptionId == null || stripeSubscriptionId.isBlank()) {
+      return;
+    }
+    Subscription subscription =
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscriptionId).orElse(null);
+    if (subscription == null) {
+      return;
+    }
+    subscription.setStatus("past_due");
+    subscription.setUpdatedAt(LocalDateTime.now());
+    subscriptionRepository.save(subscription);
+  }
+
+  private void handleStripeSubscriptionUpdated(
+      com.stripe.model.Subscription stripeSubscription, boolean deleted) {
+    if (stripeSubscription == null) {
+      return;
+    }
+    Subscription subscription =
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId()).orElse(null);
+    if (subscription == null) {
+      return;
+    }
+    applyStripeSubscription(subscription, stripeSubscription);
+    if (deleted) {
+      subscription.setStatus("cancelled");
+      subscription.setCancelAtPeriodEnd(false);
+      subscription.setCurrentPeriodEnd(LocalDateTime.now());
+      subscription.setUpdatedAt(LocalDateTime.now());
+      subscriptionRepository.save(subscription);
+    }
+
+    boolean cancelAtPeriodEnd =
+        Boolean.TRUE.equals(stripeSubscription.getCancelAtPeriodEnd());
+    if (cancelAtPeriodEnd) {
+      List<SubscriptionService> services =
+          subscriptionServiceRepository.findBySubscriptionId(subscription.getId());
+      LocalDateTime deactivateAt =
+          subscription.getCurrentPeriodEnd() != null
+              ? subscription.getCurrentPeriodEnd()
+              : LocalDateTime.now();
+      services.forEach(item -> {
+        item.setStatus("pending_removal");
+        item.setDeactivateAt(deactivateAt);
+        item.setUpdatedAt(LocalDateTime.now());
+      });
+      if (!services.isEmpty()) {
+        subscriptionServiceRepository.saveAll(services);
+      }
+    } else if ("active".equals(subscription.getStatus())) {
+      List<SubscriptionService> services =
+          subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
+              .filter(item -> "pending_removal".equals(item.getStatus()))
+              .toList();
+      if (!services.isEmpty()) {
+        services.forEach(item -> {
+          item.setStatus("active");
+          item.setDeactivateAt(null);
+          item.setUpdatedAt(LocalDateTime.now());
+        });
+        subscriptionServiceRepository.saveAll(services);
+      }
+    }
+  }
+
+  public Map<String, Object> createStripePortalSession(String tenantId) {
+    Subscription subscription =
+        subscriptionRepository
+            .findByTenantId(tenantId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+    String secret = System.getenv("STRIPE_SECRET_KEY");
+    if (secret == null || secret.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe not configured");
+    }
+    Stripe.apiKey = secret;
+
+    if (subscription.getStripeCustomerId() == null
+        || subscription.getStripeCustomerId().isBlank()) {
+      // Try to recover from existing Stripe subscription.
+      if (subscription.getStripeSubscriptionId() != null
+          && !subscription.getStripeSubscriptionId().isBlank()) {
+        try {
+          com.stripe.model.Subscription stripeSubscription =
+              com.stripe.model.Subscription.retrieve(subscription.getStripeSubscriptionId());
+          if (stripeSubscription.getCustomer() != null) {
+            subscription.setStripeCustomerId(stripeSubscription.getCustomer());
+            subscription.setUpdatedAt(LocalDateTime.now());
+            subscriptionRepository.save(subscription);
+          }
+        } catch (Exception ex) {
+          log.warn(
+              "Failed to retrieve Stripe subscription {}: {}",
+              subscription.getStripeSubscriptionId(),
+              ex.getMessage());
+        }
+      }
+    }
+
+    if (subscription.getStripeCustomerId() == null
+        || subscription.getStripeCustomerId().isBlank()) {
+      var tenant = tenantsService.getById(tenantId);
+      if (tenant == null || tenant.getBillingEmail() == null || tenant.getBillingEmail().isBlank()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe customer not configured");
+      }
+      try {
+        com.stripe.model.Customer customer =
+            com.stripe.model.Customer.create(
+                com.stripe.param.CustomerCreateParams.builder()
+                    .setEmail(tenant.getBillingEmail())
+                    .setName(tenant.getName())
+                    .putMetadata("tenantId", tenantId)
+                    .putMetadata("subscriptionId", subscription.getId())
+                    .build());
+        subscription.setStripeCustomerId(customer.getId());
+        subscription.setUpdatedAt(LocalDateTime.now());
+        subscriptionRepository.save(subscription);
+      } catch (Exception ex) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe customer not configured");
+      }
+    }
+
+    if (subscription.getStripeCustomerId() == null
+        || subscription.getStripeCustomerId().isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe customer not configured");
+    }
+    String returnUrl =
+        System.getenv().getOrDefault(
+            "STRIPE_PORTAL_RETURN_URL",
+            System.getenv("FRONTEND_BASE_URL") + "/billing");
+    try {
+      com.stripe.model.billingportal.Session session =
+          com.stripe.model.billingportal.Session.create(
+              com.stripe.param.billingportal.SessionCreateParams.builder()
+                  .setCustomer(subscription.getStripeCustomerId())
+                  .setReturnUrl(returnUrl)
+                  .build());
+      return Map.of("url", session.getUrl());
+    } catch (Exception ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stripe portal failed");
     }
   }
 
@@ -859,6 +1460,16 @@ public class SubscriptionsService {
   }
 
   private Map<String, Object> activateSubscription(SubscriptionPaymentRequest request) {
+    return activateSubscription(request, false, false);
+  }
+
+  private Map<String, Object> activateSubscription(
+      SubscriptionPaymentRequest request, boolean skipInvoice) {
+    return activateSubscription(request, skipInvoice, false);
+  }
+
+  private Map<String, Object> activateSubscription(
+      SubscriptionPaymentRequest request, boolean skipInvoice, boolean preservePeriod) {
     request.setStatus("completed");
     request.setCompletedAt(LocalDateTime.now());
     request.setUpdatedAt(LocalDateTime.now());
@@ -871,8 +1482,12 @@ public class SubscriptionsService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
     LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
     subscription.setStatus("active");
-    subscription.setCurrentPeriodStart(now);
-    subscription.setCurrentPeriodEnd(buildPeriodEnd(now, subscription.getPeriod()));
+    if (!preservePeriod
+        || subscription.getCurrentPeriodStart() == null
+        || subscription.getCurrentPeriodEnd() == null) {
+      subscription.setCurrentPeriodStart(now);
+      subscription.setCurrentPeriodEnd(buildPeriodEnd(now, subscription.getPeriod()));
+    }
     subscription.setCancelAtPeriodEnd(false);
     subscription.setUpdatedAt(LocalDateTime.now());
     subscriptionRepository.save(subscription);
@@ -890,7 +1505,9 @@ public class SubscriptionsService {
       subscriptionServiceRepository.saveAll(pending);
     }
 
-    createInvoiceFromPayment(request, subscription);
+    if (!skipInvoice) {
+      createInvoiceFromPayment(request, subscription);
+    }
 
     return buildResponse(subscription);
   }
@@ -906,16 +1523,23 @@ public class SubscriptionsService {
         subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
             .filter(item -> List.of("active", "pending_removal").contains(item.getStatus()))
             .toList();
-    double servicesTotal =
-        services.stream().map(item -> item.getPriceEur().doubleValue()).reduce(0d, Double::sum);
+    BigDecimal servicesTotal =
+        services.stream()
+            .map(item -> toMoney(item.getPriceEur()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal subtotal = basePrice.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, request.getAmountEur());
     LocalDateTime now = LocalDateTime.now();
 
     TenantInvoice invoice;
     if (existingInvoice.isPresent()) {
       invoice = existingInvoice.get();
-      invoice.setBasePriceEur(subscription.getBasePriceEur());
-      invoice.setServicesPriceEur(BigDecimal.valueOf(servicesTotal));
-      invoice.setTotalEur(request.getAmountEur());
+      invoice.setBasePriceEur(basePrice);
+      invoice.setServicesPriceEur(servicesTotal);
+      invoice.setTaxRate(tax.rate());
+      invoice.setTaxEur(tax.taxEur());
+      invoice.setTotalEur(tax.totalEur());
       invoice.setCurrency(subscription.getCurrency() != null ? subscription.getCurrency() : "EUR");
       invoice.setStatus("paid");
       invoice.setPaidAt(now);
@@ -929,9 +1553,11 @@ public class SubscriptionsService {
       invoice.setSubscriptionId(subscription.getId());
       invoice.setPaymentRequestId(request.getId());
       invoice.setPeriod(subscription.getPeriod());
-      invoice.setBasePriceEur(subscription.getBasePriceEur());
-      invoice.setServicesPriceEur(BigDecimal.valueOf(servicesTotal));
-      invoice.setTotalEur(request.getAmountEur());
+      invoice.setBasePriceEur(basePrice);
+      invoice.setServicesPriceEur(servicesTotal);
+      invoice.setTaxRate(tax.rate());
+      invoice.setTaxEur(tax.taxEur());
+      invoice.setTotalEur(tax.totalEur());
       invoice.setCurrency(subscription.getCurrency() != null ? subscription.getCurrency() : "EUR");
       invoice.setStatus("paid");
       invoice.setIssuedAt(now);
@@ -975,8 +1601,13 @@ public class SubscriptionsService {
 
     List<SubscriptionService> services =
         subscriptionServiceRepository.findBySubscriptionId(subscription.getId());
-    double servicesTotal =
-        services.stream().map(item -> item.getPriceEur().doubleValue()).reduce(0d, Double::sum);
+    BigDecimal servicesTotal =
+        services.stream()
+            .map(item -> toMoney(item.getPriceEur()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+    BigDecimal subtotal = basePrice.add(servicesTotal);
+    TaxBreakdown tax = computeTax(subtotal, request.getAmountEur());
     LocalDateTime now = LocalDateTime.now();
 
     TenantInvoice invoice = new TenantInvoice();
@@ -985,9 +1616,11 @@ public class SubscriptionsService {
     invoice.setSubscriptionId(subscription.getId());
     invoice.setPaymentRequestId(request.getId());
     invoice.setPeriod(subscription.getPeriod());
-    invoice.setBasePriceEur(subscription.getBasePriceEur());
-    invoice.setServicesPriceEur(BigDecimal.valueOf(servicesTotal));
-    invoice.setTotalEur(request.getAmountEur());
+    invoice.setBasePriceEur(basePrice);
+    invoice.setServicesPriceEur(servicesTotal);
+    invoice.setTaxRate(tax.rate());
+    invoice.setTaxEur(tax.taxEur());
+    invoice.setTotalEur(tax.totalEur());
     invoice.setCurrency(subscription.getCurrency() != null ? subscription.getCurrency() : "EUR");
     invoice.setStatus("pending");
     invoice.setIssuedAt(now);
@@ -1050,26 +1683,30 @@ public class SubscriptionsService {
                 return summary;
               }
               List<SubscriptionService> serviceList = servicesBySub.getOrDefault(subscription.getId(), List.of());
-              double servicesTotal =
+              BigDecimal servicesTotal =
                   serviceList.stream()
                       .filter(item -> "active".equals(item.getStatus()))
-                      .map(item -> item.getPriceEur().doubleValue())
-                      .reduce(0d, Double::sum);
-              double basePrice = subscription.getBasePriceEur().doubleValue();
+                      .map(item -> toMoney(item.getPriceEur()))
+                      .reduce(BigDecimal.ZERO, BigDecimal::add);
+              BigDecimal basePrice = toMoney(subscription.getBasePriceEur());
+              BigDecimal subtotal = basePrice.add(servicesTotal);
+              TaxBreakdown tax = computeTax(subtotal, null);
               LocalDateTime endDate =
                   "cancelled".equals(subscription.getStatus())
                       ? subscription.getCurrentPeriodEnd()
                       : now;
               int periods =
                   countPeriods(subscription.getCurrentPeriodStart(), endDate, subscription.getPeriod());
-              double currentTotal = basePrice + servicesTotal;
+              BigDecimal currentTotal = tax.totalEur();
 
               Map<String, Object> summary = new HashMap<>();
               summary.put("tenantId", tenant.getId());
               summary.put("tenantName", tenant.getName());
               summary.put("subscription", subscription);
               summary.put("currentTotalEur", currentTotal);
-              summary.put("billedSinceStartEur", periods * currentTotal);
+              summary.put(
+                  "billedSinceStartEur",
+                  currentTotal.multiply(BigDecimal.valueOf(periods)).setScale(2, RoundingMode.HALF_UP));
               summary.put("historyTotalEur", historyTotals.getOrDefault(tenant.getId(), 0d));
               return summary;
             })

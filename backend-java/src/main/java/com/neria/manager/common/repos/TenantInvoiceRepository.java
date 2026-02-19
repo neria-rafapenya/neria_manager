@@ -11,4 +11,6 @@ public interface TenantInvoiceRepository extends JpaRepository<TenantInvoice, St
   List<TenantInvoice> findBySubscriptionId(String subscriptionId);
 
   Optional<TenantInvoice> findFirstByPaymentRequestId(String paymentRequestId);
+
+  Optional<TenantInvoice> findByStripeInvoiceId(String stripeInvoiceId);
 }

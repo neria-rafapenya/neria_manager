@@ -1,6 +1,14 @@
 APP_PORT=3000
 APP_ENV=local
 BILLING_PAYMENT_MODE=mock
+BILLING_TAX_RATE=0.21
+
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SUCCESS_URL=http://localhost:5173/billing/success?session_id={CHECKOUT_SESSION_ID}
+STRIPE_CANCEL_URL=http://localhost:5173/billing/cancel
+STRIPE_PORTAL_RETURN_URL=http://localhost:5173/billing
 
 DB_HOST=localhost
 DB_PORT=3306
@@ -11,6 +19,14 @@ DB_SSL=false
 
 CORS_ORIGINS=http://localhost:5173,http://localhost:8620
 FRONTEND_BASE_URL=http://localhost:5173
+
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM=
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
 
 AUTH_JWT_SECRET=-Oe9pIVHBdc5h_bgSHDxCy4Eii0k_vsjXjlW4W-EkENn49HwSVJoa3sFiuMZt8Rk
 AUTH_JWT_TTL=7200

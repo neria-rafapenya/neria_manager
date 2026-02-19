@@ -21,6 +21,7 @@ com/neria/manager/subscriptions/AdminSubscriptionsController.class
 com/neria/manager/tenantservices/TenantServicesService$JiraSettings.class
 com/neria/manager/emailautomation/EmailAutomationScheduler.class
 com/neria/manager/auth/ApiKeysService$ApiKeyCreateResult.class
+com/neria/manager/subscriptions/SubscriptionsService$TaxBreakdown.class
 com/neria/manager/auth/AdminUsersService$UpdateAdminUserRequest.class
 com/neria/manager/providers/ProvidersService.class
 com/neria/manager/docs/DocsService.class
@@ -100,6 +101,7 @@ com/neria/manager/common/repos/ApiKeyRepository.class
 com/neria/manager/common/services/KillSwitchService.class
 com/neria/manager/docs/DocsService$CreateDocRequest.class
 com/neria/manager/tenants/TenantsService$UpdateTenantRequest.class
+com/neria/manager/common/services/EmailService$1.class
 com/neria/manager/jira/TenantServiceJiraService$JiraCredentialsRequest.class
 com/neria/manager/jira/TenantServiceJiraService.class
 com/neria/manager/tenantservices/TenantServicesService.class

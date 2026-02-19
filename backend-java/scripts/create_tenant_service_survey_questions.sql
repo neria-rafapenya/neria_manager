@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS tenant_service_survey_questions (
+  id varchar(36) NOT NULL,
+  surveyId varchar(36) NOT NULL,
+  tenantId varchar(36) NOT NULL,
+  serviceCode varchar(64) NOT NULL,
+  type varchar(32) NOT NULL,
+  label varchar(280) NOT NULL,
+  description text NULL,
+  required tinyint(1) NOT NULL DEFAULT 0,
+  orderIndex int NOT NULL DEFAULT 1,
+  options json NULL,
+  scaleMin int NULL,
+  scaleMax int NULL,
+  scaleMinLabel varchar(120) NULL,
+  scaleMaxLabel varchar(120) NULL,
+  createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_survey_question (surveyId, orderIndex)
+) ENGINE=InnoDB;

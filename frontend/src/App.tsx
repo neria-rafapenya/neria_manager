@@ -30,9 +30,12 @@ import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { AdminSubscriptionsPage } from "./pages/AdminSubscriptionsPage";
 import { BillingConfirmPage } from "./pages/BillingConfirmPage";
 import { BillingSuccessPage } from "./pages/BillingSuccessPage";
+import { BillingCancelPage } from "./pages/BillingCancelPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ServiceEditorPage } from "./pages/ServiceEditorPage";
 import { TenantServiceDetailPage } from "./pages/TenantServiceDetailPage";
+import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
+import { PublicSurveyPage } from "./pages/PublicSurveyPage";
 
 function App() {
   return (
@@ -45,6 +48,11 @@ function App() {
               <Route path="/reset-password" element={<LoginPage />} />
               <Route path="/billing/confirm" element={<BillingConfirmPage />} />
               <Route path="/billing/success" element={<BillingSuccessPage />} />
+              <Route
+                path="/public/surveys/:publicCode"
+                element={<PublicSurveyPage />}
+              />
+              <Route path="/billing/cancel" element={<BillingCancelPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route
                   element={
@@ -71,6 +79,10 @@ function App() {
                   <Route
                     path="clients/:tenantId/services/:serviceCode"
                     element={<TenantServiceDetailPage />}
+                  />
+                  <Route
+                    path="clients/:tenantId/services/:serviceCode/surveys"
+                    element={<TenantServiceSurveysPage />}
                   />
                   <Route
                     path="clients/:tenantId/observability"
