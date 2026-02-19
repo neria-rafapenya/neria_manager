@@ -4210,7 +4210,9 @@ export function ClientSummaryPage() {
                             type="button"
                             onClick={() =>
                               navigate(
-                                `/clients/${tenantId}/services/${service.serviceCode}`,
+                                service.serviceCode === "sistema-encuestas"
+                                  ? `/clients/${tenantId}/services/${service.serviceCode}/surveys`
+                                  : `/clients/${tenantId}/services/${service.serviceCode}`,
                               )
                             }
                           >

@@ -41,7 +41,8 @@ public class AuthFilter extends OncePerRequestFilter {
         || path.startsWith("/actuator/info")
         || path.startsWith("/billing/confirm")
         || path.startsWith("/billing/stripe/confirm")
-        || path.startsWith("/billing/stripe/webhook")) {
+        || path.startsWith("/billing/stripe/webhook")
+        || path.startsWith("/public/surveys")) {
       filterChain.doFilter(request, response);
       return;
     }

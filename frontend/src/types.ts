@@ -220,6 +220,85 @@ export type TenantServiceEmailMessage = {
   jiraIssueUrl?: string | null;
 };
 
+export type SurveySummary = {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  language?: string | null;
+  publicCode: string;
+  allowMultiple: boolean;
+  collectEmail: boolean;
+  anonymous: boolean;
+  welcomeText?: string | null;
+  thankYouText?: string | null;
+  questionCount: number;
+  responseCount: number;
+  startAt?: string | null;
+  endAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type SurveyQuestion = {
+  id: string;
+  label: string;
+  description?: string | null;
+  type: string;
+  required: boolean;
+  orderIndex: number;
+  options?: string[];
+  scaleMin?: number | null;
+  scaleMax?: number | null;
+  scaleMinLabel?: string | null;
+  scaleMaxLabel?: string | null;
+};
+
+export type SurveyDetail = {
+  summary: SurveySummary;
+  questions: SurveyQuestion[];
+};
+
+export type SurveyResponseSummary = {
+  id: string;
+  status: string;
+  respondentEmail?: string | null;
+  respondentName?: string | null;
+  submittedAt?: string | null;
+  answerCount: number;
+};
+
+export type SurveyResponseDetail = {
+  id: string;
+  status: string;
+  respondentEmail?: string | null;
+  respondentName?: string | null;
+  submittedAt?: string | null;
+  answers: { questionId: string; value: any }[];
+};
+
+export type SurveyInsight = {
+  id: string;
+  model?: string | null;
+  status: string;
+  payload?: string | null;
+  errorMessage?: string | null;
+  createdAt?: string | null;
+};
+
+export type PublicSurvey = {
+  publicCode: string;
+  title: string;
+  description?: string | null;
+  welcomeText?: string | null;
+  thankYouText?: string | null;
+  language?: string | null;
+  collectEmail: boolean;
+  anonymous: boolean;
+  questions: SurveyQuestion[];
+};
+
+
 export type TenantServiceUser = {
   userId: string;
   status: 'active' | 'suspended';

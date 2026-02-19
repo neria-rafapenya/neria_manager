@@ -184,6 +184,43 @@ async function requestJson<T>(
   }
 }
 
+async function requestJsonPublic<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const mergedHeaders: Record<string, string> = {
+    ...defaultHeaders,
+    ...normalizeHeaders(init?.headers),
+  };
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    credentials: "omit",
+    headers: mergedHeaders,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text}`);
+  }
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error("Invalid JSON response");
+  }
+}
+
+
+
 export const api = {
   issueToken: (payload: { clientId: string; clientSecret: string }) =>
     requestJson<{ accessToken: string; expiresIn: number }>("/auth/token", {
@@ -424,6 +461,152 @@ export const api = {
         method: "POST",
       },
     ),
+
+  listTenantServiceSurveys: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(`/tenants/${tenantId}/services/${serviceCode}/surveys`),
+  listTenantServiceSurveysExternal: (tenantId: string, serviceCode: string) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/external`,
+    ),
+  getTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+    ),
+  createTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(`/tenants/${tenantId}/services/${serviceCode}/surveys`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    ),
+  deleteTenantServiceSurvey: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}`,
+      { method: "DELETE" },
+    ),
+  createTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    questionId: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions/${questionId}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    ),
+  deleteTenantServiceSurveyQuestion: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    questionId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/questions/${questionId}`,
+      { method: "DELETE" },
+    ),
+  listTenantServiceSurveyResponses: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses`,
+    ),
+  listTenantServiceSurveyResponsesExternal: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/external`,
+    ),
+  getTenantServiceSurveyResponse: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+    responseId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/${responseId}`,
+    ),
+  exportTenantServiceSurveyResponses: async (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) => {
+    const authToken = getStoredToken();
+    const response = await fetch(
+      `${baseUrl}/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/responses/export`,
+      {
+        method: "GET",
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        credentials: "include",
+      },
+    );
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API error ${response.status}: ${text}`);
+    }
+    return response.blob();
+  },
+  listTenantServiceSurveyInsights: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/insights`,
+    ),
+  runTenantServiceSurveyInsights: (
+    tenantId: string,
+    serviceCode: string,
+    surveyId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/surveys/${surveyId}/insights`,
+      { method: "POST" },
+    ),
+  publicGetSurvey: (publicCode: string) =>
+    requestJsonPublic<any>(`/public/surveys/${publicCode}`),
+  publicSubmitSurvey: (publicCode: string, payload: any) =>
+    requestJsonPublic<any>(`/public/surveys/${publicCode}/responses`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   listTenantServiceEndpoints: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/endpoints`,

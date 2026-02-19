@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS tenant_service_surveys (
+  id varchar(36) NOT NULL,
+  tenantId varchar(36) NOT NULL,
+  serviceCode varchar(64) NOT NULL,
+  publicCode varchar(64) NOT NULL,
+  title varchar(200) NOT NULL,
+  description text NULL,
+  status varchar(16) NOT NULL DEFAULT 'draft',
+  language varchar(8) NULL,
+  allowMultiple tinyint(1) NOT NULL DEFAULT 1,
+  collectEmail tinyint(1) NOT NULL DEFAULT 0,
+  isAnonymous tinyint(1) NOT NULL DEFAULT 1,
+  startAt timestamp NULL,
+  endAt timestamp NULL,
+  welcomeText text NULL,
+  thankYouText text NULL,
+  createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_survey_public (publicCode),
+  KEY idx_survey_tenant (tenantId, serviceCode),
+  KEY idx_survey_status (status)
+) ENGINE=InnoDB;

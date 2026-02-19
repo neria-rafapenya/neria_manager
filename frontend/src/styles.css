@@ -852,6 +852,55 @@ h1 {
   gap: 16px;
 }
 
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.card-subtle {
+  background: var(--surface-2);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.question-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.option-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.range-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
 .success-banner {
   background: rgba(31, 111, 120, 0.12);
   border: 1px solid rgba(31, 111, 120, 0.35);
