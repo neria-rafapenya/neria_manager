@@ -1,0 +1,12 @@
+export LOCAL_DB_PASSWORD="pimpamtomalacasitos"
+export PROD_DB_PASSWORD="HGMFzyaCRfCcSAZPxRHlmoBvHidAKGAu"
+export INT_DB_PASSWORD="qrGmDPTJHmSmZKVEqsBkoyVQDXixgbRz"
+scripts/sync-railway-to-local.sh
+
+scripts/sync-railway-db.sh
+
+
+
+
+
+
