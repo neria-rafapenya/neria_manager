@@ -279,11 +279,21 @@ export function ProfilePage() {
                   <div className="col-12 col-md-6">
                     <label>
                       {t("Estado")}
-                      <input
-                        className="form-control"
-                        value={profile?.status || "active"}
-                        readOnly
-                      />
+                      <div className="toggle-cell">
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={(profile?.status || "active") === "active"}
+                            disabled
+                          />
+                          <span className="toggle-slider" />
+                        </label>
+                        <span className="muted">
+                          {(profile?.status || "active") === "active"
+                            ? t("activo")
+                            : t("inactivo")}
+                        </span>
+                      </div>
                     </label>
                   </div>
                 )}
