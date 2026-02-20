@@ -15,6 +15,7 @@ export function DashboardLayout() {
   const {
     user,
     name,
+    avatarUrl,
     role,
     tenantId: authTenantId,
     mustChangePassword,
@@ -29,6 +30,7 @@ export function DashboardLayout() {
     "/tenants": t("Clientes"),
     "/usage": t("Uso"),
     "/audit": t("Auditoría"),
+    "/logs": t("Logs"),
     "/docs": t("Documentación"),
     "/settings": t("Configuración"),
     "/services": t("Servicios"),
@@ -68,6 +70,7 @@ export function DashboardLayout() {
             : []),
           { label: t("Uso"), to: "/usage" },
           { label: t("Auditoría"), to: "/audit" },
+          ...(role === "admin" ? [{ label: t("Logs"), to: "/logs" }] : []),
           { label: t("Docs"), to: "/docs" },
           ...(role === "admin"
             ? [{ label: t("Configuración"), to: "/settings" }]
@@ -140,6 +143,7 @@ export function DashboardLayout() {
       "/runtime": [{ label: t("Runtime") }],
       "/usage": [{ label: t("Uso") }],
       "/audit": [{ label: t("Auditoría") }],
+      "/logs": [{ label: t("Logs") }],
       "/pricing": [{ label: t("Pricing") }],
       "/webhooks": [{ label: t("Webhooks") }],
       "/notifications": [{ label: t("Notificaciones") }],
@@ -154,6 +158,12 @@ export function DashboardLayout() {
     return items.length ? withHome(items) : [];
   };
   const breadcrumbs = buildBreadcrumbs();
+
+  const avatarLabel = (name || user || '').trim();
+  const avatarInitial = avatarLabel.charAt(0).toUpperCase();
+  const avatarAlt = avatarLabel
+    ? t('Avatar de {name}', { name: avatarLabel })
+    : t('Avatar');
 
   useEffect(() => {
     const match = location.pathname.match(/^\/clients\/([^/]+)/);
@@ -228,15 +238,17 @@ export function DashboardLayout() {
                     aria-label={t("Ir al perfil")}
                   >
                     <span
-                      className={`avatar-circle ${
-                        role === "admin" ? "avatar-admin" : "avatar-user"
-                      }`}
+                      className={`avatar-circle ${role === "admin" ? "avatar-admin" : "avatar-user"} ${avatarUrl ? "avatar-image" : ""}`.trim()}
                     >
-                      {(name || user || "").trim().charAt(0).toUpperCase()}
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt={avatarAlt} />
+                      ) : (
+                        avatarInitial
+                      )}
                     </span>
                   </NavLink>
                   <span>
-                    {t("Usuario: {name}", { name: name || user || "" })}
+                    {name || user || ""}
                   </span>
                 </div>
               )}

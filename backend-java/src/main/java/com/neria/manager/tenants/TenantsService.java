@@ -1,6 +1,9 @@
 package com.neria.manager.tenants;
 
 import com.neria.manager.auth.TenantAuthService;
+import com.neria.manager.common.entities.AdminUser;
+import com.neria.manager.common.repos.AdminUserRepository;
+import com.neria.manager.common.services.EmailService;
 import com.neria.manager.common.entities.Tenant;
 import com.neria.manager.common.repos.TenantRepository;
 import java.time.LocalDateTime;
@@ -12,10 +15,18 @@ import org.springframework.stereotype.Service;
 public class TenantsService {
   private final TenantRepository repository;
   private final TenantAuthService tenantAuthService;
+  private final AdminUserRepository adminUserRepository;
+  private final EmailService emailService;
 
-  public TenantsService(TenantRepository repository, TenantAuthService tenantAuthService) {
+  public TenantsService(
+      TenantRepository repository,
+      TenantAuthService tenantAuthService,
+      AdminUserRepository adminUserRepository,
+      EmailService emailService) {
     this.repository = repository;
     this.tenantAuthService = tenantAuthService;
+    this.adminUserRepository = adminUserRepository;
+    this.emailService = emailService;
   }
 
   public List<Tenant> list(String tenantId) {
@@ -39,7 +50,9 @@ public class TenantsService {
     }
     tenant.setCreatedAt(LocalDateTime.now());
     tenant.setUpdatedAt(LocalDateTime.now());
-    return repository.save(tenant);
+    Tenant saved = repository.save(tenant);
+    notifyAdminsNewTenant(saved);
+    return saved;
   }
 
   public Tenant update(String tenantId, UpdateTenantRequest dto) {
@@ -120,6 +133,37 @@ public class TenantsService {
     if (dto.website != null) tenant.setWebsite(dto.website);
     if (dto.avatarUrl != null) tenant.setAvatarUrl(dto.avatarUrl);
     if (dto.language != null) tenant.setLanguage(dto.language);
+  }
+
+  private void notifyAdminsNewTenant(Tenant tenant) {
+    if (tenant == null) {
+      return;
+    }
+    List<String> recipients =
+        adminUserRepository.findByRoleIgnoreCaseAndStatusIgnoreCase("admin", "active").stream()
+            .map(AdminUser::getEmail)
+            .filter(email -> email != null && !email.isBlank())
+            .distinct()
+            .toList();
+    if (recipients.isEmpty()) {
+      return;
+    }
+    String subject = "Nuevo tenant creado";
+    String body =
+        "Se ha creado un nuevo tenant en Neria Manager.\\n\\n"
+            + "Nombre: "
+            + (tenant.getName() != null ? tenant.getName() : "-")
+            + "\\n"
+            + "ID: "
+            + tenant.getId()
+            + "\\n"
+            + "Estado: "
+            + (tenant.getStatus() != null ? tenant.getStatus() : "-")
+            + "\\n"
+            + "Email facturación: "
+            + (tenant.getBillingEmail() != null ? tenant.getBillingEmail() : "-")
+            + "\\n";
+    emailService.sendGeneric(recipients, subject, body);
   }
 
   public static class UpdateTenantBase {

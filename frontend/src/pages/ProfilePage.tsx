@@ -26,7 +26,6 @@ export function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
-
   useEffect(() => {
     return () => {
       if (avatarPreview) {
@@ -56,9 +55,7 @@ export function ProfilePage() {
     load();
   }, []);
 
-  const handleAvatarUpload = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) {
@@ -155,18 +152,39 @@ export function ProfilePage() {
                 ) : (
                   initial
                 )}
-              </div>
-              <label className="btn small profile-avatar-upload">
-                {avatarUploading ? t("Subiendo...") : t("Subir avatar")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  disabled={avatarUploading}
-                />
-              </label>
-              <div className="muted mt-2">
-                {t("Máximo 500x500px y 400KB")}
+                <label
+                  className="profile-avatar-upload"
+                  aria-label={t("Subir avatar")}
+                >
+                  <span className="camera-icon" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    disabled={avatarUploading}
+                  />
+                </label>
               </div>
               {avatarError && (
                 <div className="error-banner mt-2">{avatarError}</div>
@@ -278,7 +296,6 @@ export function ProfilePage() {
                 {!isTenant && (
                   <div className="col-12 col-md-6">
                     <label>
-                      {t("Estado")}
                       <div className="toggle-cell">
                         <label className="toggle-switch">
                           <input

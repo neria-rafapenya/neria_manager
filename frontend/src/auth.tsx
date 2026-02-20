@@ -5,6 +5,7 @@ type AuthContextValue = {
   token: string | null;
   user: string | null;
   name: string | null;
+  avatarUrl: string | null;
   role: 'admin' | 'editor' | 'tenant' | null;
   tenantId: string | null;
   mustChangePassword: boolean;
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<string | null>(() => cookie.get('pm_auth_user'));
   const [name, setName] = useState<string | null>(() => cookie.get('pm_auth_name'));
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [role, setRole] = useState<'admin' | 'editor' | 'tenant' | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(() => cookie.get('pm_auth_tenant'));
   const [mustChangePassword, setMustChangePassword] = useState(false);
@@ -128,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
     setName(null);
+    setAvatarUrl(null);
     setRole(null);
     setTenantId(null);
     setMustChangePassword(false);
@@ -180,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: 'admin' | 'editor' | 'tenant' | null;
         name?: string | null;
         email?: string | null;
+        avatarUrl?: string | null;
         mustChangePassword?: boolean;
         tenantId?: string | null;
         language?: string | null;
@@ -190,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken || 'cookie');
       setUser(data.user);
       setName(data.name ?? null);
+      setAvatarUrl(data.avatarUrl ?? null);
       setTenantId(data.tenantId ?? null);
       if (data.user) {
         cookie.set('pm_auth_user', data.user);
@@ -207,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
       setUser(null);
       setName(null);
+      setAvatarUrl(null);
       setRole(null);
       setTenantId(null);
       setMustChangePassword(false);
@@ -224,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       user,
       name,
+      avatarUrl,
       role,
       tenantId,
       mustChangePassword,
@@ -233,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession
     }),
-    [token, user, name, role, tenantId, mustChangePassword, loading]
+    [token, user, name, avatarUrl, role, tenantId, mustChangePassword, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
