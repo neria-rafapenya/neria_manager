@@ -31,6 +31,7 @@ import {
 } from "../config/env";
 import { API_ENDPOINTS } from "../../core/domain/constants/apiEndpoints";
 import { fetchWithAuth } from "../api/api";
+import { useAuthContext } from "./AuthContext";
 
 const conversationRepository = new ConversationRepository();
 const chatRepository = new ChatRepository();
@@ -104,13 +105,13 @@ export interface ChatProviderProps {
 
 const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
 
-const getConversationStorageKey = (): string => {
+const getConversationStorageKey = (userId?: string | null): string => {
   const tenantId = getTenantId();
   const serviceCode = getServiceCode();
-  if (!tenantId && !serviceCode) {
+  if (!tenantId && !serviceCode && !userId) {
     return SELECTED_CONVERSATION_STORAGE_KEY;
   }
-  return `${SELECTED_CONVERSATION_STORAGE_KEY}:${tenantId || "unknown"}:${serviceCode || "unknown"}`;
+  return `${SELECTED_CONVERSATION_STORAGE_KEY}:${tenantId || "unknown"}:${serviceCode || "unknown"}:${userId || "anonymous"}`;
 };
 
 const filterConversationsByService = (items: Conversation[]): Conversation[] => {
@@ -132,13 +133,20 @@ interface UsageState {
   cooldownUntil: number | null;
 }
 
-const loadUsageState = (): UsageState => {
+const getUsageStorageKey = (userId?: string | null): string => {
+  if (!userId) {
+    return USAGE_STORAGE_KEY;
+  }
+  return `${USAGE_STORAGE_KEY}:${userId}`;
+};
+
+const loadUsageState = (storageKey: string): UsageState => {
   if (typeof window === "undefined") {
     return { windowStart: null, cooldownUntil: null };
   }
 
   try {
-    const raw = window.localStorage.getItem(USAGE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) {
       return { windowStart: null, cooldownUntil: null };
     }
@@ -158,9 +166,9 @@ const loadUsageState = (): UsageState => {
   }
 };
 
-const saveUsageState = (state: UsageState) => {
+const saveUsageState = (storageKey: string, state: UsageState) => {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(state));
+  window.localStorage.setItem(storageKey, JSON.stringify(state));
 };
 
 interface UsageEvaluation {
@@ -256,6 +264,10 @@ const computeUsageView = (now: number, state: UsageState): UsageView => {
 };
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
+  const { user, token } = useAuthContext();
+  const userId = user?.id || null;
+  const conversationStorageKey = useMemo(() => getConversationStorageKey(userId), [userId]);
+  const usageStorageKey = useMemo(() => getUsageStorageKey(userId), [userId]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -391,7 +403,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       }
 
       const filteredConversations = filterConversationsByService(safeConversations);
-      setConversations(filteredConversations);
+        setConversations(filteredConversations);
     } catch (e) {
       console.error(e);
       setError("No se han podido cargar las conversaciones.");
@@ -449,10 +461,17 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         return;
       }
 
+      if (!token || !userId) {
+        setConversations([]);
+        setSelectedConversationId(null);
+        setMessages([]);
+        return;
+      }
+
       try {
         const storedId =
           typeof window !== "undefined"
-            ? window.localStorage.getItem(getConversationStorageKey())
+            ? window.localStorage.getItem(conversationStorageKey)
             : null;
 
         setLoadingConversations(true);
@@ -468,7 +487,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         }
 
         const filteredConversations = filterConversationsByService(safeConversations);
-      setConversations(filteredConversations);
+        setConversations(filteredConversations);
         setLoadingConversations(false);
 
         // 🔐 Si no hay conversaciones, no intentes leer .id
@@ -508,8 +527,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           return;
         }
 
-          setSelectedConversationId(conversationIdToLoad);
-          setLoadingMessages(true);
+        setSelectedConversationId(conversationIdToLoad);
+        setLoadingMessages(true);
         try {
           const detail =
             await conversationService.getConversationWithMessages(
@@ -546,7 +565,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     };
 
     void init();
-  }, []);
+  }, [conversationStorageKey, token, userId]);
 
   // Actualizar contador de uso cada 30s (solo si está restringido)
   useEffect(() => {
@@ -557,7 +576,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
       if (typeof window !== "undefined") {
         try {
-          window.localStorage.removeItem(USAGE_STORAGE_KEY);
+          window.localStorage.removeItem(usageStorageKey);
         } catch {
           // ignoramos errores de storage
         }
@@ -569,7 +588,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     if (typeof window === "undefined") return;
 
     const update = () => {
-      const state = loadUsageState();
+      const state = loadUsageState(usageStorageKey);
       const { mode, remainingMs } = computeUsageView(Date.now(), state);
       setUsageMode(mode);
       setUsageRemainingMs(remainingMs ?? null);
@@ -578,11 +597,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     update();
     const id = window.setInterval(update, 30_000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [usageStorageKey, token, userId]);
 
   useEffect(() => {
     void loadServiceInfo();
-  }, []);
+  }, [token, userId]);
 
   // Persistir conversación seleccionada
   useEffect(() => {
@@ -591,13 +610,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     if (selectedConversationId) {
       window.localStorage.setItem(
-        getConversationStorageKey(),
+        conversationStorageKey,
         selectedConversationId,
       );
     } else {
-      window.localStorage.removeItem(getConversationStorageKey());
+      window.localStorage.removeItem(conversationStorageKey);
     }
-  }, [selectedConversationId]);
+  }, [selectedConversationId, conversationStorageKey]);
 
   const handoffStatus = useMemo(() => {
     if (!selectedConversationId) return "none";
@@ -812,12 +831,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     // --- LÓGICA DE USO SOLO SI ESTÁ RESTRINGIDO ---
     if (IS_RESTRICTED) {
       const now = Date.now();
-      const currentUsageState = loadUsageState();
+      const currentUsageState = loadUsageState(usageStorageKey);
       const { allowed, updatedState, remainingMs } = evaluateUsage(
         now,
         currentUsageState,
       );
-      saveUsageState(updatedState);
+      saveUsageState(usageStorageKey, updatedState);
 
       const view = computeUsageView(now, updatedState);
       setUsageMode(view.mode);
