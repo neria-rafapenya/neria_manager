@@ -42,6 +42,16 @@ export interface AuthProviderProps {
 const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
 const WIDGET_OPEN_STORAGE_KEY = "ia_chat_widget_open";
 
+const clearChatStorage = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const keys = Object.keys(window.localStorage).filter((key) =>
+    key.startsWith("ia_chat_")
+  );
+  keys.forEach((key) => window.localStorage.removeItem(key));
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(getAuthToken());
@@ -107,10 +117,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(null);
     setUser(null);
 
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(SELECTED_CONVERSATION_STORAGE_KEY);
-      window.localStorage.removeItem(WIDGET_OPEN_STORAGE_KEY);
-    }
+    clearChatStorage();
   };
 
   const value = useMemo<AuthContextValue>(
