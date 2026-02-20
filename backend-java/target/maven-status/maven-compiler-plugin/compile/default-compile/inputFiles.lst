@@ -55,6 +55,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantInvoiceItem.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantLoginLog.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantPricing.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantRequestLog.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceApiKey.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceConfig.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/TenantServiceEmailAccount.java
@@ -101,6 +102,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantLoginLogRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantPricingRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantRequestLogRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceApiKeyRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceConfigRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/repos/TenantServiceEmailAccountRepository.java
@@ -149,6 +151,9 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/financialsim/FinancialSimulationsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/JiraIssuesService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/jira/TenantServiceJiraService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/logs/TenantRequestLogFilter.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/logs/TenantRequestLogsController.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/logs/TenantRequestLogsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/notifications/NotificationsController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/notifications/NotificationsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/ocr/OcrDocumentsController.java

@@ -16,6 +16,7 @@ com/neria/manager/financialsim/FinancialSimulationsService$SimulationSummary.cla
 com/neria/manager/webhooks/WebhooksService$WebhookEventPayload.class
 com/neria/manager/jira/JiraIssuesService$IssueDraft.class
 com/neria/manager/common/entities/TenantServiceSurvey.class
+com/neria/manager/logs/TenantRequestLogsService.class
 com/neria/manager/docs/DocsController.class
 com/neria/manager/emailautomation/TenantServiceEmailService$1.class
 com/neria/manager/auth/ApiKeysController.class
@@ -82,6 +83,7 @@ com/neria/manager/documents/EmbeddingsService$1.class
 com/neria/manager/selfassessment/SelfAssessmentsService$SelfAssessmentDetail.class
 com/neria/manager/common/repos/SystemSettingRepository.class
 com/neria/manager/jira/TenantServiceJiraService$ResolvedJira.class
+com/neria/manager/common/repos/TenantRequestLogRepository.class
 com/neria/manager/config/AppProperties$Auth.class
 com/neria/manager/tenants/TenantsService$UpdateTenantSelfRequest.class
 com/neria/manager/common/repos/AdminUserRepository.class
@@ -121,6 +123,7 @@ com/neria/manager/common/entities/TenantServiceSurveyAnswer.class
 com/neria/manager/tenantpricing/TenantPricingService$TenantPricingUpdateRequest.class
 com/neria/manager/ocr/OcrDocumentsService$CreateOcrDocumentRequest.class
 com/neria/manager/common/entities/TenantServiceEndpoint.class
+com/neria/manager/logs/TenantRequestLogsController.class
 com/neria/manager/providers/ProvidersService$UpdateProviderRequest.class
 com/neria/manager/common/repos/ApiKeyRepository.class
 com/neria/manager/common/services/KillSwitchService.class
@@ -336,11 +339,13 @@ com/neria/manager/chat/ChatService$AttachmentPayload.class
 com/neria/manager/config/AppProperties$Cors.class
 com/neria/manager/common/entities/TenantServiceConfig.class
 com/neria/manager/common/services/RateLimitService.class
+com/neria/manager/logs/TenantRequestLogFilter.class
 com/neria/manager/settings/SettingsController$PurgeRequest.class
 com/neria/manager/auth/AdminPasswordResetService.class
 com/neria/manager/common/repos/ChatUserRepository.class
 com/neria/manager/settings/SettingsController$ToggleRequest.class
 com/neria/manager/settings/SettingsController$AlertsScheduleRequest.class
+com/neria/manager/common/entities/TenantRequestLog.class
 com/neria/manager/common/entities/Tenant.class
 com/neria/manager/adapters/AzureOpenAIAdapter.class
 com/neria/manager/operationsupport/OperationalSupportController.class
