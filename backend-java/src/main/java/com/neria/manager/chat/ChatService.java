@@ -357,6 +357,7 @@ public class ChatService {
               + "\n\nREGLAS DE RESPUESTA:\n"
               + "- Responde directamente con los datos de ENDPOINT_DATA.\n"
               + "- No anuncies búsquedas ni pidas confirmación.\n"
+              + "- Si hay resultados, muéstralos directamente sin preguntar al usuario.\n"
               + "- Si faltan datos, indícalo de forma concisa y sugiere un criterio alternativo.";
     }
     String documentContext =
@@ -776,6 +777,7 @@ public class ChatService {
 
     sb.append("Contexto del servicio: ").append(serviceCode).append(".\n");
     sb.append("Permite saludos y cortesías con una respuesta breve y amable, e invita a preguntar sobre el servicio.\n");
+    sb.append("Si el usuario pregunta qué puedes hacer, explica brevemente el alcance del servicio y ofrece ejemplos.\n");
     sb.append("Si una pregunta está fuera del ámbito, indica que no puedes responder y sugiere temas del servicio.\n");
 
     if (endpoints == null || endpoints.isEmpty()) {
@@ -820,6 +822,9 @@ public class ChatService {
         "Instrucciones: Si la respuesta depende de datos externos, consulta primero el endpoint más relevante. ");
     sb.append(
         "Si no hay datos suficientes, responde exactamente: \"No tengo información para responder a esa pregunta.\"");
+    if (serviceCode != null && serviceCode.equalsIgnoreCase("asistente-operativo")) {
+      sb.append(" Si hay plantillas o documentos relevantes, muéstralos directamente sin pedir confirmación.");
+    }
     sb.append(" Para saludos o cortesías, responde de forma breve y amable.");
     return sb.toString().trim();
   }
@@ -1578,7 +1583,10 @@ public class ChatService {
     String[] keywords = {
       "hola", "buenas", "buenos dias", "buenas tardes", "buenas noches",
       "saludos", "hey", "hello", "hi", "que tal", "como estas",
-      "gracias", "ok", "vale", "bien", "perfecto"
+      "gracias", "ok", "vale", "bien", "perfecto",
+      "que sabes hacer", "que puedes hacer", "que puedes", "que haces",
+      "para que sirves", "en que me puedes ayudar", "en que puedes ayudar",
+      "como puedes ayudar", "como ayudas", "que ofreces", "cual es tu funcion"
     };
     for (String keyword : keywords) {
       if (normalized.contains(keyword)) {
