@@ -390,6 +390,14 @@ export const api = {
         ? `/audit?limit=${limit}&tenantId=${tenantId}`
         : `/audit?limit=${limit}`,
     ),
+  getLogs: (limit = 200, tenantId?: string, type?: string, query?: string) => {
+    const params = new URLSearchParams();
+    params.set("limit", String(limit));
+    if (tenantId) params.set("tenantId", tenantId);
+    if (type) params.set("type", type);
+    if (query) params.set("q", query);
+    return requestJson<any[]>(`/logs?${params.toString()}`);
+  },
   getPricing: () => requestJson<any[]>("/pricing"),
   createPricing: (payload: any) =>
     requestJson<any>("/pricing", {

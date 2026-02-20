@@ -1,6 +1,7 @@
 package com.neria.manager.subscriptions;
 
 import com.neria.manager.auth.TenantServiceApiKeysService;
+import com.neria.manager.common.entities.AdminUser;
 import com.neria.manager.common.entities.ServiceCatalog;
 import com.neria.manager.common.entities.Subscription;
 import com.neria.manager.common.entities.SubscriptionHistory;
@@ -8,6 +9,7 @@ import com.neria.manager.common.entities.SubscriptionPaymentRequest;
 import com.neria.manager.common.entities.SubscriptionService;
 import com.neria.manager.common.entities.TenantInvoice;
 import com.neria.manager.common.entities.TenantInvoiceItem;
+import com.neria.manager.common.repos.AdminUserRepository;
 import com.neria.manager.common.repos.ServiceCatalogRepository;
 import com.neria.manager.common.repos.SubscriptionHistoryRepository;
 import com.neria.manager.common.repos.SubscriptionPaymentRequestRepository;
@@ -66,6 +68,7 @@ public class SubscriptionsService {
   private final TenantServiceUserRepository tenantServiceUserRepository;
   private final TenantsService tenantsService;
   private final EmailService emailService;
+  private final AdminUserRepository adminUserRepository;
 
   public SubscriptionsService(
       SubscriptionRepository subscriptionRepository,
@@ -80,7 +83,8 @@ public class SubscriptionsService {
       TenantServiceEndpointRepository tenantServiceEndpointRepository,
       TenantServiceUserRepository tenantServiceUserRepository,
       TenantsService tenantsService,
-      EmailService emailService) {
+      EmailService emailService,
+      AdminUserRepository adminUserRepository) {
     this.subscriptionRepository = subscriptionRepository;
     this.subscriptionServiceRepository = subscriptionServiceRepository;
     this.subscriptionHistoryRepository = subscriptionHistoryRepository;
@@ -94,6 +98,7 @@ public class SubscriptionsService {
     this.tenantServiceUserRepository = tenantServiceUserRepository;
     this.tenantsService = tenantsService;
     this.emailService = emailService;
+    this.adminUserRepository = adminUserRepository;
   }
 
   private LocalDateTime buildPeriodEnd(LocalDateTime start, String period) {
@@ -471,6 +476,36 @@ public class SubscriptionsService {
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
+  private void notifyAdminsServiceAssigned(String tenantId, String tenantName, List<ServiceCatalog> services) {
+    if (services == null || services.isEmpty()) {
+      return;
+    }
+    List<String> recipients =
+        adminUserRepository.findByRoleIgnoreCaseAndStatusIgnoreCase("admin", "active").stream()
+            .map(AdminUser::getEmail)
+            .filter(email -> email != null && !email.isBlank())
+            .distinct()
+            .toList();
+    if (recipients.isEmpty()) {
+      return;
+    }
+    String subject = "Nuevo servicio asignado";
+    String headerName = tenantName != null && !tenantName.isBlank() ? tenantName : tenantId;
+    StringBuilder body = new StringBuilder();
+    body.append("Se han asignado nuevos servicios a un tenant.\\n\\n");
+    body.append("Tenant: ").append(headerName).append("\\n");
+    body.append("ID: ").append(tenantId).append("\\n\\n");
+    body.append("Servicios:\\n");
+    for (ServiceCatalog service : services) {
+      String label =
+          service.getName() != null && !service.getName().isBlank()
+              ? service.getName()
+              : service.getCode();
+      body.append("- ").append(label).append(" (").append(service.getCode()).append(")\\n");
+    }
+    emailService.sendGeneric(recipients, subject, body.toString());
+  }
+
   public Map<String, Object> getByTenantId(String tenantId) {
     var tenant = tenantsService.getById(tenantId);
     if (tenant == null) {
@@ -560,6 +595,7 @@ public class SubscriptionsService {
       }
       subscriptionServiceRepository.saveAll(rows);
       tenantServiceApiKeysService.ensureKeys(tenantId, List.copyOf(codes));
+      notifyAdminsServiceAssigned(tenantId, tenant.getName(), catalog);
     }
 
     List<ServiceSummary> servicesSummary =
@@ -774,6 +810,8 @@ public class SubscriptionsService {
           rows.add(entry);
         }
         subscriptionServiceRepository.saveAll(rows);
+        var tenant = tenantsService.getById(tenantId);
+        notifyAdminsServiceAssigned(tenantId, tenant != null ? tenant.getName() : null, toAdd);
       }
       if (!codes.isEmpty()) {
         tenantServiceApiKeysService.ensureKeys(tenantId, List.copyOf(codes));

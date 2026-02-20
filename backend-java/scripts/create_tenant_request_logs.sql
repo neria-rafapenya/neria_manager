@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS tenant_request_logs (
+  id VARCHAR(36) NOT NULL,
+  tenantId VARCHAR(36) NOT NULL,
+  userId VARCHAR(120) NULL,
+  userEmail VARCHAR(160) NULL,
+  role VARCHAR(32) NULL,
+  method VARCHAR(8) NULL,
+  path VARCHAR(255) NULL,
+  type VARCHAR(64) NULL,
+  serviceCode VARCHAR(64) NULL,
+  queryString VARCHAR(1024) NULL,
+  ipAddress VARCHAR(64) NULL,
+  userAgent VARCHAR(255) NULL,
+  statusCode INT NULL,
+  payloadJson JSON NULL,
+  createdAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX idx_tenant_request_logs_tenant (tenantId),
+  INDEX idx_tenant_request_logs_created (createdAt),
+  INDEX idx_tenant_request_logs_type (type),
+  INDEX idx_tenant_request_logs_user (userId),
+  INDEX idx_tenant_request_logs_email (userEmail)
+);

@@ -1,0 +1,107 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Arial;}}
+\b \fs36 Onboarding funcional — Frontend Manager\par\b0 
+\fs24 Guía de uso detallada para el equipo\par
+\par
+\b \fs28 Índice\par\b0 
+\fs22 1. Objetivo y alcance\par
+\fs22 2. Roles y permisos\par
+\fs22 3. Acceso y sesión\par
+\fs22 4. Estructura general de la interfaz\par
+\fs22 5. Inicio / Overview\par
+\fs22 6. Tenants\par
+\fs22 7. Clientes (Resumen del tenant)\par
+\fs22 8. Servicios (Catálogo)\par
+\fs22 9. Detalle de servicio asignado\par
+\fs22 10. Providers\par
+\fs22 11. Policies\par
+\fs22 12. Pricing\par
+\fs22 13. Runtime (global)\par
+\fs22 14. Usage (global) y Usage por tenant\par
+\fs22 15. Audit\par
+\fs22 16. Observability\par
+\fs22 17. Webhooks\par
+\fs22 18. Notifications\par
+\fs22 19. API Keys\par
+\fs22 20. Billing y suscripciones\par
+\fs22 21. Docs\par
+\fs22 22. Profile\par
+\fs22 23. Admin Users\par
+\fs22 24. Public Surveys\par
+\fs22 25. Buenas prácticas y notas\par
+\par
+\b \fs28 1. Objetivo y alcance\par\b0 
+\fs24 Este documento describe el flujo funcional del frontend del Manager. Su objetivo es que cualquier miembro del equipo pueda entender qué hace cada pantalla, cómo navegar y qué acciones están disponibles.\par
+\b \fs28 2. Roles y permisos\par\b0 
+\fs24 El Manager contempla varios roles:\par
+\fs24 - Admin: acceso completo a configuración global, catálogo de servicios, usuarios admin y suscripciones.\par
+\fs24 - Editor: acceso a gestión operativa según permisos, sin acceso a secciones de administración global.\par
+\fs24 - Tenant: acceso restringido a su propio cliente/tenant y acciones permitidas.\par
+\b \fs28 3. Acceso y sesión\par\b0 
+\fs24 /login: formulario de acceso. Permite iniciar sesión con credenciales de admin o tenant.\par
+\fs24 /reset-password: recuperación de contraseña mediante token.\par
+\fs24 La sesión se mantiene con token y cookies. Si expira, el sistema solicita reautenticación.\par
+\b \fs28 4. Estructura general de la interfaz\par\b0 
+\fs24 Layout con navegación lateral, área principal y panel de documentación contextual (PageWithDocs) cuando aplica.\par
+\fs24 La mayoría de pantallas usan tarjetas (cards) y tablas con filtros. Las acciones suelen estar en la esquina superior derecha o en ‘row-actions’.\par
+\b \fs28 5. Inicio / Overview\par\b0 
+\fs24 Resumen global del sistema: métricas principales, estado general y accesos rápidos.\par
+\b \fs28 6. Tenants\par\b0 
+\fs24 /tenants: lista de tenants con búsqueda y filtros. Permite crear, editar, activar/desactivar y gestionar kill switch.\par
+\fs24 Acciones comunes: editar datos, activar/desactivar estado, abrir detalle del tenant.\par
+\b \fs28 7. Clientes (Resumen del tenant)\par\b0 
+\fs24 /clients/:tenantId: vista principal del cliente con secciones en acordeones y tarjetas.\par
+\fs24 Incluye: datos del cliente, uso, auditoría, API keys, servicios asignados, usuarios chat, facturación y suscripción.\par
+\fs24 Acciones típicas: crear API key, asignar servicio, configurar endpoints, crear usuarios de chat, cancelar o reactivar suscripción.\par
+\b \fs28 8. Servicios (Catálogo)\par\b0 
+\fs24 /services: lista de servicios disponibles para asignar. Permite activar/desactivar, editar y eliminar.\par
+\fs24 Cada card muestra estado y precios. Incluye botón ‘Ver demo’ que abre la demo del servicio en ia-demo-frontend.\par
+\b \fs28 9. Detalle de servicio asignado\par\b0 
+\fs24 /clients/:tenantId/services/:serviceCode: configuración avanzada de un servicio ya asignado.\par
+\fs24 Secciones principales:\par
+\fs24 - Configuración LLM: provider, pricing, política, prompt y capacidades.\par
+\fs24 - Integración Jira: proyecto, credenciales y opciones.\par
+\fs24 - Automatización de correos: cuentas IMAP, sincronización y mensajes.\par
+\fs24 - Almacenamiento: proveedor y JSON de configuración.\par
+\fs24 - Prueba runtime: ejecutar un payload para validar credenciales.\par
+\fs24 - Endpoints: alta/edición de endpoints con headers y path de extracción.\par
+\fs24 - Datos para app de terceros: resumen de configuración.\par
+\fs24 - Usuarios asignados y conversaciones.\par
+\b \fs28 10. Providers\par\b0 
+\fs24 /providers: gestión de proveedores LLM y credenciales globales.\par
+\b \fs28 11. Policies\par\b0 
+\fs24 /policies: políticas de límites y redacción. Define tokens, coste y req/min.\par
+\b \fs28 12. Pricing\par\b0 
+\fs24 /pricing: tarifas por modelo/provider. Base para cálculo de costes.\par
+\b \fs28 13. Runtime (global)\par\b0 
+\fs24 /runtime: ejecutar peticiones de prueba globales.\par
+\b \fs28 14. Usage (global) y Usage por tenant\par\b0 
+\fs24 /usage: métricas globales, alertas y logs de uso.\par
+\fs24 /clients/:tenantId/usage: métricas específicas del tenant.\par
+\b \fs28 15. Audit\par\b0 
+\fs24 /audit: eventos de auditoría y estado de operaciones.\par
+\b \fs28 16. Observability\par\b0 
+\fs24 /clients/:tenantId/observability: métricas y trazas a nivel de tenant.\par
+\b \fs28 17. Webhooks\par\b0 
+\fs24 /webhooks: configuración de webhooks para integraciones externas.\par
+\b \fs28 18. Notifications\par\b0 
+\fs24 /notifications: ajustes de notificaciones del sistema.\par
+\b \fs28 19. API Keys\par\b0 
+\fs24 /api-keys: gestión global de API keys para acceso a servicios.\par
+\b \fs28 20. Billing y suscripciones\par\b0 
+\fs24 /admin/subscriptions: control administrativo de suscripciones y estados.\par
+\fs24 /billing/confirm, /billing/success, /billing/cancel: flujo de pago y confirmación.\par
+\b \fs28 21. Docs\par\b0 
+\fs24 /docs: documentación interna. Cada página con PageWithDocs muestra un panel lateral de ayuda.\par
+\b \fs28 22. Profile\par\b0 
+\fs24 /profile: edición de datos de usuario, idioma y contraseña.\par
+\fs24 Incluye subida de avatar (máx 500x500px y 400KB). La imagen se sube a Cloudinary por defecto.\par
+\b \fs28 23. Admin Users\par\b0 
+\fs24 /admin/users: gestión de usuarios administrativos.\par
+\b \fs28 24. Public Surveys\par\b0 
+\fs24 /public/surveys/:publicCode: página pública para responder encuestas.\par
+\b \fs28 25. Buenas prácticas y notas\par\b0 
+\fs24 - Revisar permisos antes de editar configuraciones sensibles.\par
+\fs24 - Confirmar cambios críticos (suscripciones, endpoints, API keys).\par
+\fs24 - Usar el panel de documentación contextual para validar campos y formatos.\par
+}

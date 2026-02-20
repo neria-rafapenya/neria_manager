@@ -154,6 +154,19 @@ html {
   text-transform: uppercase;
 }
 
+.avatar-circle.avatar-image {
+  padding: 0;
+  overflow: hidden;
+}
+
+.avatar-circle.avatar-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 999px;
+}
+
 .avatar-circle.avatar-admin {
   background: var(--accent-2);
 }
@@ -719,15 +732,17 @@ h1 {
 }
 
 .profile-avatar {
-  width: 64px;
-  height: 64px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: var(--accent-2);
   color: #fff;
   font-weight: 700;
-  font-size: 26px;
+  font-size: 48px;
   display: grid;
   place-items: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .profile-avatar img {
@@ -738,10 +753,21 @@ h1 {
 }
 
 .profile-avatar-upload {
-  position: relative;
-  display: inline-flex;
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(16, 15, 13, 0.55);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.profile-avatar:hover .profile-avatar-upload,
+.profile-avatar:focus-within .profile-avatar-upload {
+  opacity: 1;
 }
 
 .profile-avatar-upload input {
@@ -749,6 +775,19 @@ h1 {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.profile-avatar-upload .camera-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-upload .camera-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .profile-meta {
@@ -2911,4 +2950,34 @@ label input[type="radio"] {
   font-size: 28px;
   padding-bottom: 8px;
   border-bottom: 3px solid #000;
+}
+
+
+.log-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.log-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin: 12px 0 18px;
+}
+
+.log-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.log-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }

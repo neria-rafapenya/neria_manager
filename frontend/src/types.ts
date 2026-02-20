@@ -65,6 +65,24 @@ export type AuditEvent = {
   tenantId: string;
   createdAt: string;
 };
+export type TenantRequestLog = {
+  id: string;
+  tenantId: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  role?: string | null;
+  method?: string | null;
+  path?: string | null;
+  type?: string | null;
+  serviceCode?: string | null;
+  queryString?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  statusCode?: number | null;
+  payloadJson?: string | null;
+  createdAt: string;
+};
+
 
 export type UsageEvent = {
   id: string;

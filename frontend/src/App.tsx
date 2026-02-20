@@ -16,6 +16,7 @@ import { RuntimePage } from "./pages/RuntimePage";
 import { UsagePage } from "./pages/UsagePage";
 import { TenantUsagePage } from "./pages/TenantUsagePage";
 import { AuditPage } from "./pages/AuditPage";
+import { LogsPage } from "./pages/LogsPage";
 import { PricingPage } from "./pages/PricingPage";
 import { WebhooksPage } from "./pages/WebhooksPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
@@ -152,6 +153,7 @@ function App() {
                       element={<ServiceEditorPage />}
                     />
                     <Route path="admin/users" element={<AdminUsersPage />} />
+                    <Route path="logs" element={<LogsPage />} />
                     <Route
                       path="admin/subscriptions"
                       element={<AdminSubscriptionsPage />}
