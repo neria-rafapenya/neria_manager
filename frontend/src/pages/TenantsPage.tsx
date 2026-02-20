@@ -7,6 +7,7 @@ import { FieldWithHelp } from '../components/FieldWithHelp';
 import { PageWithDocs } from '../components/PageWithDocs';
 import { DataTable } from '../components/DataTable';
 import { StatusBadgeIcon } from '../components/StatusBadgeIcon';
+import { LoaderComponent } from '../components/LoaderComponent';
 import { useI18n } from '../i18n/I18nProvider';
 import Swal from 'sweetalert2';
 
@@ -25,6 +26,7 @@ export function TenantsPage() {
     authPassword: ''
   });
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const resetForm = () => {
     setEditingId(null);
@@ -39,6 +41,7 @@ export function TenantsPage() {
   };
 
   const handleSubmit = async () => {
+    setIsSaving(true);
     try {
       setActionError(null);
       if (editingId) {
@@ -64,6 +67,8 @@ export function TenantsPage() {
       resetForm();
     } catch (err: any) {
       setActionError(err.message || t('Error guardando tenant'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -118,6 +123,11 @@ export function TenantsPage() {
 
   return (
     <PageWithDocs slug="tenants">
+      {isSaving && (
+        <div className="modal-backdrop">
+          <LoaderComponent label={t('Guardando...')} />
+        </div>
+      )}
       <section className="grid">
         {error && <div className="error-banner full-row">{error}</div>}
         {actionError && <div className="error-banner full-row">{actionError}</div>}
