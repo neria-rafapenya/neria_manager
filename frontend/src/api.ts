@@ -184,6 +184,77 @@ async function requestJson<T>(
   }
 }
 
+
+async function requestForm<T>(
+  path: string,
+  form: FormData,
+  init?: RequestInit,
+  retry = true,
+): Promise<T> {
+  const authToken = getStoredToken();
+  const mergedHeaders: Record<string, string> = {
+    ...normalizeHeaders(init?.headers),
+  };
+  if (authToken) {
+    mergedHeaders.Authorization = `Bearer ${authToken}`;
+  }
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    method: init?.method || "POST",
+    credentials: "include",
+    headers: mergedHeaders,
+    body: form,
+  });
+
+  if (response.status === 401) {
+    if (retry && canRefresh) {
+      const refreshed = await refreshToken();
+      if (refreshed) {
+        return requestForm<T>(path, form, init, false);
+      }
+    }
+    if (typeof window !== "undefined" && authToken) {
+      await showSessionExpiredModal();
+    }
+    throw new Error(t("Sesión expirada. Vuelve a iniciar sesión."));
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = `API error ${response.status}`;
+    try {
+      const data = JSON.parse(text) as { message?: string; error?: string };
+      if (data?.message) {
+        message = data.message;
+      } else if (data?.error) {
+        message = data.error;
+      } else if (text) {
+        message = text;
+      }
+    } catch (error) {
+      if (text) {
+        message = text;
+      }
+    }
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error("Invalid JSON response");
+  }
+}
+
 async function requestJsonPublic<T>(
   path: string,
   init?: RequestInit,
@@ -922,6 +993,12 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
+
+  uploadProfileAvatar: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return requestForm<any>("/auth/profile/avatar", form);
+  },
   forgotPassword: (identifier: string) =>
     requestJson<any>("/auth/forgot-password", {
       method: "POST",

@@ -4,20 +4,25 @@ import com.neria.manager.common.entities.AdminUser;
 import com.neria.manager.common.entities.Tenant;
 import com.neria.manager.common.security.AuthContext;
 import com.neria.manager.common.services.EmailService;
+import com.neria.manager.storage.StorageUploadService;
 import com.neria.manager.config.AppProperties;
 import com.neria.manager.tenants.TenantsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,6 +34,7 @@ public class AuthController {
   private final EmailService emailService;
   private final TenantAuthService tenantAuthService;
   private final TenantsService tenantsService;
+  private final StorageUploadService storageUploadService;
   private final AppProperties properties;
 
   public AuthController(
@@ -38,6 +44,7 @@ public class AuthController {
       EmailService emailService,
       TenantAuthService tenantAuthService,
       TenantsService tenantsService,
+      StorageUploadService storageUploadService,
       AppProperties properties) {
     this.authService = authService;
     this.adminUsersService = adminUsersService;
@@ -45,6 +52,7 @@ public class AuthController {
     this.emailService = emailService;
     this.tenantAuthService = tenantAuthService;
     this.tenantsService = tenantsService;
+    this.storageUploadService = storageUploadService;
     this.properties = properties;
   }
 
@@ -134,45 +142,34 @@ public class AuthController {
     }
     if ("tenant".equals(auth.getRole()) && auth.getTenantId() != null) {
       Tenant tenant = tenantsService.getById(auth.getTenantId());
-      return ResponseEntity.ok(
-          Map.of(
-              "user",
-              tenant != null && tenant.getAuthUsername() != null
-                  ? tenant.getAuthUsername()
-                  : auth.getSub(),
-              "role",
-              "tenant",
-              "name",
-              tenant != null ? tenant.getName() : null,
-              "email",
-              tenant != null ? tenant.getBillingEmail() : null,
-              "tenantId",
-              auth.getTenantId(),
-              "status",
-              tenant != null ? tenant.getStatus() : null,
-              "language",
-              tenant != null ? tenant.getLanguage() : null,
-              "mustChangePassword",
-              tenant != null && tenant.isAuthMustChangePassword()));
+      Map<String, Object> payload = new LinkedHashMap<>();
+      payload.put(
+          "user",
+          tenant != null && tenant.getAuthUsername() != null
+              ? tenant.getAuthUsername()
+              : auth.getSub());
+      payload.put("role", "tenant");
+      payload.put("name", tenant != null ? tenant.getName() : null);
+      payload.put("email", tenant != null ? tenant.getBillingEmail() : null);
+      payload.put("tenantId", auth.getTenantId());
+      payload.put("status", tenant != null ? tenant.getStatus() : null);
+      payload.put("language", tenant != null ? tenant.getLanguage() : null);
+      payload.put("avatarUrl", tenant != null ? tenant.getAvatarUrl() : null);
+      payload.put("mustChangePassword", tenant != null && tenant.isAuthMustChangePassword());
+      return ResponseEntity.ok(payload);
     }
 
     AdminUser profile = adminUsersService.getOrCreate(auth.getSub());
-    return ResponseEntity.ok(
-        Map.of(
-            "user",
-            profile.getUsername(),
-            "role",
-            profile.getRole(),
-            "name",
-            profile.getName(),
-            "email",
-            profile.getEmail(),
-            "status",
-            profile.getStatus(),
-            "language",
-            profile.getLanguage(),
-            "mustChangePassword",
-            profile.isMustChangePassword()));
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("user", profile.getUsername());
+    payload.put("role", profile.getRole());
+    payload.put("name", profile.getName());
+    payload.put("email", profile.getEmail());
+    payload.put("status", profile.getStatus());
+    payload.put("language", profile.getLanguage());
+    payload.put("avatarUrl", profile.getAvatarUrl());
+    payload.put("mustChangePassword", profile.isMustChangePassword());
+    return ResponseEntity.ok(payload);
   }
 
   @GetMapping("/profile")
@@ -183,52 +180,34 @@ public class AuthController {
     }
     if ("tenant".equals(auth.getRole()) && auth.getTenantId() != null) {
       Tenant tenant = tenantsService.getById(auth.getTenantId());
-      return ResponseEntity.ok(
-          Map.of(
-              "id",
-              tenant != null ? tenant.getId() : null,
-              "username",
-              tenant != null ? tenant.getAuthUsername() : auth.getSub(),
-              "name",
-              tenant != null ? tenant.getName() : null,
-              "email",
-              tenant != null ? tenant.getBillingEmail() : null,
-              "role",
-              "tenant",
-              "status",
-              tenant != null ? tenant.getStatus() : null,
-              "language",
-              tenant != null ? tenant.getLanguage() : null,
-              "mustChangePassword",
-              tenant != null && tenant.isAuthMustChangePassword(),
-              "createdAt",
-              tenant != null ? tenant.getCreatedAt() : null,
-              "updatedAt",
-              tenant != null ? tenant.getUpdatedAt() : null));
+      Map<String, Object> payload = new LinkedHashMap<>();
+      payload.put("id", tenant != null ? tenant.getId() : null);
+      payload.put("username", tenant != null ? tenant.getAuthUsername() : auth.getSub());
+      payload.put("name", tenant != null ? tenant.getName() : null);
+      payload.put("email", tenant != null ? tenant.getBillingEmail() : null);
+      payload.put("role", "tenant");
+      payload.put("status", tenant != null ? tenant.getStatus() : null);
+      payload.put("language", tenant != null ? tenant.getLanguage() : null);
+      payload.put("avatarUrl", tenant != null ? tenant.getAvatarUrl() : null);
+      payload.put("mustChangePassword", tenant != null && tenant.isAuthMustChangePassword());
+      payload.put("createdAt", tenant != null ? tenant.getCreatedAt() : null);
+      payload.put("updatedAt", tenant != null ? tenant.getUpdatedAt() : null);
+      return ResponseEntity.ok(payload);
     }
     AdminUser profile = adminUsersService.getOrCreate(auth.getSub());
-    return ResponseEntity.ok(
-        Map.of(
-            "id",
-            profile.getId(),
-            "username",
-            profile.getUsername(),
-            "name",
-            profile.getName(),
-            "email",
-            profile.getEmail(),
-            "role",
-            profile.getRole(),
-            "status",
-            profile.getStatus(),
-            "language",
-            profile.getLanguage(),
-            "mustChangePassword",
-            profile.isMustChangePassword(),
-            "createdAt",
-            profile.getCreatedAt(),
-            "updatedAt",
-            profile.getUpdatedAt()));
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("id", profile.getId());
+    payload.put("username", profile.getUsername());
+    payload.put("name", profile.getName());
+    payload.put("email", profile.getEmail());
+    payload.put("role", profile.getRole());
+    payload.put("status", profile.getStatus());
+    payload.put("language", profile.getLanguage());
+    payload.put("avatarUrl", profile.getAvatarUrl());
+    payload.put("mustChangePassword", profile.isMustChangePassword());
+    payload.put("createdAt", profile.getCreatedAt());
+    payload.put("updatedAt", profile.getUpdatedAt());
+    return ResponseEntity.ok(payload);
   }
 
   @PatchMapping("/profile")
@@ -243,17 +222,23 @@ public class AuthController {
       String email = body.get("email");
       String password = body.get("password");
       String language = body.get("language");
+      String avatarUrl = body.get("avatarUrl");
       TenantsService.UpdateTenantSelfRequest dto = new TenantsService.UpdateTenantSelfRequest();
       dto.name = name;
       dto.billingEmail = email;
       dto.authPassword = password;
       dto.language = language;
+      dto.avatarUrl = avatarUrl;
       tenantsService.updateSelf(auth.getTenantId(), dto);
       return profile(request);
     }
     AdminUsersService.UpdateProfileRequest dto =
         new AdminUsersService.UpdateProfileRequest(
-            body.get("name"), body.get("email"), body.get("password"), body.get("language"));
+            body.get("name"),
+            body.get("email"),
+            body.get("password"),
+            body.get("language"),
+            body.get("avatarUrl"));
     AdminUser updated = adminUsersService.updateProfile(auth.getSub(), dto);
     return ResponseEntity.ok(
         Map.of(
@@ -273,7 +258,41 @@ public class AuthController {
             updated.isMustChangePassword()));
   }
 
-  @PostMapping("/logout")
+    @PostMapping(value = "/profile/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<?> uploadAvatar(
+      HttpServletRequest request, @RequestParam("file") MultipartFile file) {
+    AuthContext auth = (AuthContext) request.getAttribute("auth");
+    if (auth == null) {
+      return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+    }
+    if (file == null || file.isEmpty()) {
+      return ResponseEntity.badRequest().body(Map.of("message", "Archivo requerido"));
+    }
+    String contentType = file.getContentType() != null ? file.getContentType() : "";
+    if (!contentType.startsWith("image/")) {
+      return ResponseEntity.badRequest().body(Map.of("message", "Formato de imagen inválido"));
+    }
+    long maxBytes = 450 * 1024;
+    if (file.getSize() > maxBytes) {
+      return ResponseEntity.badRequest().body(Map.of("message", "La imagen supera el límite de 400KB"));
+    }
+    String tenantId = auth.getTenantId();
+    String storageTenant = tenantId != null ? tenantId : auth.getSub();
+    var upload = storageUploadService.upload(storageTenant, "profile-avatar", file);
+    String avatarUrl = upload != null ? upload.url : null;
+    if ("tenant".equals(auth.getRole()) && tenantId != null) {
+      TenantsService.UpdateTenantSelfRequest dto = new TenantsService.UpdateTenantSelfRequest();
+      dto.avatarUrl = avatarUrl;
+      tenantsService.updateSelf(tenantId, dto);
+      return profile(request);
+    }
+    AdminUsersService.UpdateProfileRequest dto =
+        new AdminUsersService.UpdateProfileRequest(null, null, null, null, avatarUrl);
+    adminUsersService.updateProfile(auth.getSub(), dto);
+    return profile(request);
+  }
+
+@PostMapping("/logout")
   public ResponseEntity<?> logout(HttpServletResponse response) {
     clearCookie(response, "pm_auth_token");
     clearCookie(response, "pm_auth_user");

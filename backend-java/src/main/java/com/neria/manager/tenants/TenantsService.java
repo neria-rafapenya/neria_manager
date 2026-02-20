@@ -118,10 +118,12 @@ public class TenantsService {
     if (dto.billingCountry != null) tenant.setBillingCountry(dto.billingCountry);
     if (dto.taxId != null) tenant.setTaxId(dto.taxId);
     if (dto.website != null) tenant.setWebsite(dto.website);
+    if (dto.avatarUrl != null) tenant.setAvatarUrl(dto.avatarUrl);
     if (dto.language != null) tenant.setLanguage(dto.language);
   }
 
   public static class UpdateTenantBase {
+    public String avatarUrl;
     public String companyName;
     public String contactName;
     public String phone;

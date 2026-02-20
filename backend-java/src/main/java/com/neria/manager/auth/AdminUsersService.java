@@ -130,6 +130,9 @@ public class AdminUsersService {
     if (dto.email != null) {
       user.setEmail(dto.email);
     }
+    if (dto.avatarUrl != null) {
+      user.setAvatarUrl(dto.avatarUrl);
+    }
     if (dto.language != null && !dto.language.isBlank()) {
       user.setLanguage(dto.language);
     }
@@ -153,7 +156,8 @@ public class AdminUsersService {
     return hasher.hash(value, salt);
   }
 
-  public record UpdateProfileRequest(String name, String email, String password, String language) {}
+  public record UpdateProfileRequest(
+      String name, String email, String password, String language, String avatarUrl) {}
 
   public record CreateAdminUserRequest(
       String username, String name, String email, String role, String status, String password) {}
@@ -166,6 +170,7 @@ public class AdminUsersService {
       String username,
       String name,
       String email,
+      String avatarUrl,
       String role,
       String status,
       String language,
@@ -179,6 +184,7 @@ public class AdminUsersService {
         user.getUsername(),
         user.getName(),
         user.getEmail(),
+        user.getAvatarUrl(),
         user.getRole(),
         user.getStatus(),
         user.getLanguage(),

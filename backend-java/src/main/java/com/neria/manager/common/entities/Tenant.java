@@ -38,6 +38,9 @@ public class Tenant {
   @Column(name = "billingEmail", length = 160)
   private String billingEmail;
 
+  @Column(name = "avatarUrl", length = 512)
+  private String avatarUrl;
+
   @Column(name = "companyName", length = 180)
   private String companyName;
 

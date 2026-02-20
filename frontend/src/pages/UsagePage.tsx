@@ -98,7 +98,7 @@ export function UsagePage() {
 
   return (
     <PageWithDocs slug="usage">
-      <section className="grid">
+      <section className="grid usage-masonry">
         {error && <div className="error-banner">{error}</div>}
 
       <div className="card">
@@ -132,7 +132,7 @@ export function UsagePage() {
           <Chart option={usageOption} height={220} />
         </div>
         {summaryAll.length > 0 && (
-          <div className="mini-list">
+          <div className="mini-list usage-logs-list">
             {summaryAll.map((item) => (
               <div className="mini-row" key={item.tenantId}>
                 <span>{tenantNames.get(item.tenantId) || item.tenantId}</span>
@@ -215,12 +215,12 @@ export function UsagePage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card usage-logs-card">
         <h2>{t('Logs de uso')}</h2>
         <p className="muted">{t('Eventos recientes de consumo.')}</p>
-        <div className="mini-list">
+        <div className="mini-list usage-logs-list">
           {events.map((event) => (
-            <div className="mini-row" key={event.id}>
+            <div className="mini-row usage-logs-row" key={event.id}>
               {canNavigate ? (
                 <button
                   type="button"

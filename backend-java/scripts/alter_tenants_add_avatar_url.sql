@@ -1,0 +1,2 @@
+ALTER TABLE tenants
+  ADD COLUMN avatarUrl VARCHAR(512) NULL;
