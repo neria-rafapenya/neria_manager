@@ -132,6 +132,9 @@ export class ChatRepository {
           delta?: string;
           conversationId?: string;
           done?: boolean;
+          debug?: {
+            endpoints?: unknown;
+          };
         };
         if (parsed.debug?.endpoints) {
           console.info("[ChatRepository] endpoint:debug", parsed.debug.endpoints);
