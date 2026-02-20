@@ -737,6 +737,8 @@ public class ChatService {
     }
 
     sb.append("Contexto del servicio: ").append(serviceCode).append(".\n");
+    sb.append("Permite saludos y cortesías con una respuesta breve y amable, e invita a preguntar sobre el servicio.\n");
+    sb.append("Si una pregunta está fuera del ámbito, indica que no puedes responder y sugiere temas del servicio.\n");
 
     if (endpoints == null || endpoints.isEmpty()) {
       sb.append("No hay endpoints disponibles. Responde usando el contexto del chat.\n");
@@ -780,6 +782,7 @@ public class ChatService {
         "Instrucciones: Si la respuesta depende de datos externos, consulta primero el endpoint más relevante. ");
     sb.append(
         "Si no hay datos suficientes, responde exactamente: \"No tengo información para responder a esa pregunta.\"");
+    sb.append(" Para saludos o cortesías, responde de forma breve y amable.");
     return sb.toString().trim();
   }
 
@@ -836,6 +839,9 @@ public class ChatService {
       String userMessage,
       Map<String, String> forwardHeaders) {
     EndpointContext context = new EndpointContext();
+    if (isSmallTalk(userMessage)) {
+      return context;
+    }
     if (endpoints == null || endpoints.isEmpty()) {
       return context;
     }
@@ -1502,6 +1508,27 @@ public class ChatService {
       }
     }
     return null;
+  }
+
+  private boolean isSmallTalk(String message) {
+    if (message == null || message.isBlank()) {
+      return true;
+    }
+    String normalized = normalizeText(message);
+    if (normalized.length() <= 2) {
+      return true;
+    }
+    String[] keywords = {
+      "hola", "buenas", "buenos dias", "buenas tardes", "buenas noches",
+      "saludos", "hey", "hello", "hi", "que tal", "como estas",
+      "gracias", "ok", "vale", "bien", "perfecto"
+    };
+    for (String keyword : keywords) {
+      if (normalized.contains(keyword)) {
+        return true;
+      }
+    }
+    return normalized.split("\\s+").length <= 2;
   }
 
   private boolean isOutOfScope(String message, List<String> scopeKeywords) {
