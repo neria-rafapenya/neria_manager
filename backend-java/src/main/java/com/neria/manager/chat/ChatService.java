@@ -157,7 +157,8 @@ public class ChatService {
       String userId,
       String apiKeyId,
       String conversationId,
-      CreateMessageRequest dto) {
+      CreateMessageRequest dto,
+      Map<String, String> forwardHeaders) {
     ChatConversation conversation = getConversationForUser(tenantId, userId, conversationId);
     var access = tenantServicesService.requireServiceAccess(tenantId, conversation.getServiceCode(), userId);
 
@@ -288,7 +289,7 @@ public class ChatService {
     }
 
     EndpointContext endpointContext = buildEndpointContext(
-        serviceConfig, endpoints, searchMessage);
+        serviceConfig, endpoints, searchMessage, forwardHeaders);
     if (endpointContext.refuse) {
       String refusal =
           endpointContext.suggestion != null && !endpointContext.suggestion.isBlank()
@@ -403,8 +404,9 @@ public class ChatService {
       String userId,
       String apiKeyId,
       String conversationId,
-      CreateMessageRequest dto) {
-    AddMessageResult result = addMessageInternal(tenantId, userId, apiKeyId, conversationId, dto);
+      CreateMessageRequest dto,
+      Map<String, String> forwardHeaders) {
+    AddMessageResult result = addMessageInternal(tenantId, userId, apiKeyId, conversationId, dto, forwardHeaders);
     return Map.of(
         "conversationId", result.conversationId,
         "message", result.message,
@@ -416,8 +418,9 @@ public class ChatService {
       String userId,
       String apiKeyId,
       String conversationId,
-      CreateMessageRequest dto) {
-    return addMessageInternal(tenantId, userId, apiKeyId, conversationId, dto);
+      CreateMessageRequest dto,
+      Map<String, String> forwardHeaders) {
+    return addMessageInternal(tenantId, userId, apiKeyId, conversationId, dto, forwardHeaders);
   }
 
   public List<ChatConversation> adminListConversations(String tenantId) {
@@ -830,7 +833,8 @@ public class ChatService {
   private EndpointContext buildEndpointContext(
       TenantServiceConfig config,
       List<TenantServiceEndpointResponse> endpoints,
-      String userMessage) {
+      String userMessage,
+      Map<String, String> forwardHeaders) {
     EndpointContext context = new EndpointContext();
     if (endpoints == null || endpoints.isEmpty()) {
       return context;
@@ -877,7 +881,8 @@ public class ChatService {
         String normalizedPath = path.startsWith("/") ? path : "/" + path;
         url = base + normalizedPath;
       }
-      EndpointFetch fetch = fetchEndpoint(url, endpoint.headers);
+      Map<String, String> mergedHeaders = mergeHeaders(endpoint.headers, forwardHeaders);
+      EndpointFetch fetch = fetchEndpoint(url, mergedHeaders);
       if (!fetch.ok) {
         log.info(
             "Endpoint fetch failed slug={} url={} responsePath={} status={} error={}",
@@ -896,7 +901,7 @@ public class ChatService {
           url,
           endpoint.responsePath,
           countItems(data, endpoint.responsePath));
-      data = maybeLoadMorePages(url, endpoint.headers, data, endpoint.responsePath, year, keywords);
+      data = maybeLoadMorePages(url, mergedHeaders, data, endpoint.responsePath, year, keywords);
       if (year != null) {
         List<Object> items = extractItems(data, endpoint.responsePath);
         for (Object item : items) {
@@ -958,6 +963,23 @@ public class ChatService {
       }
     }
     return context;
+  }
+
+  private Map<String, String> mergeHeaders(
+      Map<String, String> endpointHeaders,
+      Map<String, String> forwardHeaders) {
+    if ((endpointHeaders == null || endpointHeaders.isEmpty())
+        && (forwardHeaders == null || forwardHeaders.isEmpty())) {
+      return null;
+    }
+    Map<String, String> merged = new HashMap<>();
+    if (forwardHeaders != null && !forwardHeaders.isEmpty()) {
+      merged.putAll(forwardHeaders);
+    }
+    if (endpointHeaders != null && !endpointHeaders.isEmpty()) {
+      merged.putAll(endpointHeaders);
+    }
+    return merged;
   }
 
   private EndpointFetch fetchEndpoint(String url, Map<String, String> headers) {
