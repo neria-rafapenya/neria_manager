@@ -133,6 +133,9 @@ export class ChatRepository {
           conversationId?: string;
           done?: boolean;
         };
+        if (parsed.debug?.endpoints) {
+          console.info("[ChatRepository] endpoint:debug", parsed.debug.endpoints);
+        }
         if (parsed.conversationId) {
           resolvedConversationId = parsed.conversationId;
         }

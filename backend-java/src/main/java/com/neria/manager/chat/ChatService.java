@@ -278,6 +278,7 @@ public class ChatService {
       result.conversationId = conversationId;
       result.message = assistantMessage;
       result.output = Map.of("outOfScope", true);
+      result.endpointDebug = List.of();
       return result;
     }
     if (endpoints.isEmpty()) {
@@ -320,6 +321,7 @@ public class ChatService {
       result.conversationId = conversationId;
       result.message = assistantMessage;
       result.output = Map.of("outOfScope", true);
+      result.endpointDebug = endpointContext.debug;
       return result;
     }
 
@@ -396,6 +398,7 @@ public class ChatService {
     result.conversationId = conversationId;
     result.message = assistantMessage;
     result.output = output;
+    result.endpointDebug = endpointContext.debug;
     return result;
   }
 
@@ -407,6 +410,13 @@ public class ChatService {
       CreateMessageRequest dto,
       Map<String, String> forwardHeaders) {
     AddMessageResult result = addMessageInternal(tenantId, userId, apiKeyId, conversationId, dto, forwardHeaders);
+    if (isEndpointDebugEnabled()) {
+      return Map.of(
+          "conversationId", result.conversationId,
+          "message", result.message,
+          "output", result.output,
+          "endpointDebug", result.endpointDebug);
+    }
     return Map.of(
         "conversationId", result.conversationId,
         "message", result.message,
@@ -616,6 +626,7 @@ public class ChatService {
     public String conversationId;
     public ChatMessage message;
     public Object output;
+    public List<Map<String, Object>> endpointDebug;
   }
 
   public List<ChatConversation> adminListHandoffs(String tenantId) {
@@ -725,6 +736,10 @@ public class ChatService {
     message.setCreatedAt(LocalDateTime.now());
     messagesRepository.save(message);
     return message;
+  }
+
+  private boolean isEndpointDebugEnabled() {
+    return "true".equalsIgnoreCase(System.getenv("CHAT_ENDPOINT_DEBUG"));
   }
 
   private String buildSystemPrompt(
@@ -864,6 +879,12 @@ public class ChatService {
             endpoint.slug,
             endpoint.method,
             endpoint.path);
+        context.debug.add(Map.of(
+            "slug", endpoint.slug != null ? endpoint.slug : "n/a",
+            "url", endpoint.path != null ? endpoint.path : "",
+            "ok", false,
+            "status", 0,
+            "error", "method_not_supported"));
         continue;
       }
       String path = endpoint.path != null ? endpoint.path.trim() : "";
@@ -880,6 +901,12 @@ public class ChatService {
               "Endpoint skipped missing baseUrl slug={} path={}",
               endpoint.slug,
               path);
+          context.debug.add(Map.of(
+              "slug", endpoint.slug != null ? endpoint.slug : "n/a",
+              "url", path,
+              "ok", false,
+              "status", 0,
+              "error", "missing_base_url"));
           continue;
         }
         String base =
@@ -889,6 +916,12 @@ public class ChatService {
       }
       Map<String, String> mergedHeaders = mergeHeaders(endpoint.headers, forwardHeaders);
       EndpointFetch fetch = fetchEndpoint(url, mergedHeaders);
+      context.debug.add(Map.of(
+          "slug", endpoint.slug != null ? endpoint.slug : "n/a",
+          "url", url,
+          "ok", fetch.ok,
+          "status", fetch.status,
+          "error", fetch.error != null ? fetch.error : ""));
       if (!fetch.ok) {
         log.info(
             "Endpoint fetch failed slug={} url={} responsePath={} status={} error={}",
@@ -1432,6 +1465,7 @@ public class ChatService {
     String context = "";
     boolean refuse = false;
     String suggestion = null;
+    List<Map<String, Object>> debug = new ArrayList<>();
   }
 
   private List<String> extractScopeKeywords(String prompt) {
