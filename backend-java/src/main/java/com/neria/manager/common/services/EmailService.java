@@ -30,11 +30,11 @@ public class EmailService {
   }
 
   public void sendGeneric(List<String> to, String subject, String body) {
-    String host = System.getenv("SMTP_HOST");
-    String port = System.getenv().getOrDefault("SMTP_PORT", "587");
-    String username = System.getenv("SMTP_USERNAME");
-    String password = System.getenv("SMTP_PASSWORD");
-    String from = System.getenv().getOrDefault("SMTP_FROM", username);
+    String host = unquote(System.getenv("SMTP_HOST"));
+    String port = unquote(System.getenv().getOrDefault("SMTP_PORT", "587"));
+    String username = unquote(System.getenv("SMTP_USERNAME"));
+    String password = unquote(System.getenv("SMTP_PASSWORD"));
+    String from = unquote(System.getenv().getOrDefault("SMTP_FROM", username));
     boolean useTls =
         "true".equalsIgnoreCase(System.getenv().getOrDefault("SMTP_USE_TLS", "true"));
     boolean useSsl =
@@ -82,6 +82,18 @@ public class EmailService {
     } catch (MessagingException ex) {
       log.warn("[email] Failed to send email to={} subject={} error={}", to, subject, ex.getMessage());
     }
+  }
+
+  private String unquote(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+        || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      return trimmed.substring(1, trimmed.length() - 1).trim();
+    }
+    return trimmed;
   }
 
   public void sendSubscriptionPaymentEmail(
