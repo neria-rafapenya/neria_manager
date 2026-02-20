@@ -23,15 +23,22 @@ export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
     const headerToken = extractBearer(request.headers.authorization);
+    const chatHeader = request.headers["x-chat-token"];
+    const chatToken =
+      typeof chatHeader === "string"
+        ? chatHeader
+        : Array.isArray(chatHeader)
+          ? chatHeader[0]
+          : null;
 
-    let token = headerToken;
+    let token = headerToken || (chatToken ? chatToken.trim() : null);
     if (!token && request.headers.cookie) {
       const cookies = parseCookie(request.headers.cookie);
       token = cookies[TOKEN_COOKIE] || null;
     }
 
     if (!token) {
-      throw new UnauthorizedException("Missing bearer token");
+      throw new UnauthorizedException("Missing bearer token or x-chat-token");
     }
 
     const secret = process.env.AUTH_JWT_SECRET || "";
