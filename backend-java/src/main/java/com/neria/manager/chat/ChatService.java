@@ -31,6 +31,9 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -68,8 +71,28 @@ public class ChatService {
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
   }
 
-  public List<ChatConversation> listConversations(String tenantId, String userId) {
-    return conversationsRepository.findByTenantIdAndUserIdOrderByUpdatedAtDesc(tenantId, userId);
+  public List<ChatConversation> listConversations(String tenantId, String userId, String serviceCode) {
+    List<ChatConversation> list =
+        conversationsRepository.findByTenantIdAndUserIdOrderByUpdatedAtDesc(tenantId, userId);
+    if (serviceCode == null || serviceCode.isBlank()) {
+      return list;
+    }
+    String normalized = serviceCode.trim();
+    return list.stream()
+        .filter(item -> normalized.equals(item.getServiceCode()))
+        .toList();
+  }
+
+  public Page<ChatConversation> listConversationsPaged(
+      String tenantId, String userId, String serviceCode, int pageNumber, int pageSize) {
+    int safePage = Math.max(pageNumber, 1) - 1;
+    int safeSize = Math.min(Math.max(pageSize, 1), 200);
+    PageRequest page = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
+    if (serviceCode == null || serviceCode.isBlank()) {
+      return conversationsRepository.findByTenantIdAndUserIdOrderByUpdatedAtDesc(tenantId, userId, page);
+    }
+    return conversationsRepository.findByTenantIdAndUserIdAndServiceCodeOrderByUpdatedAtDesc(
+        tenantId, userId, serviceCode.trim(), page);
   }
 
   public TenantServicesService.ServiceAccess requireServiceAccess(String tenantId, String serviceCode, String userId) {

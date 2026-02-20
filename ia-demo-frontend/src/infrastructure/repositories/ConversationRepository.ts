@@ -8,6 +8,14 @@ import type {
 } from "../../interfaces";
 import { getModel, getProviderId, getServiceCode } from "../config/env";
 
+const filterByServiceCode = (items: Conversation[]): Conversation[] => {
+  const serviceCode = getServiceCode();
+  if (!serviceCode) {
+    return items;
+  }
+  return items.filter((item) => item && item.serviceCode === serviceCode);
+};
+
 interface PaginatedConversations {
   pageSize: number;
   pageNumber: number;
@@ -19,7 +27,11 @@ export class ConversationRepository {
   async getAll(): Promise<Conversation[]> {
     let raw: any;
     try {
-      raw = await fetchWithAuth<any>(API_ENDPOINTS.CONVERSATIONS);
+      const serviceCode = getServiceCode();
+      const endpoint = serviceCode
+        ? `${API_ENDPOINTS.CONVERSATIONS}?serviceCode=${encodeURIComponent(serviceCode)}`
+        : API_ENDPOINTS.CONVERSATIONS;
+      raw = await fetchWithAuth<any>(endpoint);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         return [];
@@ -27,7 +39,7 @@ export class ConversationRepository {
       throw err;
     }
     if (Array.isArray(raw)) {
-      return raw as Conversation[];
+      return filterByServiceCode(raw as Conversation[]);
     }
     if (
       raw &&
@@ -35,7 +47,7 @@ export class ConversationRepository {
       Array.isArray((raw as PaginatedConversations).list)
     ) {
       const paginated = raw as PaginatedConversations;
-      return paginated.list;
+      return filterByServiceCode(paginated.list);
     }
     return [];
   }
@@ -46,6 +58,10 @@ export class ConversationRepository {
       detail = await fetchWithAuth<Conversation>(API_ENDPOINTS.CONVERSATION_DETAIL(id));
     } catch {
       detail = null;
+    }
+    const currentServiceCode = getServiceCode();
+    if (currentServiceCode && detail?.serviceCode && detail.serviceCode !== currentServiceCode) {
+      throw new Error("Conversation does not belong to current service");
     }
     const rawMessages = await fetchWithAuth<ChatMessage[]>(
       API_ENDPOINTS.CONVERSATION_MESSAGES(id),

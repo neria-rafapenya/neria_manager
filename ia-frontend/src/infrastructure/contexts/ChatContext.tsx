@@ -104,6 +104,23 @@ export interface ChatProviderProps {
 
 const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
 
+const getConversationStorageKey = (): string => {
+  const tenantId = getTenantId();
+  const serviceCode = getServiceCode();
+  if (!tenantId && !serviceCode) {
+    return SELECTED_CONVERSATION_STORAGE_KEY;
+  }
+  return `${SELECTED_CONVERSATION_STORAGE_KEY}:${tenantId || "unknown"}:${serviceCode || "unknown"}`;
+};
+
+const filterConversationsByService = (items: Conversation[]): Conversation[] => {
+  const serviceCode = getServiceCode();
+  if (!serviceCode) {
+    return items;
+  }
+  return items.filter((item) => item && item.serviceCode === serviceCode);
+};
+
 // Limitador de uso
 const USAGE_STORAGE_KEY = "ia_chat_usage_state";
 const USAGE_WINDOW_MS = 5 * 60 * 1000; // 5 minutos
@@ -373,7 +390,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         );
       }
 
-      setConversations(safeConversations);
+      const filteredConversations = filterConversationsByService(safeConversations);
+      setConversations(filteredConversations);
     } catch (e) {
       console.error(e);
       setError("No se han podido cargar las conversaciones.");
@@ -434,7 +452,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       try {
         const storedId =
           typeof window !== "undefined"
-            ? window.localStorage.getItem(SELECTED_CONVERSATION_STORAGE_KEY)
+            ? window.localStorage.getItem(getConversationStorageKey())
             : null;
 
         setLoadingConversations(true);
@@ -449,11 +467,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           );
         }
 
-        setConversations(safeConversations);
+        const filteredConversations = filterConversationsByService(safeConversations);
+      setConversations(filteredConversations);
         setLoadingConversations(false);
 
         // 🔐 Si no hay conversaciones, no intentes leer .id
-        if (!safeConversations || safeConversations.length === 0) {
+        if (!filteredConversations || filteredConversations.length === 0) {
           console.warn(
             "[ChatContext] init: no hay conversaciones disponibles tras el login",
           );
@@ -465,11 +484,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         // 1) Intentamos usar la conversación almacenada
         let conversationIdToLoad: string | null = null;
 
-        if (storedId && safeConversations.some((c) => c && c.id === storedId)) {
+        if (storedId && filteredConversations.some((c) => c && c.id === storedId)) {
           conversationIdToLoad = storedId;
         } else {
           // 2) Si no existe o no coincide, usamos la última conversación
-          const last = safeConversations[safeConversations.length - 1];
+          const last = filteredConversations[filteredConversations.length - 1];
           if (last && last.id) {
             conversationIdToLoad = last.id;
           } else {
@@ -572,11 +591,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     if (selectedConversationId) {
       window.localStorage.setItem(
-        SELECTED_CONVERSATION_STORAGE_KEY,
+        getConversationStorageKey(),
         selectedConversationId,
       );
     } else {
-      window.localStorage.removeItem(SELECTED_CONVERSATION_STORAGE_KEY);
+      window.localStorage.removeItem(getConversationStorageKey());
     }
   }, [selectedConversationId]);
 
@@ -709,6 +728,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
 
     if (!idOrNew) {
+      setSelectedConversationId(null);
+      setMessages([]);
+      return;
+    }
+
+    const currentServiceCode = getServiceCode();
+    const selectedConversation = conversations.find((item) => item.id === idOrNew);
+    if (currentServiceCode && selectedConversation?.serviceCode && selectedConversation.serviceCode !== currentServiceCode) {
       setSelectedConversationId(null);
       setMessages([]);
       return;

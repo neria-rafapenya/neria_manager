@@ -137,11 +137,25 @@ public class ChatController {
   }
 
   @GetMapping("/conversations")
-  public Object listConversations(HttpServletRequest request) {
+  public Object listConversations(
+      HttpServletRequest request,
+      @RequestParam(name = "serviceCode", required = false) String serviceCode,
+      @RequestParam(name = "pageNumber", required = false) Integer pageNumber,
+      @RequestParam(name = "pageSize", required = false) Integer pageSize) {
     String tenantId = resolveTenantId(request);
     Claims claims = requireChatToken(request, tenantId);
     String userId = requireUserId(claims);
-    return chatService.listConversations(tenantId, userId);
+    if (pageNumber != null || pageSize != null) {
+      int resolvedPage = pageNumber != null ? pageNumber : 1;
+      int resolvedSize = pageSize != null ? pageSize : 50;
+      var page = chatService.listConversationsPaged(tenantId, userId, serviceCode, resolvedPage, resolvedSize);
+      return Map.of(
+          "pageNumber", resolvedPage,
+          "pageSize", resolvedSize,
+          "totalRegisters", page.getTotalElements(),
+          "list", page.getContent());
+    }
+    return chatService.listConversations(tenantId, userId, serviceCode);
   }
 
   @GetMapping("/services")
