@@ -193,8 +193,8 @@ export function TenantServiceSelfAssessmentsPage({
           </p>
         </div>
         <div className="row-actions">
-          <button className="btn" onClick={() => navigate(`/clients/${tenantId}`)}>
-            {t("Volver al tenant")}
+          <button className="btn" onClick={() => navigate(`/clients/${tenantId}/services/${serviceCode}`)}>
+            {t("Volver al servicio")}
           </button>
         </div>
       </div>

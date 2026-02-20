@@ -448,8 +448,8 @@ export function TenantServiceSurveysPage({
           </p>
         </div>
         <div className="page-actions">
-          <button className="btn" onClick={() => navigate(-1)}>
-            {t("Volver")}
+          <button className="btn" onClick={() => navigate(`/clients/${tenantId}/services/${serviceCode}`)}>
+            {t("Volver al servicio")}
           </button>
         </div>
       </div>
