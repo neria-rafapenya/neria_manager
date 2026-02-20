@@ -63,6 +63,23 @@ export async function fetchWithAuth<T = unknown>(
     headers["x-chat-token"] = token;
   }
 
+  const method = (restOptions.method || "GET").toUpperCase();
+  const maskSecret = (value?: string | null) => {
+    if (!value) return null;
+    if (value.length <= 8) return "********";
+    return `${value.slice(0, 4)}…${value.slice(-4)}`;
+  };
+  console.log("[api] request", {
+    method,
+    baseUrl,
+    path,
+    url,
+    tenantId,
+    apiKey: maskSecret(apiKey),
+    hasChatToken: Boolean(token),
+    credentials,
+  });
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -74,6 +91,12 @@ export async function fetchWithAuth<T = unknown>(
     // Error de red / CORS / servidor caído
     throw new ApiError(0, url, "Error de red al conectar con el servidor.");
   }
+  console.log("[api] response", {
+    method,
+    url,
+    status: response.status,
+    ok: response.ok,
+  });
 
   // 🟢 CASO STREAMING / RAW → NO TOCAMOS EL BODY
   if (rawResponse) {
