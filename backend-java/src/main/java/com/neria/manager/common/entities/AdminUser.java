@@ -26,6 +26,9 @@ public class AdminUser {
   @Column(length = 160)
   private String email;
 
+  @Column(name = "avatarUrl", length = 512)
+  private String avatarUrl;
+
   @Column(name = "passwordHash", length = 255)
   private String passwordHash;
 

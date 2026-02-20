@@ -730,6 +730,27 @@ h1 {
   place-items: center;
 }
 
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-avatar-upload {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .profile-meta {
   display: grid;
   gap: 4px;
@@ -1578,6 +1599,32 @@ h1 {
   flex-wrap: wrap;
 }
 
+.usage-masonry {
+  column-count: 2;
+  column-gap: 20px;
+}
+
+.usage-masonry .card {
+  break-inside: avoid;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .usage-masonry {
+    column-count: 1;
+  }
+}
+
+.usage-logs-card {
+  min-height: 500px;
+}
+
+.usage-logs-list {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
 .alerts {
   display: grid;
   gap: 12px;
@@ -2001,11 +2048,6 @@ label input[type="radio"] {
   font-size: 13px;
 }
 
-.mini-list.usage-logs-list {
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
 
 .mini-row {
   display: grid;

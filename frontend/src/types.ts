@@ -546,6 +546,7 @@ export type AdminUser = {
   username: string;
   name?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
   mustChangePassword?: boolean;
   role: 'admin' | 'editor';
   status: 'active' | 'disabled';
@@ -559,6 +560,7 @@ export type Profile = {
   role: 'admin' | 'editor' | 'tenant' | null;
   name?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
   status?: string | null;
   mustChangePassword?: boolean;
   language?: string | null;

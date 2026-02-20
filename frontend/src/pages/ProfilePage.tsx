@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
+import imageCompression from "browser-image-compression";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useI18n } from "../i18n/I18nProvider";
@@ -21,6 +22,18 @@ export function ProfilePage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +55,49 @@ export function ProfilePage() {
     };
     load();
   }, []);
+
+  const handleAvatarUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setAvatarError(t("El archivo debe ser una imagen."));
+      return;
+    }
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.4,
+        maxWidthOrHeight: 500,
+        useWebWorker: true,
+      });
+      if (compressed.size > 400 * 1024) {
+        throw new Error(t("La imagen supera el límite de 400KB."));
+      }
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      const previewUrl = URL.createObjectURL(compressed);
+      setAvatarPreview(previewUrl);
+      const updated = await api.uploadProfileAvatar(compressed as File);
+      setProfile(updated);
+      setAvatarPreview(null);
+      if (updated?.language && isLanguage(updated.language)) {
+        setLanguage(updated.language);
+      }
+      await refreshSession();
+    } catch (err: any) {
+      setAvatarError(err.message || t("Error subiendo avatar"));
+      setAvatarPreview(null);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -77,6 +133,7 @@ export function ProfilePage() {
     }
   };
 
+  const avatarUrl = avatarPreview || profile?.avatarUrl || null;
   const initial = (profile?.name || user || "U").charAt(0).toUpperCase();
 
   return (
@@ -92,7 +149,28 @@ export function ProfilePage() {
           )}
           <div className="profile-header row g-3 align-items-start">
             <div className="col-12 col-md-2 text-center">
-              <div className="profile-avatar mx-auto">{initial}</div>
+              <div className="profile-avatar mx-auto">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={t("Avatar")} />
+                ) : (
+                  initial
+                )}
+              </div>
+              <label className="btn small profile-avatar-upload">
+                {avatarUploading ? t("Subiendo...") : t("Subir avatar")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={avatarUploading}
+                />
+              </label>
+              <div className="muted mt-2">
+                {t("Máximo 500x500px y 400KB")}
+              </div>
+              {avatarError && (
+                <div className="error-banner mt-2">{avatarError}</div>
+              )}
               <div className="profile-meta mt-3">
                 <div className="eyebrow">{t("Perfil")}</div>
                 <div className="muted">
