@@ -149,6 +149,9 @@ export const Chatbot = () => {
   const showConversationsList = authMode !== "none";
   const isEphemeral = authMode === "none";
 
+  const hideServiceInfo =
+    import.meta.env.VITE_CHATBOT_HIDE_SERVICE_INFO === "true";
+
   return (
     <div className="ia-chatbot-content">
       {showConversationsList && (
@@ -163,7 +166,8 @@ export const Chatbot = () => {
         />
       )}
 
-      <div className="ia-chatbot-service-info">
+      {!hideServiceInfo && (
+        <div className="ia-chatbot-service-info">
         <div className="ia-chatbot-service-line">
           <strong>Tenant:</strong> {serviceInfo.tenantId || "—"}
         </div>
@@ -190,6 +194,7 @@ export const Chatbot = () => {
           </div>
         )}
       </div>
+      )}
 
       <div
         className="ia-chatbot-messages"

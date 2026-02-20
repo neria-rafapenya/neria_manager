@@ -84,6 +84,10 @@ public class ChatController {
     return AuthUtils.resolveTenantId(auth, request);
   }
 
+  private boolean isEndpointDebugEnabled() {
+    return "true".equalsIgnoreCase(System.getenv("CHAT_ENDPOINT_DEBUG"));
+  }
+
   private Map<String, String> extractForwardHeaders(HttpServletRequest request) {
     Map<String, String> headers = new LinkedHashMap<>();
     java.util.Set<String> allowed = new java.util.HashSet<>(
@@ -322,6 +326,12 @@ public class ChatController {
           try {
             ChatService.AddMessageResult result =
                 chatService.addMessageForStreaming(tenantId, userId, apiKeyId, id, dto, extractForwardHeaders(request));
+            if (isEndpointDebugEnabled() && result.endpointDebug != null) {
+              emitter.send(
+                  SseEmitter.event()
+                      .name("debug")
+                      .data(Map.of("debug", Map.of("endpoints", result.endpointDebug))));
+            }
             String content =
                 result.message != null && result.message.getContent() != null
                     ? result.message.getContent()
