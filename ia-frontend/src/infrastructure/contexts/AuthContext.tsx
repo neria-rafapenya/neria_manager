@@ -39,15 +39,15 @@ export interface AuthProviderProps {
   children: ReactNode;
 }
 
-const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
-const WIDGET_OPEN_STORAGE_KEY = "ia_chat_widget_open";
+// const SELECTED_CONVERSATION_STORAGE_KEY = "ia_chat_selected_conversation_id";
+// const WIDGET_OPEN_STORAGE_KEY = "ia_chat_widget_open";
 
 const clearChatStorage = () => {
   if (typeof window === "undefined") {
     return;
   }
   const keys = Object.keys(window.localStorage).filter((key) =>
-    key.startsWith("ia_chat_")
+    key.startsWith("ia_chat_"),
   );
   keys.forEach((key) => window.localStorage.removeItem(key));
 };
@@ -96,9 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setError(t("login_error_forbidden"));
           }
         } else {
-          setError(
-            err.message || t("login_error_generic")
-          );
+          setError(err.message || t("login_error_generic"));
         }
       } else {
         setError(i18n.t("login_error_generic"));
@@ -129,7 +127,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       login,
       logout,
     }),
-    [user, token, loading, error]
+    [user, token, loading, error],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

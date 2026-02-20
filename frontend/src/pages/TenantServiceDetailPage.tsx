@@ -57,6 +57,70 @@ export function TenantServiceDetailPage() {
   >([]);
 
   const endpointsEnabled = service?.endpointsEnabled !== false;
+
+  const sectionLinks = useMemo(() => {
+    const links = [
+      { id: "section-jira", label: t("Integración Jira"), visible: true },
+      {
+        id: "section-email",
+        label: t("Automatización de correos y tickets"),
+        visible: Boolean(service?.emailAutomationEnabled),
+      },
+      {
+        id: "section-financial",
+        label: t("Simulador financiero"),
+        visible: isFinancialService,
+      },
+      {
+        id: "section-pre-eval",
+        label: t("Pre-evaluacion"),
+        visible: isPreEvaluationService,
+      },
+      {
+        id: "section-self-assessment",
+        label: t("Autoevaluacion inteligente"),
+        visible: isSelfAssessmentService,
+      },
+      {
+        id: "section-storage",
+        label: t("Almacenamiento de archivos"),
+        visible: Boolean(service?.fileStorageEnabled),
+      },
+      {
+        id: "section-runtime",
+        label: t("Prueba runtime"),
+        visible: true,
+      },
+      {
+        id: "section-endpoints",
+        label: t("Endpoints del servicio"),
+        visible: endpointsEnabled,
+      },
+      {
+        id: "section-third-party",
+        label: t("Datos para app de terceros"),
+        visible: true,
+      },
+      { id: "section-users", label: t("Usuarios asignados"), visible: true },
+      {
+        id: "section-conversations",
+        label: t("Conversaciones"),
+        visible: canManageConversations,
+      },
+    ];
+    return links.filter((item) => item.visible);
+  }, [
+    t,
+    service?.emailAutomationEnabled,
+    service?.fileStorageEnabled,
+    isFinancialService,
+    isOperationalSupportService,
+    isPreEvaluationService,
+    isSelfAssessmentService,
+    endpointsEnabled,
+    canManageConversations,
+  ]);
+
   const [serviceUsers, setServiceUsers] = useState<TenantServiceUser[]>([]);
   const [chatUserModalOpen, setChatUserModalOpen] = useState(false);
   const [newChatUser, setNewChatUser] = useState({
@@ -92,9 +156,8 @@ export function TenantServiceDetailPage() {
     documentDomain: "",
     documentOutputType: "markdown",
   });
-  const [storageConfig, setStorageConfig] = useState<TenantServiceStorage | null>(
-    null,
-  );
+  const [storageConfig, setStorageConfig] =
+    useState<TenantServiceStorage | null>(null);
   const [storageDraft, setStorageDraft] = useState({
     provider: "cloudinary",
     enabled: true,
@@ -102,9 +165,8 @@ export function TenantServiceDetailPage() {
     usingDefault: true,
   });
   const [storageBusy, setStorageBusy] = useState(false);
-  const [jiraConfig, setJiraConfig] = useState<TenantServiceJiraSettings | null>(
-    null,
-  );
+  const [jiraConfig, setJiraConfig] =
+    useState<TenantServiceJiraSettings | null>(null);
   const [jiraDraft, setJiraDraft] = useState({
     jiraEnabled: false,
     jiraProjectKey: "",
@@ -137,9 +199,9 @@ export function TenantServiceDetailPage() {
     useStartTls: false,
     enabled: true,
   });
-  const [emailAccountMode, setEmailAccountMode] = useState<
-    "create" | "edit"
-  >("create");
+  const [emailAccountMode, setEmailAccountMode] = useState<"create" | "edit">(
+    "create",
+  );
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailSyncBusy, setEmailSyncBusy] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -178,7 +240,10 @@ export function TenantServiceDetailPage() {
         ? "https://backend-production-fc6a.up.railway.app"
         : "http://localhost:3000";
     let resolved = import.meta.env.VITE_API_BASE_URL || fallback;
-    if (import.meta.env.MODE === "production" && resolved.includes("localhost")) {
+    if (
+      import.meta.env.MODE === "production" &&
+      resolved.includes("localhost")
+    ) {
       resolved = "https://backend-production-fc6a.up.railway.app";
     }
     return resolved;
@@ -237,8 +302,8 @@ export function TenantServiceDetailPage() {
     () =>
       Boolean(
         serviceConfigDraft.providerId.trim() &&
-          serviceConfigDraft.pricingId.trim() &&
-          serviceConfigDraft.policyId.trim(),
+        serviceConfigDraft.pricingId.trim() &&
+        serviceConfigDraft.policyId.trim(),
       ),
     [
       serviceConfigDraft.providerId,
@@ -252,7 +317,8 @@ export function TenantServiceDetailPage() {
   const catalogDocumentEnabled =
     service?.catalogDocumentProcessingEnabled !== false;
   const catalogOcrEnabled = service?.catalogOcrEnabled !== false;
-  const catalogSemanticEnabled = service?.catalogSemanticSearchEnabled !== false;
+  const catalogSemanticEnabled =
+    service?.catalogSemanticSearchEnabled !== false;
   const effectiveHandoffEnabled =
     catalogHandoffEnabled && serviceConfigDraft.humanHandoffEnabled;
   const effectiveStorageEnabled =
@@ -390,37 +456,43 @@ export function TenantServiceDetailPage() {
           humanHandoffEnabled:
             match.catalogHumanHandoffEnabled === false
               ? false
-              : match.tenantHumanHandoffEnabled ??
+              : (match.tenantHumanHandoffEnabled ??
                 match.humanHandoffEnabled ??
-                true,
+                true),
           fileStorageEnabled:
             match.catalogFileStorageEnabled === false
               ? false
-              : match.tenantFileStorageEnabled ??
+              : (match.tenantFileStorageEnabled ??
                 match.fileStorageEnabled ??
-                true,
+                true),
           documentProcessingEnabled:
             match.catalogDocumentProcessingEnabled === false
               ? false
-              : match.tenantDocumentProcessingEnabled ??
+              : (match.tenantDocumentProcessingEnabled ??
                 match.documentProcessingEnabled ??
-                false,
+                false),
           ocrEnabled:
             match.catalogOcrEnabled === false
               ? false
-              : match.tenantOcrEnabled ?? match.ocrEnabled ?? false,
+              : (match.tenantOcrEnabled ?? match.ocrEnabled ?? false),
           semanticSearchEnabled:
             match.catalogSemanticSearchEnabled === false
               ? false
-              : match.tenantSemanticSearchEnabled ??
+              : (match.tenantSemanticSearchEnabled ??
                 match.semanticSearchEnabled ??
-                false,
+                false),
           internalDocsEnabled:
-            match.tenantInternalDocsEnabled ?? match.internalDocsEnabled ?? true,
+            match.tenantInternalDocsEnabled ??
+            match.internalDocsEnabled ??
+            true,
           internalPoliciesEnabled:
-            match.tenantInternalPoliciesEnabled ?? match.internalPoliciesEnabled ?? true,
+            match.tenantInternalPoliciesEnabled ??
+            match.internalPoliciesEnabled ??
+            true,
           internalTemplatesEnabled:
-            match.tenantInternalTemplatesEnabled ?? match.internalTemplatesEnabled ?? true,
+            match.tenantInternalTemplatesEnabled ??
+            match.internalTemplatesEnabled ??
+            true,
           documentDomain: match.documentDomain || "",
           documentOutputType: match.documentOutputType || "markdown",
         });
@@ -672,10 +744,7 @@ export function TenantServiceDetailPage() {
       emitToast(t("El usuario es obligatorio."), "error");
       return;
     }
-    if (
-      emailAccountMode === "create" &&
-      !emailAccountDraft.password.trim()
-    ) {
+    if (emailAccountMode === "create" && !emailAccountDraft.password.trim()) {
       emitToast(t("La contraseña es obligatoria."), "error");
       return;
     }
@@ -741,7 +810,9 @@ export function TenantServiceDetailPage() {
     });
   };
 
-  const handleDeleteEmailAccount = async (account: TenantServiceEmailAccount) => {
+  const handleDeleteEmailAccount = async (
+    account: TenantServiceEmailAccount,
+  ) => {
     if (!tenantId || !serviceCode) {
       return;
     }
@@ -996,7 +1067,9 @@ export function TenantServiceDetailPage() {
       try {
         config = JSON.parse(trimmed);
       } catch (error) {
-        throw new Error(t("JSON inválido en la configuración de almacenamiento."));
+        throw new Error(
+          t("JSON inválido en la configuración de almacenamiento."),
+        );
       }
       const payload = {
         provider: storageDraft.provider,
@@ -1402,7 +1475,9 @@ export function TenantServiceDetailPage() {
   if (!tenantId || !serviceCode) {
     return (
       <PageWithDocs slug="tenant-services">
-        <div className="muted">{t("Selecciona un servicio para gestionarlo.")}</div>
+        <div className="muted">
+          {t("Selecciona un servicio para gestionarlo.")}
+        </div>
       </PageWithDocs>
     );
   }
@@ -1410,17 +1485,68 @@ export function TenantServiceDetailPage() {
   return (
     <PageWithDocs slug="tenant-services">
       {error && <div className="error-banner">{error}</div>}
-      <div className="card full-width">
-        <div className="card-header">
-          <div>
-            <div className="eyebrow">{t("Servicio adquirido")}</div>
-            <h2>{service?.name || serviceCode}</h2>
-            <p className="muted">{service?.description}</p>
-          </div>
-          <div className="row-actions">
+      <div className="card full-width services-detail">
+        <div className="row">
+          <div className="col-md-2">
             <Link className="btn" to={`/clients/${tenantId}`}>
               {t("Volver al tenant")}
             </Link>
+          </div>
+
+          {sectionLinks.length > 0 && (
+            <div className="col-md-10">
+              <div
+                className="row-actions mb-5"
+                style={{ flexWrap: "wrap", gap: 22 }}
+                role="navigation"
+                aria-label={t("Secciones")}
+              >
+                {sectionLinks.map((link) => (
+                  <a key={link.id} className="link" href={`#${link.id}`}>
+                    {link.label}
+                  </a>
+                ))}
+                {isOperationalSupportService && (
+                  <Link
+                    className="link"
+                    to={`/clients/${tenantId}/operational-support`}
+                  >
+                    {t("Abrir panel de soporte operativo")}
+                  </Link>
+                )}
+                {isFinancialService && (
+                  <Link
+                    className="link"
+                    to={`/clients/${tenantId}/financial-simulations`}
+                  >
+                    {t("Abrir simulador financiero")}
+                  </Link>
+                )}
+                {isPreEvaluationService && (
+                  <Link
+                    className="link"
+                    to={`/clients/${tenantId}/pre-evaluations`}
+                  >
+                    {t("Abrir pre-evaluaciones")}
+                  </Link>
+                )}
+                {isSelfAssessmentService && (
+                  <Link
+                    className="link"
+                    to={`/clients/${tenantId}/self-assessments`}
+                  >
+                    {t("Abrir autoevaluaciones")}
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="card-header">
+          <div>
+            <h2>{service?.name || serviceCode}</h2>
+            <p className="muted">{service?.description}</p>
           </div>
         </div>
         {loading && <LoaderComponent label={t("Cargando servicio")} />}
@@ -1450,7 +1576,9 @@ export function TenantServiceDetailPage() {
                         onChange={(event) =>
                           setServiceConfigDraft((prev) => ({
                             ...prev,
-                            status: event.target.value as "active" | "suspended",
+                            status: event.target.value as
+                              | "active"
+                              | "suspended",
                           }))
                         }
                       >
@@ -1460,7 +1588,7 @@ export function TenantServiceDetailPage() {
                     </label>
                   </div>
                   {endpointsEnabled && (
-                    <div className="col-12">
+                    <div className="col-12 col-md-8">
                       <label>
                         {t("URL base de la API")}
                         <input
@@ -1477,26 +1605,6 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
-                  <div className="col-12">
-                    <label>
-                      <span className="label-with-tooltip">
-                        {t("Prompt de comportamiento (aplica a todo el servicio)")}
-                        <InfoTooltip field="serviceSystemPrompt" />
-                      </span>
-                      <textarea
-                        className="form-control"
-                        value={serviceConfigDraft.systemPrompt}
-                        onChange={(event) =>
-                          setServiceConfigDraft((prev) => ({
-                            ...prev,
-                            systemPrompt: event.target.value,
-                          }))
-                        }
-                        rows={20}
-                        placeholder={t("Define el estilo del asistente, tono y reglas...")}
-                      />
-                    </label>
-                  </div>
                   <div className="col-12 col-md-4">
                     <label>
                       {t("Provider")}
@@ -1563,8 +1671,8 @@ export function TenantServiceDetailPage() {
                         </option>
                         {policyCatalog.map((entry) => (
                           <option key={entry.id} value={entry.id}>
-                            {entry.id.slice(0, 8)} · {entry.maxRequestsPerMinute}
-                            /min
+                            {entry.id.slice(0, 8)} ·{" "}
+                            {entry.maxRequestsPerMinute}/min
                           </option>
                         ))}
                       </select>
@@ -1587,7 +1695,6 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
-
                   {catalogStorageEnabled && (
                     <div className="col-12 col-md-6">
                       <label className="checkbox">
@@ -1675,7 +1782,9 @@ export function TenantServiceDetailPage() {
                         <label className="checkbox">
                           <input
                             type="checkbox"
-                            checked={serviceConfigDraft.internalTemplatesEnabled}
+                            checked={
+                              serviceConfigDraft.internalTemplatesEnabled
+                            }
                             onChange={(event) =>
                               setServiceConfigDraft((prev) => ({
                                 ...prev,
@@ -1743,6 +1852,30 @@ export function TenantServiceDetailPage() {
                       </label>
                     </div>
                   )}
+                  <div className="col-12">
+                    <label>
+                      <span className="label-with-tooltip">
+                        {t(
+                          "Prompt de comportamiento (aplica a todo el servicio)",
+                        )}
+                        <InfoTooltip field="serviceSystemPrompt" />
+                      </span>
+                      <textarea
+                        className="form-control"
+                        value={serviceConfigDraft.systemPrompt}
+                        onChange={(event) =>
+                          setServiceConfigDraft((prev) => ({
+                            ...prev,
+                            systemPrompt: event.target.value,
+                          }))
+                        }
+                        rows={20}
+                        placeholder={t(
+                          "Define el estilo del asistente, tono y reglas...",
+                        )}
+                      />
+                    </label>
+                  </div>
                 </div>
                 <div className="form-actions">
                   <button
@@ -1771,7 +1904,8 @@ export function TenantServiceDetailPage() {
                     <span>{t("Provider")}</span>
                     <span>
                       {providers.find(
-                        (provider) => provider.id === serviceConfigDraft.providerId,
+                        (provider) =>
+                          provider.id === serviceConfigDraft.providerId,
                       )?.displayName || "—"}
                     </span>
                   </div>
@@ -1781,11 +1915,7 @@ export function TenantServiceDetailPage() {
                       {pricing.find(
                         (entry) => entry.id === serviceConfigDraft.pricingId,
                       )
-                        ? `${pricing.find(
-                            (entry) => entry.id === serviceConfigDraft.pricingId,
-                          )?.providerType} · ${pricing.find(
-                            (entry) => entry.id === serviceConfigDraft.pricingId,
-                          )?.model}`
+                        ? `${pricing.find((entry) => entry.id === serviceConfigDraft.pricingId)?.providerType} · ${pricing.find((entry) => entry.id === serviceConfigDraft.pricingId)?.model}`
                         : "—"}
                     </span>
                   </div>
@@ -1795,11 +1925,7 @@ export function TenantServiceDetailPage() {
                       {policyCatalog.find(
                         (entry) => entry.id === serviceConfigDraft.policyId,
                       )
-                        ? `${serviceConfigDraft.policyId.slice(0, 8)} · ${
-                            policyCatalog.find(
-                              (entry) => entry.id === serviceConfigDraft.policyId,
-                            )?.maxRequestsPerMinute
-                          }/min`
+                        ? `${serviceConfigDraft.policyId.slice(0, 8)} · ${policyCatalog.find((entry) => entry.id === serviceConfigDraft.policyId)?.maxRequestsPerMinute}/min`
                         : "—"}
                     </span>
                   </div>
@@ -1843,538 +1969,33 @@ export function TenantServiceDetailPage() {
                   </div>
                 </div>
                 <div className="code-block">
-                  <pre>{serviceConfigDraft.systemPrompt || t("Sin prompt.")}</pre>
+                  <pre>
+                    {serviceConfigDraft.systemPrompt || t("Sin prompt.")}
+                  </pre>
                 </div>
               </>
             )}
 
             <div className="section-divider" />
 
-            <h4>{t("Integración Jira")}</h4>
-            <p className="muted mb-3">
-              {t(
-                "Configura Jira para crear incidencias manuales desde el chatbot.",
-              )}
-            </p>
-            {service?.emailAutomationEnabled && (
-              <div className="info-banner">
-                {t("Jira es obligatorio para la automatización de correos.")}
-              </div>
-            )}
-            {canManageServices ? (
-              <>
-                <div className="row g-3 form-grid-13">
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={jiraDraft.jiraEnabled}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={service?.emailAutomationEnabled}
-                      />
-                      {t("Habilitar Jira")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={jiraDraft.jiraCredentialsEnabled}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraCredentialsEnabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!jiraDraft.jiraEnabled}
-                      />
-                      {t("Credenciales activas")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Project key")}
-                      <input
-                        className="form-control"
-                        value={jiraDraft.jiraProjectKey}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraProjectKey: event.target.value,
-                          }))
-                        }
-                        placeholder={t("Ej: NER")}
-                        disabled={!jiraDraft.jiraEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Tipo de issue por defecto")}
-                      <input
-                        className="form-control"
-                        value={jiraDraft.jiraDefaultIssueType}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraDefaultIssueType: event.target.value,
-                          }))
-                        }
-                        placeholder={t("Task, Bug, Story")}
-                        disabled={!jiraDraft.jiraEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={jiraDraft.jiraAllowUserPriorityOverride}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraAllowUserPriorityOverride: event.target.checked,
-                          }))
-                        }
-                        disabled={!jiraDraft.jiraEnabled}
-                      />
-                      {t("Permitir prioridad definida por el usuario")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label className="checkbox">
-                      <input
-                        type="checkbox"
-                        checked={jiraDraft.jiraAutoLabelWithServiceName}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraAutoLabelWithServiceName: event.target.checked,
-                          }))
-                        }
-                        disabled={!jiraDraft.jiraEnabled}
-                      />
-                      {t("Etiquetar con el nombre del servicio")}
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Base URL de Jira")}
-                      <input
-                        className="form-control"
-                        value={jiraDraft.jiraBaseUrl}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraBaseUrl: event.target.value,
-                          }))
-                        }
-                        placeholder="https://tu-dominio.atlassian.net"
-                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("Email técnico de Jira")}
-                      <input
-                        className="form-control"
-                        value={jiraDraft.jiraEmail}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraEmail: event.target.value,
-                          }))
-                        }
-                        placeholder="ops@tuempresa.com"
-                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <label>
-                      {t("API token de Jira")}
-                      <input
-                        className="form-control"
-                        type="password"
-                        value={jiraDraft.jiraApiToken}
-                        onChange={(event) =>
-                          setJiraDraft((prev) => ({
-                            ...prev,
-                            jiraApiToken: event.target.value,
-                          }))
-                        }
-                        placeholder={t("Introduce un token nuevo")}
-                        disabled={!jiraDraft.jiraCredentialsEnabled || !jiraDraft.jiraEnabled}
-                      />
-                    </label>
-                    {jiraDraft.jiraHasToken && !jiraDraft.jiraApiToken.trim() && (
-                      <div className="muted">{t("Token guardado")}</div>
-                    )}
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button
-                    className="btn primary"
-                    onClick={handleSaveJira}
-                    disabled={jiraBusy}
-                  >
-                    {jiraBusy ? t("Guardando...") : t("Guardar Jira")}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="mini-list">
-                <div className="mini-row">
-                  <span>{t("Habilitar Jira")}</span>
-                  <span>
-                    {jiraConfig?.jiraEnabled ? t("Activo") : t("Inactivo")}
-                  </span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Project key")}</span>
-                  <span>{jiraConfig?.jiraProjectKey || "—"}</span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Tipo de issue por defecto")}</span>
-                  <span>{jiraConfig?.jiraDefaultIssueType || "—"}</span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Permitir prioridad definida por el usuario")}</span>
-                  <span>
-                    {jiraConfig?.jiraAllowUserPriorityOverride
-                      ? t("Activo")
-                      : t("Inactivo")}
-                  </span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Etiquetar con el nombre del servicio")}</span>
-                  <span>
-                    {jiraConfig?.jiraAutoLabelWithServiceName
-                      ? t("Activo")
-                      : t("Inactivo")}
-                  </span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Base URL de Jira")}</span>
-                  <span>{jiraConfig?.jiraBaseUrl || "—"}</span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Email técnico de Jira")}</span>
-                  <span>{jiraConfig?.jiraEmail || "—"}</span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Credenciales activas")}</span>
-                  <span>
-                    {jiraConfig?.jiraCredentialsEnabled
-                      ? t("Activo")
-                      : t("Inactivo")}
-                  </span>
-                </div>
-                <div className="mini-row">
-                  <span>{t("Token guardado")}</span>
-                  <span>{jiraConfig?.jiraHasToken ? t("Sí") : t("No")}</span>
-                </div>
-              </div>
-            )}
-
-            {service?.emailAutomationEnabled ? (
-              <>
-                <div className="section-divider" />
-                <h4>{t("Automatización de correos y tickets")}</h4>
-                <p className="muted mb-3">
-                  {t(
-                    "Conecta cuentas IMAP para clasificar correos y crear acciones automáticas en Jira.",
-                  )}
-                </p>
-                {emailError && <div className="error-banner">{emailError}</div>}
-                {canManageEmailAutomation && (
-                  <>
-                    <div className="row g-3 form-grid-13">
-                      <div className="col-12 col-md-6">
-                        <label>
-                          {t("Etiqueta interna")}
-                          <input
-                            className="form-control"
-                            value={emailAccountDraft.label}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                label: event.target.value,
-                              }))
-                            }
-                            placeholder={t("Ej: Soporte general")}
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label>
-                          {t("Email")}
-                          <input
-                            className="form-control"
-                            value={emailAccountDraft.email}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                email: event.target.value,
-                              }))
-                            }
-                            placeholder="soporte@tuempresa.com"
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label>
-                          {t("Servidor IMAP")}
-                          <input
-                            className="form-control"
-                            value={emailAccountDraft.host}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                host: event.target.value,
-                              }))
-                            }
-                            placeholder="imap.tuempresa.com"
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-3">
-                        <label>
-                          {t("Puerto")}
-                          <input
-                            className="form-control"
-                            type="number"
-                            value={emailAccountDraft.port}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                port: event.target.value,
-                              }))
-                            }
-                            placeholder="993"
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-3">
-                        <label>
-                          {t("Carpeta")}
-                          <input
-                            className="form-control"
-                            value={emailAccountDraft.folder}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                folder: event.target.value,
-                              }))
-                            }
-                            placeholder="INBOX"
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label>
-                          {t("Usuario")}
-                          <input
-                            className="form-control"
-                            value={emailAccountDraft.username}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                username: event.target.value,
-                              }))
-                            }
-                            placeholder="soporte@tuempresa.com"
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label>
-                          {t("Contraseña")}
-                          <input
-                            className="form-control"
-                            type="password"
-                            value={emailAccountDraft.password}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                password: event.target.value,
-                              }))
-                            }
-                            placeholder={
-                              emailAccountMode === "edit"
-                                ? t("Dejar vacío para mantener")
-                                : t("Introduce la contraseña")
-                            }
-                          />
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-4">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={emailAccountDraft.useSsl}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                useSsl: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Usar SSL")}
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-4">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={emailAccountDraft.useStartTls}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                useStartTls: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Usar STARTTLS")}
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-4">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={emailAccountDraft.enabled}
-                            onChange={(event) =>
-                              setEmailAccountDraft((prev) => ({
-                                ...prev,
-                                enabled: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Cuenta activa")}
-                        </label>
-                      </div>
-                    </div>
-                    <div className="form-actions">
-                      <button
-                        className="btn primary"
-                        onClick={handleSaveEmailAccount}
-                        disabled={emailBusy}
-                      >
-                        {emailBusy
-                          ? t("Guardando...")
-                          : emailAccountMode === "edit"
-                            ? t("Actualizar cuenta")
-                            : t("Añadir cuenta")}
-                      </button>
-                      {emailAccountMode === "edit" && (
-                        <button
-                          className="btn"
-                          type="button"
-                          onClick={resetEmailDraft}
-                        >
-                          {t("Cancelar")}
-                        </button>
-                      )}
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={handleSyncEmail}
-                        disabled={emailSyncBusy}
-                      >
-                        {emailSyncBusy
-                          ? t("Sincronizando...")
-                          : t("Sincronizar ahora")}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                <div className="section-divider" />
-
-                <h5>{t("Cuentas conectadas")}</h5>
-                {emailAccounts.length === 0 && !emailBusy && (
-                  <div className="muted">
-                    {t("No hay cuentas configuradas.")}
-                  </div>
-                )}
-                {emailAccounts.length > 0 && (
-                  <DataTable
-                    columns={emailAccountColumns}
-                    data={emailAccounts}
-                    getRowId={(row) => row.id}
-                    pageSize={5}
-                    filterKeys={["email", "host", "label"]}
-                  />
-                )}
-
-                <div className="section-divider" />
-
-                <h5>{t("Bandeja procesada")}</h5>
-                {emailMessages.length === 0 && !emailBusy && (
-                  <div className="muted">
-                    {t("No se han procesado correos aún.")}
-                  </div>
-                )}
-                {emailMessages.length > 0 && (
-                  <DataTable
-                    columns={emailMessageColumns}
-                    data={emailMessages}
-                    getRowId={(row) => row.id}
-                    pageSize={8}
-                    filterKeys={["subject", "fromEmail", "intent", "priority"]}
-                  />
-                )}
-                <div className="section-divider" />
-              </>
-            ) : (
-              <div className="section-divider" />
-            )}
-
             {isFinancialService && (
               <>
-                <h4>{t("Simulador financiero")}</h4>
-                <p className="muted mb-3">
+                <h4 id="section-financial">{t("Simulador financiero")}</h4>
+                <p className="muted">
                   {t(
-                    "Gestiona simulaciones financieras y revisa resultados con IA. Usa el provider y el prompt configurados en este servicio.",
+                    "Gestiona las simulaciones financieras asociadas a este servicio.",
                   )}
                 </p>
                 <div className="form-actions">
                   <button
-                    className="btn primary"
+                    className="btn"
+                    type="button"
                     onClick={() =>
                       navigate(`/clients/${tenantId}/financial-simulations`)
                     }
+                    disabled={!tenantId}
                   >
-                    {t("Abrir panel de simulaciones")}
-                  </button>
-                </div>
-                <div className="section-divider" />
-              </>
-            )}
-
-
-            {isOperationalSupportService && (
-              <>
-                <h4>{t("Soporte operativo")}</h4>
-                <p className="muted mb-3">
-                  {t(
-                    "Gestiona borradores y plantillas internas para soporte operativo.",
-                  )}
-                </p>
-                <div className="form-actions">
-                  <button
-                    className="btn primary"
-                    onClick={() =>
-                      navigate(`/clients/${tenantId}/operational-support`)
-                    }
-                  >
-                    {t("Abrir panel de soporte operativo")}
+                    {t("Abrir simulador financiero")}
                   </button>
                 </div>
                 <div className="section-divider" />
@@ -2383,181 +2004,395 @@ export function TenantServiceDetailPage() {
 
             {isPreEvaluationService && (
               <>
-                <h4>{t("Pre-evaluacion")}</h4>
-                <p className="muted mb-3">
+                <h4 id="section-pre-eval">{t("Pre-evaluacion")}</h4>
+                <p className="muted">
                   {t(
-                    "Simula pre-evaluaciones con preguntas generales, probabilidad estimada y factores explicativos.",
+                    "Accede al motor de reglas simulado para esta pre-evaluacion.",
                   )}
                 </p>
                 <div className="form-actions">
                   <button
-                    className="btn primary"
+                    className="btn"
+                    type="button"
                     onClick={() =>
                       navigate(`/clients/${tenantId}/pre-evaluations`)
                     }
+                    disabled={!tenantId}
                   >
-                    {t("Abrir panel de pre-evaluaciones")}
+                    {t("Abrir pre-evaluaciones")}
                   </button>
                 </div>
                 <div className="section-divider" />
               </>
             )}
+
             {isSelfAssessmentService && (
               <>
-                <h4>{t("Autoevaluacion inteligente")}</h4>
-                <p className="muted mb-3">
-                  {t("Gestiona autoevaluaciones y genera informes de cumplimiento con IA.")}
+                <h4 id="section-self-assessment">{t("Autoevaluacion inteligente")}</h4>
+                <p className="muted">
+                  {t("Gestiona las autoevaluaciones asociadas a este servicio.")}
                 </p>
                 <div className="form-actions">
                   <button
-                    className="btn primary"
+                    className="btn"
+                    type="button"
                     onClick={() =>
                       navigate(`/clients/${tenantId}/self-assessments`)
                     }
+                    disabled={!tenantId}
                   >
-                    {t("Abrir panel de autoevaluaciones")}
+                    {t("Abrir autoevaluaciones")}
                   </button>
                 </div>
                 <div className="section-divider" />
               </>
             )}
 
-            {catalogStorageEnabled && (
+            {service?.emailAutomationEnabled && (
               <>
-                <h4>{t("Almacenamiento de archivos")}</h4>
-                <p className="muted mb-3">
+                <h4 id="section-email">{t("Automatización de correos y tickets")}</h4>
+                <p className="muted">
                   {t(
-                    "Define el storage usado para adjuntar archivos e imágenes en el chatbot. Si no se configura, se usa Cloudinary por defecto.",
+                    "Configura cuentas de correo para analizar incidencias y generar tickets.",
                   )}
                 </p>
-                {storageDraft.usingDefault && !storageDraft.configText.trim() && (
-                  <div className="info-banner">
-                    {t("Usando Cloudinary por defecto para este servicio.")}
+                {emailError && <div className="error-banner">{emailError}</div>}
+                <div className="row g-3 form-grid-13">
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Etiqueta")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.label}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            label: event.target.value,
+                          }))
+                        }
+                        placeholder={t("Ej: Soporte")}
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
                   </div>
-                )}
-                {canManageServices ? (
-                  <>
-                    <div className="row g-3 form-grid-13">
-                      <div className="col-12 col-md-4">
-                        <label>
-                          {t("Proveedor de storage")}
-                          <select
-                            className="form-select"
-                            value={storageDraft.provider}
-                            onChange={(event) =>
-                              setStorageDraft((prev) => ({
-                                ...prev,
-                                provider: event.target.value,
-                              }))
-                            }
-                          >
-                            {storageProviders.map((provider) => (
-                              <option key={provider.value} value={provider.value}>
-                                {provider.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-4">
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={storageDraft.enabled}
-                            onChange={(event) =>
-                              setStorageDraft((prev) => ({
-                                ...prev,
-                                enabled: event.target.checked,
-                              }))
-                            }
-                          />{" "}
-                          {t("Activo")}
-                        </label>
-                      </div>
-                      <div className="col-12">
-                        <label>
-                          <span className="label-with-tooltip">
-                            {t("Configuración JSON")}
-                            <InfoTooltip
-                              text={t(
-                                "Cloudinary: {cloudName, apiKey, apiSecret, uploadPreset, folder}. S3/MinIO/IBM/GCS: {accessKey, secretKey, bucket, region, endpoint}. Azure: {account, container, sasToken, endpoint}.",
-                              )}
-                            />
-                          </span>
-                          <textarea
-                            className="form-control"
-                            value={storageDraft.configText}
-                            onChange={(event) =>
-                              setStorageDraft((prev) => ({
-                                ...prev,
-                                configText: event.target.value,
-                              }))
-                            }
-                            rows={6}
-                            placeholder={t(
-                              '{"cloudName":"...","apiKey":"...","apiSecret":"...","uploadPreset":"..."}',
-                            )}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    <div className="form-actions">
-                      <button
-                        className="btn primary"
-                        onClick={handleSaveStorage}
-                        disabled={storageBusy}
-                      >
-                        {t("Guardar almacenamiento")}
-                      </button>
-                      <button
-                        className="btn"
-                        onClick={handleResetStorage}
-                        disabled={storageBusy}
-                      >
-                        {t("Restablecer Cloudinary")}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="mini-list">
-                    <div className="mini-row">
-                      <span>{t("Proveedor de storage")}</span>
-                      <span>{storageConfig?.provider || "cloudinary"}</span>
-                    </div>
-                    <div className="mini-row">
-                      <span>{t("Estado")}</span>
-                      <span>
-                        {storageConfig?.enabled ? t("Activo") : t("Inactivo")}
-                      </span>
-                    </div>
-                    <div className="mini-row">
-                      <span>{t("Credenciales")}</span>
-                      <span>
-                        {storageConfig?.usingDefault
-                          ? t("Cloudinary por defecto")
-                          : t("Configuración personalizada")}
-                      </span>
-                    </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Email")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.email}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder={t("soporte@empresa.com")}
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
                   </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Host IMAP")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.host}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            host: event.target.value,
+                          }))
+                        }
+                        placeholder="imap.empresa.com"
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Puerto")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.port}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            port: event.target.value,
+                          }))
+                        }
+                        placeholder="993"
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Usuario")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.username}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            username: event.target.value,
+                          }))
+                        }
+                        placeholder={t("usuario")}
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Password")}
+                      <input
+                        className="form-control"
+                        type="password"
+                        value={emailAccountDraft.password}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            password: event.target.value,
+                          }))
+                        }
+                        placeholder={
+                          emailAccountMode === "edit"
+                            ? t("Dejar vacío para mantener")
+                            : t("Password")
+                        }
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Carpeta")}
+                      <input
+                        className="form-control"
+                        value={emailAccountDraft.folder}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            folder: event.target.value,
+                          }))
+                        }
+                        placeholder="INBOX"
+                        disabled={!canManageEmailAutomation}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={emailAccountDraft.useSsl}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            useSsl: event.target.checked,
+                          }))
+                        }
+                        disabled={!canManageEmailAutomation}
+                      />
+                      {t("Usar SSL")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={emailAccountDraft.useStartTls}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            useStartTls: event.target.checked,
+                          }))
+                        }
+                        disabled={!canManageEmailAutomation}
+                      />
+                      {t("Usar STARTTLS")}
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={emailAccountDraft.enabled}
+                        onChange={(event) =>
+                          setEmailAccountDraft((prev) => ({
+                            ...prev,
+                            enabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!canManageEmailAutomation}
+                      />
+                      {t("Cuenta activa")}
+                    </label>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={handleSaveEmailAccount}
+                    disabled={emailBusy || !canManageEmailAutomation}
+                  >
+                    {emailAccountMode === "edit"
+                      ? t("Actualizar cuenta")
+                      : t("Añadir cuenta")}
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={resetEmailDraft}
+                    disabled={emailBusy || !canManageEmailAutomation}
+                  >
+                    {t("Limpiar")}
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={handleSyncEmail}
+                    disabled={emailSyncBusy || !canManageEmailAutomation}
+                  >
+                    {emailSyncBusy ? t("Sincronizando...") : t("Sincronizar")}
+                  </button>
+                </div>
+
+                <DataTable
+                  columns={emailAccountColumns}
+                  data={emailAccounts}
+                  getRowId={(row) => row.id}
+                  pageSize={5}
+                  filterKeys={["email", "label", "host", "username", "folder"]}
+                />
+                {emailAccounts.length === 0 && (
+                  <div className="muted">{t("Sin cuentas configuradas.")}</div>
                 )}
+
+                <h4 className="mt-4">{t("Bandeja analizada")}</h4>
+                <DataTable
+                  columns={emailMessageColumns}
+                  data={emailMessages}
+                  getRowId={(row) => row.id}
+                  pageSize={5}
+                  filterKeys={["subject", "fromEmail", "intent", "priority"]}
+                />
+                {emailMessages.length === 0 && (
+                  <div className="muted">{t("Sin mensajes procesados.")}</div>
+                )}
+
+                <div className="section-divider" />
               </>
             )}
 
-            <div className="section-divider" />
+            {service?.fileStorageEnabled && (
+              <>
+                <h4 id="section-storage">{t("Almacenamiento de archivos")}</h4>
+                <p className="muted">
+                  {t(
+                    "Configura dónde se guardan los adjuntos y documentos del servicio.",
+                  )}
+                </p>
+                {storageConfig?.usingDefault && (
+                  <div className="info-banner">
+                    {t("Se está usando la configuración por defecto.")}
+                  </div>
+                )}
+                <div className="row g-3 form-grid-13">
+                  <div className="col-12 col-md-4">
+                    <label>
+                      {t("Proveedor")}
+                      <select
+                        className="form-select"
+                        value={storageDraft.provider}
+                        onChange={(event) =>
+                          setStorageDraft((prev) => ({
+                            ...prev,
+                            provider: event.target.value,
+                          }))
+                        }
+                        disabled={!canManageServices}
+                      >
+                        {storageProviders.map((provider) => (
+                          <option key={provider.value} value={provider.value}>
+                            {provider.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={storageDraft.enabled}
+                        onChange={(event) =>
+                          setStorageDraft((prev) => ({
+                            ...prev,
+                            enabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!canManageServices}
+                      />
+                      {t("Almacenamiento habilitado")}
+                    </label>
+                  </div>
+                  <div className="col-12">
+                    <label>
+                      {t("Configuración (JSON)")}
+                      <textarea
+                        className="form-control"
+                        rows={4}
+                        value={storageDraft.configText}
+                        onChange={(event) =>
+                          setStorageDraft((prev) => ({
+                            ...prev,
+                            configText: event.target.value,
+                          }))
+                        }
+                        placeholder='{"bucket":"...","region":"..."}'
+                        disabled={!canManageServices}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={handleSaveStorage}
+                    disabled={storageBusy || !canManageServices}
+                  >
+                    {storageBusy ? t("Guardando...") : t("Guardar almacenamiento")}
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={handleResetStorage}
+                    disabled={storageBusy || !canManageServices}
+                  >
+                    {t("Restablecer")}
+                  </button>
+                </div>
 
-            <h4>{t("Prueba runtime del servicio")}</h4>
-            {!canManageServices && (
-              <div className="info-banner">
-                {t("Solo administradores pueden ejecutar el runtime del servicio.")}
-              </div>
+                <div className="section-divider" />
+              </>
             )}
+
+            <h4 id="section-runtime">
+              <span className="label-with-tooltip">
+                {t("Prueba runtime")}
+                <InfoTooltip
+                  text={t(
+                    "Ejecuta una petición de prueba con el provider y modelo seleccionados para validar credenciales y conexión.",
+                  )}
+                />
+              </span>
+            </h4>
             {!hasTenantApiKey && (
               <div className="info-banner">
-                {t("Necesitas una API key activa para ejecutar el runtime.")}
+                {t("Necesitas una API key activa para ejecutar runtime.")}
               </div>
             )}
             <div className="row g-3 form-grid-13">
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label>
                   {t("Provider")}
                   <select
@@ -2572,7 +2407,7 @@ export function TenantServiceDetailPage() {
                         providerId: event.target.value,
                       }))
                     }
-                    disabled={!hasTenantApiKey || !canManageServices}
+                    disabled={!hasTenantApiKey}
                   >
                     <option value="">{t("Selecciona provider")}</option>
                     {providers.map((provider) => (
@@ -2583,7 +2418,7 @@ export function TenantServiceDetailPage() {
                   </select>
                 </label>
               </div>
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label>
                   {t("Modelo")}
                   <input
@@ -2595,8 +2430,8 @@ export function TenantServiceDetailPage() {
                         model: event.target.value,
                       }))
                     }
-                    placeholder={t("gpt-4o-mini")}
-                    disabled={!hasTenantApiKey || !canManageServices}
+                    placeholder="gpt-4o-mini"
+                    disabled={!hasTenantApiKey}
                   />
                 </label>
               </div>
@@ -2613,8 +2448,8 @@ export function TenantServiceDetailPage() {
                       }))
                     }
                     rows={6}
-                    placeholder={t('{"messages":[{"role":"user","content":"Hola"}]}')}
-                    disabled={!hasTenantApiKey || !canManageServices}
+                    placeholder='{"messages":[{"role":"user","content":"Hola"}]}'
+                    disabled={!hasTenantApiKey}
                   />
                 </label>
               </div>
@@ -2623,7 +2458,7 @@ export function TenantServiceDetailPage() {
               <button
                 className="btn primary"
                 onClick={handleServiceRuntimeTest}
-                disabled={serviceRuntimeBusy || !hasTenantApiKey || !canManageServices}
+                disabled={serviceRuntimeBusy || !hasTenantApiKey}
               >
                 {t("Ejecutar runtime")}
               </button>
@@ -2642,17 +2477,199 @@ export function TenantServiceDetailPage() {
 
             <div className="section-divider" />
 
-            {service.endpointsEnabled !== false ? (
+            <h4 id="section-jira">{t("Integración Jira")}</h4>
+            <p className="muted mb-4">
+              {t(
+                "Configura la integración con Jira para crear tickets automáticamente.",
+              )}
+            </p>
+            {!canManageServices && (
+              <div className="info-banner">
+                {t("No tienes permisos para editar la integración Jira.")}
+              </div>
+            )}
+            <div className="row g-3 form-grid-13">
+              <div className="col-12 col-md-3">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={jiraDraft.jiraEnabled}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraEnabled: event.target.checked,
+                      }))
+                    }
+                    disabled={!canManageServices}
+                  />
+                  {t("Jira habilitado")}
+                </label>
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={jiraDraft.jiraCredentialsEnabled}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraCredentialsEnabled: event.target.checked,
+                      }))
+                    }
+                    disabled={!canManageServices}
+                  />
+                  {t("Credenciales Jira")}
+                </label>
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={jiraDraft.jiraAllowUserPriorityOverride}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraAllowUserPriorityOverride: event.target.checked,
+                      }))
+                    }
+                    disabled={!canManageServices}
+                  />
+                  {t("Permitir prioridad")}
+                </label>
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={jiraDraft.jiraAutoLabelWithServiceName}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraAutoLabelWithServiceName: event.target.checked,
+                      }))
+                    }
+                    disabled={!canManageServices}
+                  />
+                  {t("Auto-etiquetar")}
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("Project key")}
+                  <input
+                    className="form-control"
+                    value={jiraDraft.jiraProjectKey}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraProjectKey: event.target.value,
+                      }))
+                    }
+                    placeholder={t("Ej: OPS")}
+                    disabled={!canManageServices}
+                  />
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("Tipo de incidencia")}
+                  <input
+                    className="form-control"
+                    value={jiraDraft.jiraDefaultIssueType}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraDefaultIssueType: event.target.value,
+                      }))
+                    }
+                    placeholder={t("Ej: Task")}
+                    disabled={!canManageServices}
+                  />
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("Base URL")}
+                  <input
+                    className="form-control"
+                    value={jiraDraft.jiraBaseUrl}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraBaseUrl: event.target.value,
+                      }))
+                    }
+                    placeholder={t("https://tuempresa.atlassian.net")}
+                    disabled={!canManageServices}
+                  />
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("Email técnico")}
+                  <input
+                    className="form-control"
+                    value={jiraDraft.jiraEmail}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraEmail: event.target.value,
+                      }))
+                    }
+                    placeholder={t("soporte@empresa.com")}
+                    disabled={!canManageServices}
+                  />
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("API token")}
+                  <input
+                    className="form-control"
+                    value={jiraDraft.jiraApiToken}
+                    onChange={(event) =>
+                      setJiraDraft((prev) => ({
+                        ...prev,
+                        jiraApiToken: event.target.value,
+                        jiraHasToken: false,
+                      }))
+                    }
+                    placeholder={jiraDraft.jiraHasToken ? t("Token guardado") : t("Pegue un token")}
+                    disabled={!canManageServices}
+                  />
+                </label>
+                {jiraDraft.jiraHasToken && !jiraDraft.jiraApiToken && (
+                  <div className="muted">
+                    {t("Token ya guardado. Deja vacío para mantenerlo.")}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="form-actions">
+              <button
+                className="btn primary"
+                onClick={handleSaveJira}
+                disabled={jiraBusy || !canManageServices}
+              >
+                {jiraBusy ? t("Guardando...") : t("Guardar Jira")}
+              </button>
+            </div>
+
+            <div className="section-divider" />
+
+            {endpointsEnabled ? (
               <>
-                <h4>{t("Endpoints del servicio")}</h4>
+                <h4 className="mt-4" id="section-endpoints">
+                  {t("Endpoints del servicio")}
+                </h4>
                 <p className="muted mb-4">
                   {t(
-                    "Es obligatorio crear endpoints para este servicio según su configuración.",
+                    "Configura los endpoints que el asistente consultará para responder con datos actualizados.",
                   )}
                 </p>
                 {!canManageServices && (
                   <div className="info-banner">
-                    {t("No tienes permisos para gestionar endpoints.")}
+                    {t("No tienes permisos para editar endpoints.")}
                   </div>
                 )}
                 <div className="row g-3 form-grid-13">
@@ -2668,7 +2685,7 @@ export function TenantServiceDetailPage() {
                             slug: event.target.value,
                           }))
                         }
-                        placeholder={t("send-message")}
+                        placeholder="send-message"
                         disabled={!canManageServices}
                       />
                     </label>
@@ -2709,17 +2726,31 @@ export function TenantServiceDetailPage() {
                             path: event.target.value,
                           }))
                         }
-                        placeholder={t("/chat/send")}
+                        placeholder="/chat/send"
                         disabled={!canManageServices}
                       />
                     </label>
                   </div>
-                  <div className="col-12 col-md-4">
+                  <div className="col-12 col-md-6">
                     <label>
-                      <span className="label-with-tooltip">
-                        {t("Path de extracción (opcional)")}
-                        <InfoTooltip field="serviceEndpointResponsePath" />
-                      </span>
+                      {t("Base URL (opcional)")}
+                      <input
+                        className="form-control"
+                        value={serviceEndpointDraft.baseUrl}
+                        onChange={(event) =>
+                          setServiceEndpointDraft((prev) => ({
+                            ...prev,
+                            baseUrl: event.target.value,
+                          }))
+                        }
+                        placeholder="https://api.cliente.com"
+                        disabled={!canManageServices}
+                      />
+                    </label>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label>
+                      {t("Path de extracción (opcional)")}
                       <input
                         className="form-control"
                         value={serviceEndpointDraft.responsePath}
@@ -2729,25 +2760,9 @@ export function TenantServiceDetailPage() {
                             responsePath: event.target.value,
                           }))
                         }
-                        placeholder={t('{ "list": [...] }')}
+                        placeholder="items"
                         disabled={!canManageServices}
                       />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={serviceEndpointDraft.enabled}
-                        onChange={(event) =>
-                          setServiceEndpointDraft((prev) => ({
-                            ...prev,
-                            enabled: event.target.checked,
-                          }))
-                        }
-                        disabled={!canManageServices}
-                      />{" "}
-                      {t("Activo")}
                     </label>
                   </div>
                   <div className="col-12">
@@ -2762,201 +2777,43 @@ export function TenantServiceDetailPage() {
                             headers: event.target.value,
                           }))
                         }
-                        placeholder={t('{"Authorization": "Bearer ..."}')}
+                        placeholder='{"Authorization": "Bearer ..."}'
                         disabled={!canManageServices}
                       />
                     </label>
                   </div>
-                  {catalogHandoffEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={serviceConfigDraft.humanHandoffEnabled}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              humanHandoffEnabled: event.target.checked,
-                            }))
-                          }
-                        />
-                        {t("Permite atención humana")}
-                      </label>
-                    </div>
-                  )}
-
-                  {catalogStorageEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={serviceConfigDraft.fileStorageEnabled}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              fileStorageEnabled: event.target.checked,
-                            }))
-                          }
-                        />
-                        {t("Permite adjuntos y almacenamiento")}
-                      </label>
-                    </div>
-                  )}
-                  {catalogDocumentEnabled && effectiveStorageEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={serviceConfigDraft.documentProcessingEnabled}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              documentProcessingEnabled: event.target.checked,
-                            }))
-                          }
-                        />
-                        {t("Procesamiento documental (OCR + IA)")}
-                      </label>
-                    </div>
-                  )}
-                  {catalogOcrEnabled && effectiveDocumentEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={serviceConfigDraft.ocrEnabled}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              ocrEnabled: event.target.checked,
-                            }))
-                          }
-                        />
-                        {t("OCR habilitado")}
-                      </label>
-                    </div>
-                  )}
-                  {isOperationalSupportService && (
-                    <>
-                      <div className="col-12 col-md-6">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={serviceConfigDraft.internalDocsEnabled}
-                            onChange={(event) =>
-                              setServiceConfigDraft((prev) => ({
-                                ...prev,
-                                internalDocsEnabled: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Fuentes internas: documentacion")}
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={serviceConfigDraft.internalPoliciesEnabled}
-                            onChange={(event) =>
-                              setServiceConfigDraft((prev) => ({
-                                ...prev,
-                                internalPoliciesEnabled: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Fuentes internas: normativas")}
-                        </label>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label className="checkbox">
-                          <input
-                            type="checkbox"
-                            checked={serviceConfigDraft.internalTemplatesEnabled}
-                            onChange={(event) =>
-                              setServiceConfigDraft((prev) => ({
-                                ...prev,
-                                internalTemplatesEnabled: event.target.checked,
-                              }))
-                            }
-                          />
-                          {t("Fuentes internas: plantillas")}
-                        </label>
-                      </div>
-                    </>
-                  )}
-                  {catalogSemanticEnabled && effectiveDocumentEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={serviceConfigDraft.semanticSearchEnabled}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              semanticSearchEnabled: event.target.checked,
-                            }))
-                          }
-                        />
-                        {t("IA semántica habilitada")}
-                      </label>
-                    </div>
-                  )}
-                  {effectiveDocumentEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label>
-                        {t("Dominio documental (opcional)")}
-                        <input
-                          className="form-control"
-                          value={serviceConfigDraft.documentDomain}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              documentDomain: event.target.value,
-                            }))
-                          }
-                          placeholder={t("Ej: banca, sanidad, legal")}
-                        />
-                      </label>
-                    </div>
-                  )}
-                  {effectiveDocumentEnabled && (
-                    <div className="col-12 col-md-6">
-                      <label>
-                        {t("Salida documental")}
-                        <select
-                          className="form-select"
-                          value={serviceConfigDraft.documentOutputType}
-                          onChange={(event) =>
-                            setServiceConfigDraft((prev) => ({
-                              ...prev,
-                              documentOutputType: event.target.value,
-                            }))
-                          }
-                        >
-                          <option value="markdown">{t("Markdown")}</option>
-                          <option value="file">{t("Archivo")}</option>
-                        </select>
-                      </label>
-                    </div>
-                  )}
+                  <div className="col-12 col-md-4">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={serviceEndpointDraft.enabled}
+                        onChange={(event) =>
+                          setServiceEndpointDraft((prev) => ({
+                            ...prev,
+                            enabled: event.target.checked,
+                          }))
+                        }
+                        disabled={!canManageServices}
+                      />
+                      {t("Activo")}
+                    </label>
+                  </div>
                 </div>
                 <div className="form-actions">
                   <button
                     className="btn primary"
                     onClick={handleSaveEndpoint}
                     disabled={
+                      !canManageServices ||
                       serviceBusy ||
                       !serviceEndpointDraft.slug.trim() ||
-                      !serviceEndpointDraft.path.trim() ||
-                      !canManageServices
+                      !serviceEndpointDraft.path.trim()
                     }
                   >
                     {serviceEndpointMode === "edit"
                       ? t("Actualizar endpoint")
                       : t("Crear endpoint")}
                   </button>
-
                   {serviceEndpointMode === "edit" && (
                     <button
                       className="btn"
@@ -2979,7 +2836,7 @@ export function TenantServiceDetailPage() {
                     </button>
                   )}
                 </div>
-                <hr />
+
                 <DataTable
                   columns={[
                     { key: "slug", label: t("Slug"), sortable: true },
@@ -2987,7 +2844,7 @@ export function TenantServiceDetailPage() {
                     { key: "path", label: t("Path"), sortable: true },
                     {
                       key: "responsePath",
-                      label: t("Path extracción"),
+                      label: t("Extracción"),
                       sortable: true,
                       render: (row: TenantServiceEndpoint) =>
                         row.responsePath || "—",
@@ -3029,7 +2886,9 @@ export function TenantServiceDetailPage() {
                   filterKeys={["slug", "method", "path", "responsePath"]}
                 />
                 {serviceEndpoints.length === 0 && (
-                  <div className="muted">{t("Sin endpoints configurados.")}</div>
+                  <div className="muted">
+                    {t("Sin endpoints configurados.")}
+                  </div>
                 )}
               </>
             ) : (
@@ -3040,7 +2899,7 @@ export function TenantServiceDetailPage() {
 
             <div className="section-divider" />
 
-            <h4>{t("Datos para app de terceros")}</h4>
+            <h4 id="section-third-party">{t("Datos para app de terceros")}</h4>
             <p className="muted">
               {t(
                 "Resumen para que el desarrollador configure el chatbot en la app externa.",
@@ -3065,10 +2924,7 @@ export function TenantServiceDetailPage() {
                         ? t("API key activa (no visible)")
                         : t("No disponible")}
                   </span>
-                  <button
-                    className="link"
-                    onClick={handleCopyApiKey}
-                  >
+                  <button className="link" onClick={handleCopyApiKey}>
                     {t("Copiar")}
                   </button>
                 </div>
@@ -3133,21 +2989,27 @@ export function TenantServiceDetailPage() {
                 </div>
               )
             ) : (
-              <div className="muted">{t("Este servicio no requiere endpoints.")}</div>
+              <div className="muted">
+                {t("Este servicio no requiere endpoints.")}
+              </div>
             )}
 
             <div className="section-divider" />
 
-            <div className="d-flex align-items-center justify-content-between">
-              <h4>{t("Usuarios asignados")}</h4>
-              {canManageChatUsers && (
-                <button
-                  className="btn"
-                  onClick={() => setChatUserModalOpen(true)}
-                >
-                  {t("Crear usuario")}
-                </button>
-              )}
+            <div>
+              <h4 id="section-users">{t("Usuarios asignados")}</h4>
+            </div>
+            <div className="row">
+              <div className="col-12 text-end">
+                {canManageChatUsers && (
+                  <button
+                    className="btn"
+                    onClick={() => setChatUserModalOpen(true)}
+                  >
+                    {t("Crear usuario")}
+                  </button>
+                )}
+              </div>
             </div>
             <div className="row g-3 form-grid-13">
               <div className="col-12 col-md-4">
@@ -3241,7 +3103,9 @@ export function TenantServiceDetailPage() {
 
             <div className="section-divider" />
 
-            <h4>{t("Conversaciones del servicio")}</h4>
+            <h4 id="section-conversations">
+              {t("Conversaciones del servicio")}
+            </h4>
             <p className="muted mb-4">
               {t("Histórico de conversaciones asociadas a este servicio.")}
             </p>
