@@ -776,6 +776,7 @@ public class ChatService {
 
     sb.append("Contexto del servicio: ").append(serviceCode).append(".\n");
     sb.append("Permite saludos y cortesías con una respuesta breve y amable, e invita a preguntar sobre el servicio.\n");
+    sb.append("Si el usuario pregunta qué puedes hacer, explica brevemente el alcance del servicio y ofrece ejemplos.\n");
     sb.append("Si una pregunta está fuera del ámbito, indica que no puedes responder y sugiere temas del servicio.\n");
 
     if (endpoints == null || endpoints.isEmpty()) {
@@ -1578,7 +1579,10 @@ public class ChatService {
     String[] keywords = {
       "hola", "buenas", "buenos dias", "buenas tardes", "buenas noches",
       "saludos", "hey", "hello", "hi", "que tal", "como estas",
-      "gracias", "ok", "vale", "bien", "perfecto"
+      "gracias", "ok", "vale", "bien", "perfecto",
+      "que sabes hacer", "que puedes hacer", "que puedes", "que haces",
+      "para que sirves", "en que me puedes ayudar", "en que puedes ayudar",
+      "como puedes ayudar", "como ayudas", "que ofreces", "cual es tu funcion"
     };
     for (String keyword : keywords) {
       if (normalized.contains(keyword)) {
