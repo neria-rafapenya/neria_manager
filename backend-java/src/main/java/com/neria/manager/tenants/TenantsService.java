@@ -8,8 +8,12 @@ import com.neria.manager.common.entities.Tenant;
 import com.neria.manager.common.repos.TenantRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class TenantsService {
@@ -17,16 +21,19 @@ public class TenantsService {
   private final TenantAuthService tenantAuthService;
   private final AdminUserRepository adminUserRepository;
   private final EmailService emailService;
+  private final TenantCleanupService cleanupService;
 
   public TenantsService(
       TenantRepository repository,
       TenantAuthService tenantAuthService,
       AdminUserRepository adminUserRepository,
-      EmailService emailService) {
+      EmailService emailService,
+      TenantCleanupService cleanupService) {
     this.repository = repository;
     this.tenantAuthService = tenantAuthService;
     this.adminUserRepository = adminUserRepository;
     this.emailService = emailService;
+    this.cleanupService = cleanupService;
   }
 
   public List<Tenant> list(String tenantId) {
@@ -164,6 +171,17 @@ public class TenantsService {
             + (tenant.getBillingEmail() != null ? tenant.getBillingEmail() : "-")
             + "\\n";
     emailService.sendGeneric(recipients, subject, body);
+  }
+
+  @Transactional
+  public Map<String, Object> deleteTenant(String tenantId) {
+    Tenant tenant = repository.findById(tenantId).orElse(null);
+    if (tenant == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
+    }
+    Map<String, Integer> deleted = cleanupService.purgeTenant(tenantId);
+    repository.deleteById(tenantId);
+    return Map.of("tenantId", tenantId, "deleted", true, "stats", deleted);
   }
 
   public static class UpdateTenantBase {
