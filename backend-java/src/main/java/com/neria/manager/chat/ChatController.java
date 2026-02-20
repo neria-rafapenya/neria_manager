@@ -84,6 +84,54 @@ public class ChatController {
     return AuthUtils.resolveTenantId(auth, request);
   }
 
+  private Map<String, String> extractForwardHeaders(HttpServletRequest request) {
+    Map<String, String> headers = new LinkedHashMap<>();
+    java.util.Set<String> allowed = new java.util.HashSet<>(
+        List.of("authorization", "x-chat-token", "x-api-key", "x-tenant-id"));
+    String forwardList = request.getHeader("x-forward-headers");
+    if (forwardList != null && !forwardList.isBlank()) {
+      for (String name : forwardList.split(",")) {
+        if (name == null || name.isBlank()) {
+          continue;
+        }
+        allowed.add(name.trim().toLowerCase(java.util.Locale.ROOT));
+      }
+    }
+    java.util.Enumeration<String> headerNames = request.getHeaderNames();
+    if (headerNames == null) {
+      return headers;
+    }
+    while (headerNames.hasMoreElements()) {
+      String name = headerNames.nextElement();
+      if (name == null) {
+        continue;
+      }
+      String lower = name.toLowerCase(java.util.Locale.ROOT);
+      if (lower.equals("cookie")
+          || lower.equals("host")
+          || lower.equals("content-length")
+          || lower.equals("content-type")
+          || lower.equals("user-agent")
+          || lower.equals("accept")
+          || lower.equals("origin")
+          || lower.equals("referer")
+          || lower.equals("x-forward-headers")) {
+        continue;
+      }
+      boolean shouldForward =
+          allowed.contains(lower) || lower.startsWith("x-") || lower.contains("token");
+      if (!shouldForward) {
+        continue;
+      }
+      String value = request.getHeader(name);
+      if (value == null || value.isBlank()) {
+        continue;
+      }
+      headers.put(name, value);
+    }
+    return headers;
+  }
+
   @GetMapping("/conversations")
   public Object listConversations(HttpServletRequest request) {
     String tenantId = resolveTenantId(request);
@@ -161,7 +209,8 @@ public class ChatController {
     String userId = requireUserId(claims);
     AuthContext auth = AuthUtils.requireAuth(request);
     String apiKeyId = auth.getApiKeyId();
-    return chatService.addMessage(tenantId, userId, apiKeyId, id, dto);
+    Map<String, String> forwardHeaders = extractForwardHeaders(request);
+    return chatService.addMessage(tenantId, userId, apiKeyId, id, dto, forwardHeaders);
   }
 
     @PostMapping(value = "/uploads", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -272,7 +321,7 @@ public class ChatController {
         () -> {
           try {
             ChatService.AddMessageResult result =
-                chatService.addMessageForStreaming(tenantId, userId, apiKeyId, id, dto);
+                chatService.addMessageForStreaming(tenantId, userId, apiKeyId, id, dto, extractForwardHeaders(request));
             String content =
                 result.message != null && result.message.getContent() != null
                     ? result.message.getContent()
