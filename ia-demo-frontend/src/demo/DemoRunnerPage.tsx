@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { loadDemos } from "./demoLoader";
 import type { DemoConfig } from "./types";
 import { setRuntimeConfig } from "../infrastructure/config/runtimeConfig";
+import { setAuthToken } from "../infrastructure/config/env";
 import { ChatbotApp } from "../adapters/ui/components/ChatbotApp";
 import { EmailAutomationApp } from "../adapters/ui/components/EmailAutomationApp";
 import { FinancialSimulatorApp } from "../adapters/ui/components/FinancialSimulatorApp";
@@ -15,6 +16,30 @@ export const DemoRunnerPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [configReady, setConfigReady] = useState(false);
+
+  const clearDemoAuth = () => {
+    setAuthToken(null);
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      const keys = Object.keys(window.localStorage);
+      keys.forEach((key) => {
+        if (key.startsWith("ia_chat_") || key.startsWith("pm_auth_")) {
+          window.localStorage.removeItem(key);
+        }
+      });
+      window.localStorage.removeItem("pm_auth_token");
+    } catch {
+      // ignore storage errors
+    }
+    document.cookie = "pm_auth_token=; Max-Age=0; Path=/; SameSite=Lax";
+    document.cookie = "pm_auth_refresh_token=; Max-Age=0; Path=/; SameSite=Lax";
+  };
+
+  useEffect(() => {
+    clearDemoAuth();
+  }, [code]);
 
   useEffect(() => {
     let mounted = true;

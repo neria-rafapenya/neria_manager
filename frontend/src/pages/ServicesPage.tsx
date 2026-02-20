@@ -5,6 +5,7 @@ import type { ServiceCatalogItem } from "../types";
 import { PageWithDocs } from "../components/PageWithDocs";
 import { formatEur } from "../utils/currency";
 import { emitToast } from "../toast";
+import { getServiceDemoUrl } from "../constants/serviceDemos";
 import Swal from "sweetalert2";
 import { useI18n } from "../i18n/I18nProvider";
 
@@ -156,6 +157,16 @@ export function ServicesPage() {
                   </div>
 
                   <div className="row-actions">
+                    {getServiceDemoUrl(service.code) && (
+                      <a
+                        className="link"
+                        href={getServiceDemoUrl(service.code) as string}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {t("Ver demo")}
+                      </a>
+                    )}
                     {/* 👇 AHORA ES UN BUTTON REAL */}
                     <button
                       type="button"
