@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,6 +66,13 @@ public class TenantsController {
     requireAdmin(request);
     boolean enabled = Boolean.TRUE.equals(body.get("enabled"));
     return tenantsService.toggleKillSwitch(id, enabled);
+  }
+
+  @DeleteMapping("/{id}")
+  public Map<String, Object> delete(
+      HttpServletRequest request, @PathVariable("id") String id) {
+    requireAdmin(request);
+    return tenantsService.deleteTenant(id);
   }
 
   private AuthContext requireAuth(HttpServletRequest request) {

@@ -8,6 +8,7 @@ import { PageWithDocs } from '../components/PageWithDocs';
 import { DataTable } from '../components/DataTable';
 import { StatusBadgeIcon } from '../components/StatusBadgeIcon';
 import { useI18n } from '../i18n/I18nProvider';
+import Swal from 'sweetalert2';
 
 export function TenantsPage() {
   const { role } = useAuth();
@@ -76,6 +77,33 @@ export function TenantsPage() {
       authUsername: tenant.authUsername || '',
       authPassword: ''
     });
+  };
+
+  const handleDelete = async (tenant: Tenant) => {
+    const result = await Swal.fire({
+      title: t('Eliminar cliente'),
+      text: t(
+        'Se eliminarán todos los datos de {name}. Esta acción no se puede deshacer.',
+        { name: tenant.name },
+      ),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: t('Eliminar'),
+      cancelButtonText: t('Cancelar'),
+    });
+    if (!result.isConfirmed) {
+      return;
+    }
+    try {
+      setActionError(null);
+      await api.deleteTenant(tenant.id);
+      await refreshTenants();
+      if (editingId === tenant.id) {
+        resetForm();
+      }
+    } catch (err: any) {
+      setActionError(err.message || t('Error eliminando tenant'));
+    }
   };
 
   const handleToggleKillSwitch = async (tenant: Tenant) => {
@@ -214,6 +242,9 @@ export function TenantsPage() {
                               onClick={() => handleToggleKillSwitch(tenant)}
                             >
                               {tenant.killSwitch ? t('Desactivar') : t('Activar')}
+                            </button>
+                            <button className="link danger" onClick={() => handleDelete(tenant)}>
+                              {t('Eliminar')}
                             </button>
                           </div>
                         )

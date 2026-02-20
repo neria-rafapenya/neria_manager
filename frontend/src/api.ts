@@ -319,6 +319,10 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ enabled }),
     }),
+  deleteTenant: (id: string) =>
+    requestJson<any>(`/tenants/${id}`, {
+      method: "DELETE",
+    }),
   getProviders: (tenantId: string) =>
     requestJson<any[]>("/providers", {
       headers: {
