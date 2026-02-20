@@ -1332,6 +1332,14 @@ h1 {
   font-size: 14px;
 }
 
+.servicetable-row .status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 6px 12px;
+}
+
 .servicetable-row .link {
   font-size: 14px;
   padding: 6px 12px 6px 12px;
