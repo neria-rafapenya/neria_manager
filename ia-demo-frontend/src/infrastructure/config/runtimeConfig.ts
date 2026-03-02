@@ -2,8 +2,8 @@ export type DemoRuntimeConfig = {
   demoCode?: string;
   name?: string;
   description?: string;
-  mode?: "chat" | "email" | "surveys" | "embed" | "financial" | "self-assessment";
-  serviceMode?: "chat" | "email" | "financial" | "self-assessment";
+  mode?: "chat" | "email" | "surveys" | "embed" | "financial" | "self-assessment" | "tax";
+  serviceMode?: "chat" | "email" | "financial" | "self-assessment" | "tax";
   apiBaseUrl?: string;
   apiUrl?: string;
   apiKey?: string;

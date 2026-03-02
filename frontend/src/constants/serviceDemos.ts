@@ -5,13 +5,13 @@ const SERVICE_DEMO_PATHS: Record<string, string> = {
   "chat-generic": "demo/chat-generic",
   "asistente-operativo": "demo/asistente-operativo",
   "simulador-financiero": "demo/simulador-financiero",
+  "asistente-renta": "demo/asistente-renta",
   "gestion-citas": "demo/gestion-citas",
   "pre-evaluacion": "demo/pre-evaluacion",
   "autoevalucion": "demo/autoevalucion",
   "sistema-encuestas": "demo/sistema-encuestas",
   "correos-tickets": "demo/correos-tickets",
   "chat-ocr": "demo/chat-ocr",
-  "simulado-preevaluacion": "demo/simulado-preevaluacion",
 };
 
 export const getServiceDemoUrl = (serviceCode?: string | null) => {

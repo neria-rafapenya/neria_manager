@@ -7,6 +7,7 @@ import { ChatSqlModule } from "./chat-sql/chat-sql.module";
 import { OperationalSupportModule } from "./operational-support/operational-support.module";
 import { FinancialModule } from "./financial/financial.module";
 import { AppointmentsModule } from "./appointments/appointments.module";
+import { TaxAssistantModule } from "./tax-assistant/tax-assistant.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AppointmentsModule } from "./appointments/appointments.module";
     OperationalSupportModule,
     FinancialModule,
     AppointmentsModule,
+    TaxAssistantModule,
   ],
   controllers: [HealthController],
   providers: [

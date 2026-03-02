@@ -39,6 +39,7 @@ import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
 import { TenantServiceFinancialSimulationsPage } from "./pages/TenantServiceFinancialSimulationsPage";
 import { TenantServiceSelfAssessmentsPage } from "./pages/TenantServiceSelfAssessmentsPage";
 import { TenantServiceOperationalSupportPage } from "./pages/TenantServiceOperationalSupportPage";
+import { TenantServiceTaxAssistantPage } from "./pages/TenantServiceTaxAssistantPage";
 import { TenantServicePreEvaluationsPage } from "./pages/TenantServicePreEvaluationsPage";
 import { PublicSurveyPage } from "./pages/PublicSurveyPage";
 
@@ -115,6 +116,14 @@ function App() {
                     element={
                       <TenantServicePreEvaluationsPage
                         defaultServiceCode="pre-evaluacion"
+                      />
+                    }
+                  />
+                  <Route
+                    path="clients/:tenantId/tax-assistant"
+                    element={
+                      <TenantServiceTaxAssistantPage
+                        defaultServiceCode="asistente-renta"
                       />
                     }
                   />

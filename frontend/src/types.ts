@@ -384,6 +384,26 @@ export type OperationalSupportDetail = {
   providerId?: string | null;
 };
 
+export type TaxAssistantSummary = {
+  id: string;
+  title: string;
+  taxYear?: number | null;
+  region?: string | null;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  result?: Record<string, any> | null;
+};
+
+export type TaxAssistantDetail = {
+  summary: TaxAssistantSummary;
+  input: Record<string, any> | null;
+  result: Record<string, any> | null;
+  report?: string | null;
+  model?: string | null;
+  providerId?: string | null;
+};
+
 export type SelfAssessmentSummary = {
   id: string;
   title: string;

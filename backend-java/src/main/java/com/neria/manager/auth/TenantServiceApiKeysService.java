@@ -63,7 +63,8 @@ public class TenantServiceApiKeysService {
       return List.of();
     }
     Map<String, TenantServiceApiKey> existing =
-        repository.findByTenantIdAndServiceCodeIn(tenantId, normalizedCodes).stream()
+        repository.findByTenantId(tenantId).stream()
+            .filter(item -> normalizedCodes.contains(item.getServiceCode()))
             .collect(Collectors.toMap(TenantServiceApiKey::getServiceCode, item -> item));
     return normalizedCodes.stream()
         .map(code -> existing.getOrDefault(code, create(tenantId, code)))

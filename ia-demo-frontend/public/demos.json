@@ -136,6 +136,22 @@
       "apiKey": "21e973f27e5077b56ea78fe80212d7a7946d344c527556f6efa17a28d474f9b7",
       "serviceCode": "chat-generic",
       "serviceId": "c3918d1a-1c20-4806-a81d-bd4966843aff"
+    },
+    {
+      "code": "asistente-renta",
+      "name": "Asistente IA para Declaracion de la Renta",
+      "description": "Wizard para preparar la declaracion de la renta en Espana.",
+      "mode": "tax",
+      "serviceMode": "tax",
+      "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
+      "apiKey": null,
+      "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
+      "providerId": "500672f6-0365-4cae-a026-129f871875f9",
+      "model": "gpt-4.1-mini",
+      "serviceCode": "asistente-renta",
+      "serviceId": null,
+      "chatEndpoint": "persisted",
+      "chatAuthMode": "local"
     }
   ]
 }

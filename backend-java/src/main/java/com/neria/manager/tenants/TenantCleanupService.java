@@ -35,6 +35,7 @@ public class TenantCleanupService {
           "tenant_service_operational_support",
           "tenant_service_pre_evaluations",
           "tenant_service_self_assessments",
+          "tenant_service_tax_assistants",
           "chat_messages",
           "chat_conversations",
           "chat_users",

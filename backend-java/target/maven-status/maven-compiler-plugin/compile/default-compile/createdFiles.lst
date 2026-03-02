@@ -35,9 +35,11 @@ com/neria/manager/auth/ApiKeysService$ApiKeyCreateResult.class
 com/neria/manager/subscriptions/SubscriptionsService$TaxBreakdown.class
 com/neria/manager/surveys/SurveysService$SurveySubmissionRequest.class
 com/neria/manager/auth/AdminUsersService$UpdateAdminUserRequest.class
+com/neria/manager/taxassistant/TaxAssistantService$TaxAssistantRequest.class
 com/neria/manager/providers/ProvidersService.class
 com/neria/manager/surveys/SurveysService.class
 com/neria/manager/docs/DocsService.class
+com/neria/manager/taxassistant/TaxAssistantService.class
 com/neria/manager/common/repos/ServiceCatalogRepository.class
 com/neria/manager/common/entities/AuditEvent.class
 com/neria/manager/config/AppProperties$Storage.class
@@ -74,6 +76,7 @@ com/neria/manager/redaction/RedactionService.class
 com/neria/manager/storage/StorageUploadService$2.class
 com/neria/manager/common/services/JwtService.class
 com/neria/manager/common/services/RateLimitService$Bucket.class
+com/neria/manager/common/entities/TenantServiceTaxAssistant.class
 com/neria/manager/chatbots/ChatbotsService$ChatbotGenericRequest.class
 com/neria/manager/chat/ChatService$CreateConversationRequest.class
 com/neria/manager/common/entities/Subscription.class
@@ -142,6 +145,7 @@ com/neria/manager/dbconnections/DbConnectionsController.class
 com/neria/manager/chat/ChatService$CreateHumanMessageRequest.class
 com/neria/manager/chat/ChatAdminController.class
 com/neria/manager/ocr/OcrDocumentsController.class
+com/neria/manager/common/repos/TenantServiceTaxAssistantRepository.class
 com/neria/manager/surveys/SurveysService$SurveyResponseDetail.class
 com/neria/manager/common/repos/TenantServiceStorageRepository.class
 com/neria/manager/common/repos/ChatMessageRepository.class
@@ -229,12 +233,14 @@ com/neria/manager/common/entities/Webhook.class
 com/neria/manager/storage/StorageUploadService$1.class
 com/neria/manager/common/repos/DocumentationEntryRepository.class
 com/neria/manager/surveys/SurveysService$QuestionRequest.class
+com/neria/manager/taxassistant/TaxAssistantService$TaxAssistantInput.class
 com/neria/manager/surveys/SurveysService$2.class
 com/neria/manager/common/entities/TenantInvoiceItem.class
 com/neria/manager/common/repos/AdminPasswordResetRepository.class
 com/neria/manager/common/repos/TenantServiceSurveyQuestionRepository.class
 com/neria/manager/common/entities/SubscriptionPaymentRequest.class
 com/neria/manager/jira/JiraIssuesService$CreateJiraIssueRequest.class
+com/neria/manager/taxassistant/TaxAssistantController.class
 com/neria/manager/common/entities/TenantServiceSurveyInsight.class
 com/neria/manager/common/repos/TenantServiceFinancialSimulationRepository.class
 com/neria/manager/pricing/PricingService$UpdatePricingRequest.class
@@ -278,6 +284,7 @@ com/neria/manager/financialsim/FinancialSimulationsService$SimulationInput.class
 com/neria/manager/surveys/SurveysService$SurveyResponseSummary.class
 com/neria/manager/webhooks/WebhooksService.class
 com/neria/manager/selfassessment/SelfAssessmentsService$AssessmentResult.class
+com/neria/manager/taxassistant/TaxAssistantService$TaxAssistantSummary.class
 com/neria/manager/common/entities/TenantServiceJira.class
 com/neria/manager/common/entities/DocumentationEntry.class
 com/neria/manager/adapters/MockAdapter.class
@@ -295,6 +302,7 @@ com/neria/manager/servicecatalog/ServiceCatalogService.class
 com/neria/manager/ocr/OcrDocumentsService$UpdateOcrDocumentRequest.class
 com/neria/manager/runtime/RuntimeController.class
 com/neria/manager/auth/AuthService$TokenResult.class
+com/neria/manager/taxassistant/TaxAssistantService$TaxAssistantDetail.class
 com/neria/manager/surveys/PublicSurveysController.class
 com/neria/manager/billing/TenantInvoicesService.class
 com/neria/manager/common/entities/TenantServiceEmailMessage.class
@@ -307,6 +315,7 @@ com/neria/manager/tenantservices/TenantServicesService$ServiceAccess.class
 com/neria/manager/common/repos/TenantLoginLogRepository.class
 com/neria/manager/webhooks/WebhooksService$UpdateWebhookRequest.class
 com/neria/manager/financialsim/FinancialSimulationsService$SimulationDetail.class
+com/neria/manager/tenants/TenantCleanupService.class
 com/neria/manager/emailautomation/TenantServiceEmailService$EmailAccountRequest.class
 com/neria/manager/adapters/AwsBedrockAdapter.class
 com/neria/manager/config/AppProperties$Jwt.class
@@ -334,6 +343,7 @@ com/neria/manager/common/repos/TenantServiceEmailMessageRepository.class
 com/neria/manager/selfassessment/SelfAssessmentsService.class
 com/neria/manager/chat/ChatController.class
 com/neria/manager/runtime/RuntimeService.class
+com/neria/manager/taxassistant/TaxAssistantService$AmountItem.class
 com/neria/manager/tenantservices/TenantServicesService$UpdateEndpointRequest.class
 com/neria/manager/chat/ChatService$AttachmentPayload.class
 com/neria/manager/config/AppProperties$Cors.class
