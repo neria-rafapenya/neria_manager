@@ -8,3 +8,5 @@ export const CHAT_AUTH_MODE: ChatAuthMode =
 
 export const isAuthModeLocal = CHAT_AUTH_MODE === "local";
 export const isAuthModeNone = CHAT_AUTH_MODE === "none";
+
+export const getChatAuthMode = () => CHAT_AUTH_MODE;
