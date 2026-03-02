@@ -26,7 +26,7 @@ const TaxWithAuth = () => {
 };
 
 export const TaxAssistantApp = () => {
-  if (isAuthModeNone()) {
+  if (isAuthModeNone) {
     console.log("[TaxAssistantApp] CHAT_AUTH_MODE =", getChatAuthMode(), "(none)");
     return (
       <TaxAssistantLayout>
