@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -771,6 +772,7 @@ public class TenantServicesService {
     return serviceUserRepository.save(assignment);
   }
 
+  @Transactional
   public Map<String, Object> removeServiceUser(String tenantId, String serviceCode, String userId) {
     ensureTenant(tenantId);
     String normalized = normalizeServiceCode(serviceCode);
@@ -778,6 +780,7 @@ public class TenantServicesService {
     return Map.of("deleted", true);
   }
 
+  @Transactional
   public void removeUserFromAllServices(String tenantId, String userId) {
     serviceUserRepository.deleteByTenantIdAndUserId(tenantId, userId);
   }

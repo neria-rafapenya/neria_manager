@@ -60,6 +60,7 @@ export async function fetchWithAuth<T = unknown>(
     headers["x-tenant-id"] = tenantId;
   }
   if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
     headers["x-chat-token"] = token;
   }
 
