@@ -7,6 +7,8 @@ import { MessageHuman } from "./MessageHuman";
 import { MessageBot } from "./MessageBot";
 import { ChatInputArea } from "./ChatInputArea";
 import { useChatContext } from "../../../infrastructure/contexts";
+import { getRuntimeConfig } from "../../../infrastructure/config/runtimeConfig";
+import { getServiceCode } from "../../../infrastructure/config/env";
 import { getChatAuthMode } from "../../../infrastructure/config/chatConfig";
 import { useUploadManager } from "../../../infrastructure/hooks/useUploadManager";
 import type { ChatAttachment } from "../../../interfaces";
@@ -82,6 +84,16 @@ export const Chatbot = () => {
   const authMode = getChatAuthMode();
   const showConversationsList = authMode !== "none";
 
+  const runtime = getRuntimeConfig();
+  const serviceCode = getServiceCode();
+  const envAttachments = import.meta.env.VITE_CHATBOT_ATTACHMENTS === "true";
+  const attachmentsAllowed =
+    (typeof runtime?.attachmentsEnabled === "boolean"
+      ? runtime.attachmentsEnabled
+      : undefined)
+      ?? envAttachments
+      ?? (serviceCode ? serviceCode.includes("ocr") : false);
+
   return (
     <div className="ia-chatbot-content">
       {showConversationsList && (
@@ -122,6 +134,7 @@ export const Chatbot = () => {
         onSend={handleSend}
         disabled={isStreaming || isUploading}
         attachments={attachments}
+        attachmentsEnabled={attachmentsAllowed}
         onOpenAttachmentsModal={openModal}
         onRemoveAttachment={removeAttachment}
         isUploadingAttachments={isUploading}
