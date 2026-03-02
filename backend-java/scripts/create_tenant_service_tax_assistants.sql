@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS tenant_service_tax_assistants (
+  id VARCHAR(36) NOT NULL,
+  tenantId VARCHAR(36) NOT NULL,
+  serviceCode VARCHAR(64) NOT NULL,
+  title VARCHAR(160) NULL,
+  taxYear INT NULL,
+  region VARCHAR(64) NULL,
+  filingType VARCHAR(32) NULL,
+  status VARCHAR(16) NOT NULL,
+  model VARCHAR(64) NULL,
+  providerId VARCHAR(36) NULL,
+  inputJson TEXT NULL,
+  resultJson TEXT NULL,
+  reportText TEXT NULL,
+  createdAt TIMESTAMP NULL,
+  updatedAt TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  INDEX idx_tenant_service_tax_assistants (tenantId, serviceCode),
+  INDEX idx_tenant_service_tax_assistants_created (tenantId, createdAt)
+);

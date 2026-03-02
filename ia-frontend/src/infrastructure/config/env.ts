@@ -67,12 +67,18 @@ export const getModel = (): string => readEnv("VITE_MODEL", "");
 export const getChatEndpoint = (): string =>
   readEnv("VITE_CHAT_ENDPOINT", "persisted");
 
-export type ServiceMode = "chat" | "email" | "financial" | "self-assessment";
+export type ServiceMode =
+  | "chat"
+  | "email"
+  | "financial"
+  | "self-assessment"
+  | "tax";
 
 export const getServiceMode = (): ServiceMode => {
   const raw = readEnv("VITE_SERVICE_MODE", "").trim().toLowerCase();
   if (raw === "email") return "email";
   if (["financial", "finance", "simulador-financiero"].includes(raw)) return "financial";
+  if (["tax", "renta", "asistente-renta"].includes(raw)) return "tax";
   return "chat";
 };
 

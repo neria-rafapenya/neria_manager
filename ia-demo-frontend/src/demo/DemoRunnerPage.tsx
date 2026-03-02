@@ -8,6 +8,7 @@ import { ChatbotApp } from "../adapters/ui/components/ChatbotApp";
 import { EmailAutomationApp } from "../adapters/ui/components/EmailAutomationApp";
 import { FinancialSimulatorApp } from "../adapters/ui/components/FinancialSimulatorApp";
 import { SelfAssessmentApp } from "../adapters/ui/components/SelfAssessmentApp";
+import { TaxAssistantApp } from "../adapters/ui/components/TaxAssistantApp";
 import { SurveyDemoPage } from "./SurveyDemoPage";
 
 export const DemoRunnerPage = () => {
@@ -136,6 +137,9 @@ export const DemoRunnerPage = () => {
     }
     if (mode === "self-assessment") {
       return <SelfAssessmentApp />;
+    }
+    if (mode === "tax") {
+      return <TaxAssistantApp />;
     }
     return <ChatbotApp />;
   };

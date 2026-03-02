@@ -39,8 +39,10 @@ import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,6 +57,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class SubscriptionsService {
   private static final Logger log = LoggerFactory.getLogger(SubscriptionsService.class);
+  private static final Map<String, String> SERVICE_CODE_ALIASES =
+      Map.of(
+          "simulado-preevaluacion", "pre-evaluacion",
+          "chat_generic", "chat-generic");
   private final SubscriptionRepository subscriptionRepository;
   private final SubscriptionServiceRepository subscriptionServiceRepository;
   private final SubscriptionHistoryRepository subscriptionHistoryRepository;
@@ -99,6 +105,19 @@ public class SubscriptionsService {
     this.tenantsService = tenantsService;
     this.emailService = emailService;
     this.adminUserRepository = adminUserRepository;
+  }
+
+  private Set<String> normalizeServiceCodes(List<String> codes) {
+    if (codes == null || codes.isEmpty()) {
+      return Set.of();
+    }
+    return codes.stream()
+        .filter(Objects::nonNull)
+        .map(String::trim)
+        .filter(code -> !code.isEmpty())
+        .map(code -> code.toLowerCase(Locale.ROOT))
+        .map(code -> SERVICE_CODE_ALIASES.getOrDefault(code, code))
+        .collect(Collectors.toSet());
   }
 
   private LocalDateTime buildPeriodEnd(LocalDateTime start, String period) {
@@ -531,7 +550,7 @@ public class SubscriptionsService {
           new UpdateSubscriptionRequest(dto.period, dto.basePriceEur, dto.serviceCodes, null, dto.cancelAtPeriodEnd));
     }
 
-    Set<String> codes = dto.serviceCodes != null ? Set.copyOf(dto.serviceCodes) : Set.of();
+    Set<String> codes = normalizeServiceCodes(dto.serviceCodes);
     if (!codes.isEmpty()) {
       List<ServiceCatalog> catalog = catalogRepository.findAllByCodeIn(List.copyOf(codes));
       if (catalog.size() != codes.size()) {
@@ -733,7 +752,7 @@ public class SubscriptionsService {
     }
 
     if (dto.removeServiceCodes != null && !dto.removeServiceCodes.isEmpty()) {
-      Set<String> uniqueCodes = Set.copyOf(dto.removeServiceCodes);
+      Set<String> uniqueCodes = normalizeServiceCodes(dto.removeServiceCodes);
       List<SubscriptionService> existingToRemove =
           subscriptionServiceRepository.findBySubscriptionId(subscription.getId()).stream()
               .filter(item -> uniqueCodes.contains(item.getServiceCode()))
@@ -756,7 +775,7 @@ public class SubscriptionsService {
     }
 
     if (dto.serviceCodes != null) {
-      Set<String> codes = Set.copyOf(dto.serviceCodes);
+      Set<String> codes = normalizeServiceCodes(dto.serviceCodes);
       List<ServiceCatalog> catalog =
           codes.isEmpty() ? List.of() : catalogRepository.findAllByCodeIn(List.copyOf(codes));
       if (catalog.size() != codes.size()) {

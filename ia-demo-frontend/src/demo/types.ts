@@ -2,8 +2,8 @@ export type DemoConfig = {
   code: string;
   name: string;
   description?: string | null;
-  mode?: "chat" | "email" | "surveys" | "embed" | "financial" | "self-assessment";
-  serviceMode?: "chat" | "email" | "financial" | "self-assessment";
+  mode?: "chat" | "email" | "surveys" | "embed" | "financial" | "self-assessment" | "tax";
+  serviceMode?: "chat" | "email" | "financial" | "self-assessment" | "tax";
   apiBaseUrl?: string | null;
   apiUrl?: string | null;
   apiKey?: string | null;

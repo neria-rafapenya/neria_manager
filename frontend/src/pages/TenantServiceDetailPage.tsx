@@ -43,6 +43,7 @@ export function TenantServiceDetailPage() {
   const isSelfAssessmentService = serviceCode === "autoevalucion";
   const isPreEvaluationService = serviceCode === "pre-evaluacion";
   const isOperationalSupportService = serviceCode === "asistente-operativo";
+  const isTaxAssistantService = serviceCode === "asistente-renta";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1512,6 +1513,14 @@ export function TenantServiceDetailPage() {
                     to={`/clients/${tenantId}/operational-support`}
                   >
                     {t("Abrir panel de soporte operativo")}
+                  </Link>
+                )}
+                {isTaxAssistantService && (
+                  <Link
+                    className="link"
+                    to={`/clients/${tenantId}/tax-assistant`}
+                  >
+                    {t("Abrir asistente renta")}
                   </Link>
                 )}
                 {isFinancialService && (

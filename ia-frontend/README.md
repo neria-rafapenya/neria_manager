@@ -102,6 +102,8 @@ Notas:
 - `VITE_API_KEY`, `VITE_TENANT_ID`, `VITE_SERVICE_CODE` y `VITE_SERVICE_ID` deben venir de la asignación de servicio en el Manager.
 - El frontend consulta `/tenant/chat/auth/login`, `/chat/services` y `/chat/services/{serviceCode}/endpoints` usando `x-api-key`, `x-tenant-id` y el `x-chat-token` obtenido en login.
 
+- VITE_SERVICE_MODE=tax para declaracion IA
+
 ### 4. Levantar el frontend
 
 ```

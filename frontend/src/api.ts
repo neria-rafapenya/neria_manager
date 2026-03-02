@@ -749,6 +749,30 @@ export const api = {
       `/tenants/${tenantId}/services/${serviceCode}/pre-evaluations/${evaluationId}`,
     ),
 
+  listTenantServiceTaxAssistant: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/tax-assistant`,
+      { headers: { 'x-tenant-id': tenantId } },
+    ),
+  createTenantServiceTaxAssistant: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/tax-assistant`,
+      { method: "POST", body: JSON.stringify(payload), headers: { 'x-tenant-id': tenantId } },
+    ),
+  getTenantServiceTaxAssistant: (
+    tenantId: string,
+    serviceCode: string,
+    entryId: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/tax-assistant/${entryId}`,
+      { headers: { 'x-tenant-id': tenantId } },
+    ),
+
   listTenantServiceOperationalSupport: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/operational-support`,
