@@ -236,3 +236,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+.tax-result {
+  display: grid;
+  gap: 12px;
+}
+
+.tax-result-section {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tax-result-section ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tax-result-section li {
+  margin-bottom: 4px;
+}

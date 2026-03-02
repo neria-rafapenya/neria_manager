@@ -190,6 +190,39 @@ export const TaxAssistantPage = () => {
     }
   };
 
+
+  const resultPayload = (current?.result ?? {}) as Record<string, any>;
+  const summaryText =
+    typeof (resultPayload as any).summary === "string"
+      ? (resultPayload as any).summary
+      : current?.report || "";
+  const totals =
+    resultPayload && typeof resultPayload === "object"
+      ? ((resultPayload as any).totals ?? {})
+      : {};
+  const checklist = Array.isArray((resultPayload as any).checklist)
+    ? (resultPayload as any).checklist
+    : [];
+  const nextSteps = Array.isArray((resultPayload as any).nextSteps)
+    ? (resultPayload as any).nextSteps
+    : [];
+  const warnings = Array.isArray((resultPayload as any).warnings)
+    ? (resultPayload as any).warnings
+    : [];
+  const questions = Array.isArray((resultPayload as any).questions)
+    ? (resultPayload as any).questions
+    : [];
+  const disclaimer =
+    typeof (resultPayload as any).disclaimer === "string"
+      ? (resultPayload as any).disclaimer
+      : "";
+  const renderList = (items: any[]) => (
+    <ul>
+      {items.map((item, idx) => (
+        <li key={idx}>{String(item)}</li>
+      ))}
+    </ul>
+  );
   return (
     <section className="tax-page">
       <div className="tax-hero">
@@ -430,10 +463,55 @@ export const TaxAssistantPage = () => {
 
           {current && (
             <div className="tax-result">
-              <h4>{current.summary.title}</h4>
-              {current.report && <p>{current.report}</p>}
-              {current.result && (
-                <pre>{JSON.stringify(current.result, null, 2)}</pre>
+              <h4>{current.summary.title || `Renta ${current.summary.taxYear ?? ""}`}</h4>
+              {summaryText && <p>{summaryText}</p>}
+
+              {totals && Object.keys(totals).length > 0 && (
+                <div className="tax-summary">
+                  <div>
+                    <span>Total ingresos</span>
+                    <strong>{Number((totals as any).income || 0).toFixed(2)} €</strong>
+                  </div>
+                  <div>
+                    <span>Total deducciones</span>
+                    <strong>{Number((totals as any).deductions || 0).toFixed(2)} €</strong>
+                  </div>
+                  <div>
+                    <span>Base neta</span>
+                    <strong>{Number((totals as any).netBase || 0).toFixed(2)} €</strong>
+                  </div>
+                </div>
+              )}
+
+              {checklist.length > 0 && (
+                <div className="tax-result-section">
+                  <h5>Checklist</h5>
+                  {renderList(checklist)}
+                </div>
+              )}
+              {nextSteps.length > 0 && (
+                <div className="tax-result-section">
+                  <h5>Proximos pasos</h5>
+                  {renderList(nextSteps)}
+                </div>
+              )}
+              {warnings.length > 0 && (
+                <div className="tax-result-section">
+                  <h5>Alertas</h5>
+                  {renderList(warnings)}
+                </div>
+              )}
+              {questions.length > 0 && (
+                <div className="tax-result-section">
+                  <h5>Preguntas</h5>
+                  {renderList(questions)}
+                </div>
+              )}
+              {disclaimer && (
+                <div className="tax-result-section">
+                  <h5>Nota</h5>
+                  <p className="muted">{disclaimer}</p>
+                </div>
               )}
             </div>
           )}
