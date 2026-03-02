@@ -144,12 +144,12 @@
       "mode": "tax",
       "serviceMode": "tax",
       "apiBaseUrl": "https://backend-production-d7ca.up.railway.app",
-      "apiKey": null,
+      "apiKey": "832a65de7dd74312ac8f8c0f0d84a6cf3291dd8291f8bea53f3cda87cc3b9d2b",
       "tenantId": "f5f115c3-7f0c-4468-9611-ab4c7ac2ed16",
       "providerId": "500672f6-0365-4cae-a026-129f871875f9",
       "model": "gpt-4.1-mini",
       "serviceCode": "asistente-renta",
-      "serviceId": null,
+      "serviceId": "7d4d0cab-c8c7-4bfb-86a1-a31567bbb3de",
       "chatEndpoint": "persisted",
       "chatAuthMode": "local"
     }
