@@ -43,7 +43,8 @@
       "serviceCode": "chat-ocr",
       "serviceId": "1a9679a3-dcbf-483a-a196-56e49c6a5795",
       "chatEndpoint": "persisted",
-      "chatAuthMode": "local"
+      "chatAuthMode": "local",
+      "attachmentsEnabled": true
     },
     {
       "code": "sistema-encuestas",

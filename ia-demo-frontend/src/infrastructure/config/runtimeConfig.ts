@@ -19,6 +19,7 @@ export type DemoRuntimeConfig = {
   captchaEnabled?: boolean;
   recaptchaSiteKey?: string;
   embedUrl?: string;
+  attachmentsEnabled?: boolean;
 };
 
 let runtimeConfig: DemoRuntimeConfig | null = null;

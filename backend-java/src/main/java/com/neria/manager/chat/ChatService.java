@@ -265,6 +265,12 @@ public class ChatService {
         tenantServicesService.listEndpointsForUser(tenantId, conversation.getServiceCode(), userId).stream()
             .filter(item -> item.enabled)
             .toList();
+    boolean ignoreEndpoints =
+        conversation.getServiceCode() != null
+            && conversation.getServiceCode().equalsIgnoreCase("chat-ocr");
+    if (ignoreEndpoints) {
+      endpoints = java.util.List.of();
+    }
     if (scopeBlocked && endpoints.isEmpty()) {
       log.warn(
           "Chat out-of-scope blocked tenant={} service={} user={} keywords={} message={} search={}",
@@ -782,11 +788,15 @@ public class ChatService {
 
     if (endpoints == null || endpoints.isEmpty()) {
       sb.append("No hay endpoints disponibles. Responde usando el contexto del chat.\n");
-      sb.append(
-          "Regla obligatoria: responde únicamente con información contenida en este prompt. ");
-      sb.append(
-          "Si la pregunta no está cubierta por este contexto, responde exactamente: ");
-      sb.append("\"No tengo información para responder a esa pregunta.\"");
+      if (serviceCode != null && serviceCode.equalsIgnoreCase("chat-ocr")) {
+        sb.append("Este servicio permite conversación general y análisis de documentos adjuntos. ");
+        sb.append("Si hay documentos indexados, utilízalos para responder con precisión. ");
+        sb.append("Si no hay documentos, responde de forma útil y coherente.\n");
+      } else {
+        sb.append("Regla obligatoria: responde únicamente con información contenida en este prompt. ");
+        sb.append("Si la pregunta no está cubierta por este contexto, responde exactamente: ");
+        sb.append("\"No tengo información para responder a esa pregunta.\"");
+      }
       return sb.toString().trim();
     }
 

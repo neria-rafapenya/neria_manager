@@ -188,7 +188,7 @@ if [[ "$TRUNCATE_BEFORE_IMPORT" == "1" ]]; then
     -h "$LOCAL_HOST" \
     -P "$LOCAL_PORT" \
     -u "$LOCAL_USER" --password="$LOCAL_DB_PASSWORD" \
-    -N -e "SELECT CONCAT('TRUNCATE TABLE `', table_name, '`;') FROM information_schema.tables WHERE table_schema='${LOCAL_DB}' AND table_type='BASE TABLE';" \
+    -N -e "SELECT CONCAT('TRUNCATE TABLE \`', table_name, '\`;') FROM information_schema.tables WHERE table_schema='${LOCAL_DB}' AND table_type='BASE TABLE';" \
     > "$tmpfile"
   {
     echo "SET FOREIGN_KEY_CHECKS=0;"

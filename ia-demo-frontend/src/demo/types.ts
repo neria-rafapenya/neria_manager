@@ -19,6 +19,7 @@ export type DemoConfig = {
   captchaEnabled?: boolean;
   recaptchaSiteKey?: string | null;
   embedUrl?: string | null;
+  attachmentsEnabled?: boolean | null;
 };
 
 export type DemoConfigResponse = DemoConfig[] | { demos: DemoConfig[] };

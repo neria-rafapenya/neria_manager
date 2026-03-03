@@ -16,6 +16,7 @@ export interface ChatInputAreaProps {
   onSend: () => void;
   disabled?: boolean;
   attachments: ChatAttachment[];
+  attachmentsEnabled?: boolean;
   onOpenAttachmentsModal: () => void;
   onRemoveAttachment: (key: string) => void;
   isUploadingAttachments: boolean;
@@ -35,6 +36,7 @@ export const ChatInputArea = ({
   onSend,
   disabled,
   attachments,
+  attachmentsEnabled = true,
   onOpenAttachmentsModal,
   onRemoveAttachment,
   isUploadingAttachments,
@@ -83,7 +85,7 @@ export const ChatInputArea = ({
     }
   };
 
-  const showAttachmentsRow = attachments.length > 0;
+  const showAttachmentsRow = attachmentsEnabled && attachments.length > 0;
 
   // Al montar
   useEffect(() => {
@@ -153,7 +155,7 @@ export const ChatInputArea = ({
         type="button"
         className="ia-chatbot-attach-button"
         onClick={onOpenAttachmentsModal}
-        disabled={true} // lo tienes forzado a true
+        disabled={disabled || !attachmentsEnabled}
         title={t("chat_input_attach_title")}
       >
         <IconClip size={18} color={disabled ? "#999999" : "#ffffff"} />

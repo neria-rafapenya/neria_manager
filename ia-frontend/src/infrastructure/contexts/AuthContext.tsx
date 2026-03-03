@@ -52,8 +52,24 @@ const clearChatStorage = () => {
   keys.forEach((key) => window.localStorage.removeItem(key));
 };
 
+const USER_STORAGE_KEY = "ia_chat_user";
+
+const loadStoredUser = (): AuthUser | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const storedUser = getAuthToken() ? loadStoredUser() : null;
+  const [user, setUser] = useState<AuthUser | null>(storedUser);
   const [token, setToken] = useState<string | null>(getAuthToken());
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -67,6 +83,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // AuthService ya hace setAuthToken(res.accessToken)
       setToken(res.accessToken);
       setUser(res.user);
+      try {
+        window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
+      } catch {
+        // ignore
+      }
     } catch (err: unknown) {
       console.error("[AuthContext] Error en login", err);
 
@@ -114,6 +135,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setAuthToken(null); // borra cookie ia_chat_access_token
     setToken(null);
     setUser(null);
+
+    try {
+      window.localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
 
     clearChatStorage();
   };

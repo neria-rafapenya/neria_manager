@@ -46,7 +46,14 @@ export const Chatbot = () => {
     handoffStatus === "requested" || handoffStatus === "active";
 
   const handoffAllowed = serviceInfo.humanHandoffEnabled !== false;
-  const attachmentsAllowed = serviceInfo.fileStorageEnabled !== false;
+  const envAttachments = import.meta.env.VITE_CHATBOT_ATTACHMENTS === "true";
+  const fallbackOcr = (serviceInfo.serviceCode || getServiceCode())?.includes("ocr");
+  const attachmentsAllowed =
+    serviceInfo.fileStorageEnabled !== false &&
+    (envAttachments ||
+      fallbackOcr ||
+      serviceInfo.ocrEnabled !== false ||
+      serviceInfo.documentProcessingEnabled !== false);
 
   const {
     attachments,

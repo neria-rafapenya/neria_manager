@@ -423,21 +423,29 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     try {
       const services = await fetchWithAuth<any[]>(API_ENDPOINTS.SERVICES);
       const matched = services.find((item) => item.serviceCode === serviceCode);
-      setServiceInfo((prev) => ({
-        ...prev,
-        serviceName: matched?.name || matched?.serviceCode || prev.serviceCode,
-        humanHandoffEnabled: matched?.humanHandoffEnabled ?? prev.humanHandoffEnabled ?? true,
-        fileStorageEnabled: matched?.fileStorageEnabled ?? prev.fileStorageEnabled ?? true,
-        documentProcessingEnabled:
-          matched?.documentProcessingEnabled ??
-          prev.documentProcessingEnabled ??
-          false,
-        ocrEnabled: matched?.ocrEnabled ?? prev.ocrEnabled ?? false,
-        semanticSearchEnabled:
-          matched?.semanticSearchEnabled ?? prev.semanticSearchEnabled ?? false,
-        jiraEnabled: matched?.jiraEnabled ?? prev.jiraEnabled ?? false,
-        jiraConfigured: matched?.jiraConfigured ?? prev.jiraConfigured ?? false,
-      }));
+      setServiceInfo((prev) => {
+        const next = {
+          ...prev,
+          serviceName: matched?.name || matched?.serviceCode || prev.serviceCode,
+          humanHandoffEnabled: matched?.humanHandoffEnabled ?? prev.humanHandoffEnabled ?? true,
+          fileStorageEnabled: matched?.fileStorageEnabled ?? prev.fileStorageEnabled ?? true,
+          documentProcessingEnabled:
+            matched?.documentProcessingEnabled ??
+            prev.documentProcessingEnabled ??
+            false,
+          ocrEnabled: matched?.ocrEnabled ?? prev.ocrEnabled ?? false,
+          semanticSearchEnabled:
+            matched?.semanticSearchEnabled ?? prev.semanticSearchEnabled ?? false,
+          jiraEnabled: matched?.jiraEnabled ?? prev.jiraEnabled ?? false,
+          jiraConfigured: matched?.jiraConfigured ?? prev.jiraConfigured ?? false,
+        };
+        console.info("[ChatContext] serviceInfo", {
+          serviceCode,
+          matched,
+          resolved: next,
+        });
+        return next;
+      });
     } catch {
       // ignore
     }
@@ -919,12 +927,38 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         },
       );
 
+      const resolvedConversationId =
+        result.conversationId ?? currentConversationId ?? null;
+
       if (
         !IS_EPHEMERAL &&
-        result.conversationId &&
-        result.conversationId !== selectedConversationId
+        resolvedConversationId &&
+        resolvedConversationId !== selectedConversationId
       ) {
-        setSelectedConversationId(result.conversationId);
+        setSelectedConversationId(resolvedConversationId);
+      }
+
+      // Fallback: si no llegó streaming, cargamos mensajes finales
+      if (!IS_EPHEMERAL && resolvedConversationId) {
+        const assistantMessage =
+          messages.find((msg) => msg.id === assistantId) ?? null;
+        if (!assistantMessage?.content) {
+          try {
+            const detail = await conversationService.getConversationWithMessages(
+              resolvedConversationId,
+            );
+            const sortedMessages = Array.isArray(detail.messages)
+              ? [...detail.messages].sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime(),
+                )
+              : [];
+            setMessages(sortedMessages);
+          } catch {
+            // ignore
+          }
+        }
       }
 
       if (!IS_EPHEMERAL) {
