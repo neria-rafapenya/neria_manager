@@ -41,9 +41,11 @@ export function DashboardLayout() {
   };
   const pageTitle =
     titleMap[location.pathname] ||
-    (location.pathname.startsWith("/services")
-      ? t("Servicios")
-      : "Neria Manager");
+    (location.pathname.includes("/clinicflow")
+      ? "ClinicFlow AI"
+      : location.pathname.startsWith("/services")
+        ? t("Servicios")
+        : "Neria Manager");
   const [activeEntry, setActiveEntry] = useState<DocumentationEntry | null>(
     null,
   );
@@ -52,6 +54,10 @@ export function DashboardLayout() {
   const isObservabilityRoute =
     isClientRoute && location.pathname.includes("/observability");
   const isUsageRoute = isClientRoute && location.pathname.includes("/usage");
+  const clinicFlowTenantId = selectedTenantId || authTenantId;
+  const clinicFlowLink = clinicFlowTenantId
+    ? `/clients/${clinicFlowTenantId}/clinicflow`
+    : "/tenants";
   const navItems =
     role === "tenant"
       ? [
@@ -59,6 +65,7 @@ export function DashboardLayout() {
             label: t("Cliente"),
             to: authTenantId ? `/clients/${authTenantId}` : "/",
           },
+          { label: "ClinicFlow AI", to: clinicFlowLink },
           { label: t("Docs"), to: "/docs" },
           { label: t("Perfil"), to: "/profile" },
         ]
@@ -68,6 +75,7 @@ export function DashboardLayout() {
           ...(role === "admin"
             ? [{ label: t("Servicios"), to: "/services" }]
             : []),
+          { label: "ClinicFlow AI", to: clinicFlowLink },
           { label: t("Uso"), to: "/usage" },
           { label: t("Auditoría"), to: "/audit" },
           ...(role === "admin" ? [{ label: t("Logs"), to: "/logs" }] : []),
@@ -116,6 +124,9 @@ export function DashboardLayout() {
       }
       if (parts[2] === "support") {
         return withHome([...base, { label: t("Atención humana") }]);
+      }
+      if (parts[2] === "clinicflow") {
+        return withHome([...base, { label: "ClinicFlow AI" }]);
       }
       return withHome(base);
     }

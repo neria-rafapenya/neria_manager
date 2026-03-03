@@ -8,6 +8,40 @@ let baseUrl = import.meta.env.VITE_API_BASE_URL || fallbackBaseUrl;
 if (import.meta.env.MODE === "production" && baseUrl.includes("localhost")) {
   baseUrl = "https://backend-production-fc6a.up.railway.app";
 }
+const clinicflowBaseUrl = import.meta.env.VITE_CLINICFLOW_API_BASE_URL || "";
+const clinicflowEndpointConfig = (() => {
+  const raw = import.meta.env.VITE_CLINICFLOW_ENDPOINTS || "";
+  if (!raw) {
+    return {
+      settings: "/clinicflow/settings",
+      services: "/clinicflow/services",
+      protocols: "/clinicflow/protocols",
+      faq: "/clinicflow/faq",
+      triage: "/clinicflow/triage",
+      reports: "/clinicflow/reports",
+    };
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<string, string>>;
+    return {
+      settings: parsed.settings || "/clinicflow/settings",
+      services: parsed.services || "/clinicflow/services",
+      protocols: parsed.protocols || "/clinicflow/protocols",
+      faq: parsed.faq || "/clinicflow/faq",
+      triage: parsed.triage || "/clinicflow/triage",
+      reports: parsed.reports || "/clinicflow/reports",
+    };
+  } catch {
+    return {
+      settings: "/clinicflow/settings",
+      services: "/clinicflow/services",
+      protocols: "/clinicflow/protocols",
+      faq: "/clinicflow/faq",
+      triage: "/clinicflow/triage",
+      reports: "/clinicflow/reports",
+    };
+  }
+})();
 const apiKey = import.meta.env.VITE_API_KEY || "";
 const authTokenFallback = import.meta.env.VITE_AUTH_TOKEN || "";
 const AUTH_TOKEN_KEY = "pm_auth_token";
@@ -116,21 +150,26 @@ async function refreshToken() {
   return data.accessToken;
 }
 
+type RequestInitWithBase = RequestInit & { baseUrl?: string };
+
 async function requestJson<T>(
   path: string,
-  init?: RequestInit,
+  init?: RequestInitWithBase,
   retry = true,
 ): Promise<T> {
   const authToken = getStoredToken();
+  const baseOverride = init?.baseUrl;
+  const resolvedBaseUrl = baseOverride || baseUrl;
+  const { baseUrl: _ignoredBaseUrl, ...restInit } = init || {};
   const mergedHeaders: Record<string, string> = {
     ...defaultHeaders,
-    ...normalizeHeaders(init?.headers),
+    ...normalizeHeaders(restInit.headers),
   };
   if (authToken) {
     mergedHeaders.Authorization = `Bearer ${authToken}`;
   }
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
+  const response = await fetch(`${resolvedBaseUrl}${path}`, {
+    ...restInit,
     credentials: "include",
     headers: mergedHeaders,
   });
@@ -188,19 +227,22 @@ async function requestJson<T>(
 async function requestForm<T>(
   path: string,
   form: FormData,
-  init?: RequestInit,
+  init?: RequestInitWithBase,
   retry = true,
 ): Promise<T> {
   const authToken = getStoredToken();
+  const baseOverride = init?.baseUrl;
+  const resolvedBaseUrl = baseOverride || baseUrl;
+  const { baseUrl: _ignoredBaseUrl, ...restInit } = init || {};
   const mergedHeaders: Record<string, string> = {
-    ...normalizeHeaders(init?.headers),
+    ...normalizeHeaders(restInit.headers),
   };
   if (authToken) {
     mergedHeaders.Authorization = `Bearer ${authToken}`;
   }
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    method: init?.method || "POST",
+  const response = await fetch(`${resolvedBaseUrl}${path}`, {
+    ...restInit,
+    method: restInit.method || "POST",
     credentials: "include",
     headers: mergedHeaders,
     body: form,
@@ -292,6 +334,34 @@ async function requestJsonPublic<T>(
 
 
 
+
+
+type ClinicflowEndpointKey = "settings" | "services" | "protocols" | "faq" | "triage" | "reports";
+
+const buildClinicflowPath = (
+  tenantId: string,
+  serviceCode: string,
+  key: ClinicflowEndpointKey,
+  id?: string,
+): string => {
+  if (clinicflowBaseUrl) {
+    const base = (clinicflowEndpointConfig as Record<string, string>)[key] || "";
+    const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const fullPath = id ? `${normalizedBase}/${id}` : normalizedBase;
+    const connector = fullPath.includes("?") ? "&" : "?";
+    return `${fullPath}${connector}tenantId=${encodeURIComponent(
+      tenantId,
+    )}&serviceCode=${encodeURIComponent(serviceCode)}`;
+  }
+  const base = `/tenants/${tenantId}/services/${serviceCode}/clinicflow/${key}`;
+  return id ? `${base}/${id}` : base;
+};
+
+const clinicflowRequest = <T>(path: string, init?: RequestInitWithBase) =>
+  requestJson<T>(
+    path,
+    clinicflowBaseUrl ? { ...init, baseUrl: clinicflowBaseUrl } : init,
+  );
 export const api = {
   issueToken: (payload: { clientId: string; clientSecret: string }) =>
     requestJson<{ accessToken: string; expiresIn: number }>("/auth/token", {
@@ -771,6 +841,181 @@ export const api = {
     requestJson<any>(
       `/tenants/${tenantId}/services/${serviceCode}/tax-assistant/${entryId}`,
       { headers: { 'x-tenant-id': tenantId } },
+    ),
+
+
+  getClinicFlowSettings: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "settings"),
+    ),
+  updateClinicFlowSettings: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "settings"),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  listClinicFlowServices: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "services"),
+    ),
+  createClinicFlowService: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services"),
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowService: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services", id),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowService: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services", id),
+      { method: "DELETE" },
+    ),
+  listClinicFlowProtocols: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols"),
+    ),
+  createClinicFlowProtocol: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols"),
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowProtocol: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols", id),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowProtocol: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols", id),
+      { method: "DELETE" },
+    ),
+  listClinicFlowFaq: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "faq"),
+    ),
+  createClinicFlowFaq: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq"),
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowFaq: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq", id),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowFaq: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq", id),
+      { method: "DELETE" },
+    ),
+  listClinicFlowTriageFlows: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "triage"),
+    ),
+  createClinicFlowTriageFlow: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage"),
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowTriageFlow: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage", id),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowTriageFlow: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage", id),
+      { method: "DELETE" },
+    ),
+  listClinicFlowReportTemplates: (tenantId: string, serviceCode: string) =>
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "reports"),
+    ),
+  createClinicFlowReportTemplate: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports"),
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowReportTemplate: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports", id),
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowReportTemplate: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports", id),
+      { method: "DELETE" },
     ),
 
   listTenantServiceOperationalSupport: (tenantId: string, serviceCode: string) =>
