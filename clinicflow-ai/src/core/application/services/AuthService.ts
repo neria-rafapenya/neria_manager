@@ -3,7 +3,11 @@ import { AuthRepository } from "../../../infrastructure/repositories/AuthReposit
 import { setAuthToken } from "../../../infrastructure/config/env";
 
 export class AuthService {
-  constructor(private repository: AuthRepository) {}
+  private repository: AuthRepository;
+
+  constructor(repository: AuthRepository) {
+    this.repository = repository;
+  }
 
   async login(body: LoginRequest): Promise<LoginResponse> {
     const response = await this.repository.login(body);
