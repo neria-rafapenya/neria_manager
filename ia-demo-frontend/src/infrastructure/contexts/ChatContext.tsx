@@ -585,12 +585,38 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         }
       );
 
+      const resolvedConversationId =
+        result.conversationId ?? currentConversationId ?? null;
+
       if (
         !isEphemeral() &&
-        result.conversationId &&
-        result.conversationId !== selectedConversationId
+        resolvedConversationId &&
+        resolvedConversationId !== selectedConversationId
       ) {
-        setSelectedConversationId(result.conversationId);
+        setSelectedConversationId(resolvedConversationId);
+      }
+
+      // Fallback: si no llegó streaming, cargamos mensajes finales
+      if (!isEphemeral() && resolvedConversationId) {
+        const assistantMessage =
+          messages.find((msg) => msg.id === assistantId) ?? null;
+        if (!assistantMessage?.content) {
+          try {
+            const detail = await conversationService.getConversationWithMessages(
+              resolvedConversationId
+            );
+            const sortedMessages = Array.isArray(detail.messages)
+              ? [...detail.messages].sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime()
+                )
+              : [];
+            setMessages(sortedMessages);
+          } catch {
+            // ignore
+          }
+        }
       }
 
       if (!isEphemeral()) {
