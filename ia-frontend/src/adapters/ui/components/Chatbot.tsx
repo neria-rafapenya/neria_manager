@@ -8,6 +8,7 @@ import { MessageBot } from "./MessageBot";
 import { ChatInputArea } from "./ChatInputArea";
 import { useChatContext } from "../../../infrastructure/contexts";
 import { useUploadManager } from "../../../infrastructure/hooks/useUploadManager";
+import { getServiceCode } from "../../../infrastructure/config/env";
 import type { ChatAttachment } from "../../../interfaces";
 
 // Helper para leer el modo de auth desde entorno
