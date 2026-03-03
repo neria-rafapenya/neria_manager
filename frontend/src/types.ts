@@ -664,3 +664,86 @@ export type TenantServiceStorage = {
   usingDefault: boolean;
   config: Record<string, unknown> | null;
 };
+
+
+export type ClinicFlowSettings = {
+  id?: string;
+  tenantId?: string;
+  name?: string | null;
+  legalName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  timezone?: string | null;
+  website?: string | null;
+  emergencyDisclaimer?: string | null;
+  privacyNotice?: string | null;
+  openingHours?: string | null;
+  channels?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClinicFlowService = {
+  id: string;
+  tenantId: string;
+  code?: string | null;
+  name?: string | null;
+  specialty?: string | null;
+  durationMin?: number | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  prepNotes?: string | null;
+  active?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClinicFlowProtocol = {
+  id: string;
+  tenantId: string;
+  title?: string | null;
+  version?: string | null;
+  status?: string | null;
+  summary?: string | null;
+  content?: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClinicFlowFaq = {
+  id: string;
+  tenantId: string;
+  question?: string | null;
+  answer?: string | null;
+  category?: string | null;
+  priority?: number | null;
+  active?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClinicFlowTriageFlow = {
+  id: string;
+  tenantId: string;
+  name?: string | null;
+  description?: string | null;
+  status?: string | null;
+  outcome?: string | null;
+  steps?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClinicFlowReportTemplate = {
+  id: string;
+  tenantId: string;
+  name?: string | null;
+  specialty?: string | null;
+  status?: string | null;
+  template?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
