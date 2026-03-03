@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
+  private static final Logger log = LoggerFactory.getLogger(ChatController.class);
   private final ChatService chatService;
   private final ChatAuthService chatAuthService;
   private final StorageUploadService storageUploadService;
@@ -373,7 +376,27 @@ public class ChatController {
                     .data(Map.of("conversationId", result.conversationId, "done", true)));
             emitter.complete();
           } catch (Exception ex) {
-            emitter.completeWithError(ex);
+            log.error("Chat stream error for conversation {}: {}", id, ex.getMessage());
+            try {
+              String fallback =
+                  isEndpointDebugEnabled() && ex.getMessage() != null
+                      ? "Error al generar respuesta: " + ex.getMessage()
+                      : "Lo siento, no he podido generar una respuesta en este momento.";
+              emitter.send(
+                  SseEmitter.event()
+                      .name("delta")
+                      .data(
+                          Map.of(
+                              "delta", fallback,
+                              "conversationId", id)));
+              emitter.send(
+                  SseEmitter.event()
+                      .name("done")
+                      .data(Map.of("conversationId", id, "done", true)));
+            } catch (Exception ignored) {
+              // ignore secondary errors while reporting
+            }
+            emitter.complete();
           }
         });
     return emitter;

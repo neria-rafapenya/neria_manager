@@ -362,7 +362,7 @@ public class DocumentProcessingService {
     if (file.getStorageUrl() == null || file.getStorageUrl().isBlank()) {
       return null;
     }
-    byte[] data = downloadFile(file.getStorageUrl());
+    byte[] data = downloadFile(file);
     String contentType =
         file.getContentType() != null && !file.getContentType().isBlank()
             ? file.getContentType()
@@ -433,18 +433,72 @@ public class DocumentProcessingService {
     return false;
   }
 
-  private byte[] downloadFile(String url) throws Exception {
-    HttpRequest request =
-        HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .GET()
-            .build();
-    HttpResponse<byte[]> response =
-        httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+  private byte[] downloadFile(TenantServiceFile file) throws Exception {
+    String url = file.getStorageUrl();
+    if (url == null || url.isBlank()) {
+      throw new IllegalStateException("Download failed: empty url");
+    }
+    boolean isCloudinary =
+        file.getStorageProvider() != null
+            && "cloudinary".equalsIgnoreCase(file.getStorageProvider());
+    String inferredResourceType = inferCloudinaryResourceType(file, url);
+
+    HttpResponse<byte[]> response = httpClient.send(
+        HttpRequest.newBuilder().uri(URI.create(url)).GET().build(),
+        HttpResponse.BodyHandlers.ofByteArray());
+
+    if ((response.statusCode() == 401 || response.statusCode() == 403) && isCloudinary) {
+      String signed = storageUploadService.signCloudinaryDeliveryUrl(
+          file.getTenantId(), file.getServiceCode(), url);
+      if (signed != null && !signed.equals(url)) {
+        response = httpClient.send(
+            HttpRequest.newBuilder().uri(URI.create(signed)).GET().build(),
+            HttpResponse.BodyHandlers.ofByteArray());
+      }
+    }
+
+    if ((response.statusCode() < 200 || response.statusCode() >= 300) && isCloudinary) {
+      // Fallback a descarga autenticada por API
+      String resourceType = inferredResourceType;
+      try {
+        return storageUploadService.downloadCloudinary(
+            file.getTenantId(),
+            file.getServiceCode(),
+            file.getStorageKey(),
+            resourceType);
+      } catch (Exception ex) {
+        throw new IllegalStateException("Download failed " + response.statusCode());
+      }
+    }
+
     if (response.statusCode() < 200 || response.statusCode() >= 300) {
       throw new IllegalStateException("Download failed " + response.statusCode());
     }
     return response.body();
+  }
+
+  private String inferCloudinaryResourceType(TenantServiceFile file, String url) {
+    if (file != null) {
+      String contentType = file.getContentType();
+      String name = file.getOriginalName();
+      if (contentType != null || name != null) {
+        return isImage(contentType, name) ? "image" : "raw";
+      }
+    }
+    if (url != null && !url.isBlank()) {
+      try {
+        URI uri = URI.create(url);
+        String[] parts = uri.getPath().split("/");
+        if (parts.length >= 3) {
+          String candidate = parts[2];
+          if ("raw".equalsIgnoreCase(candidate) || "image".equalsIgnoreCase(candidate)) {
+            return candidate.toLowerCase(Locale.ROOT);
+          }
+        }
+      } catch (Exception ignored) {
+      }
+    }
+    return null;
   }
 
   private String detectContentType(String name, byte[] data) {

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +34,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 
 @Service
 public class StorageUploadService {
+  private static final Logger log = LoggerFactory.getLogger(StorageUploadService.class);
   private final TenantServiceStorageService storageService;
   private final ObjectMapper objectMapper;
   private final HttpClient httpClient;
@@ -40,6 +43,27 @@ public class StorageUploadService {
     this.storageService = storageService;
     this.objectMapper = objectMapper;
     this.httpClient = HttpClient.newBuilder().build();
+  }
+
+
+  private String resolveCloudinaryResourceType(String contentType, String filename) {
+    String ct = contentType != null ? contentType.toLowerCase(Locale.ROOT) : "";
+    if (ct.startsWith("image/")) {
+      return "image";
+    }
+    if (ct.contains("pdf") || ct.contains("zip") || ct.contains("rar") || ct.contains("excel") || ct.contains("spreadsheet") || ct.contains("word") || ct.contains("csv")) {
+      return "raw";
+    }
+    if (filename != null) {
+      String lower = filename.toLowerCase(Locale.ROOT);
+      if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp") || lower.endsWith(".gif")) {
+        return "image";
+      }
+      if (lower.endsWith(".pdf") || lower.endsWith(".zip") || lower.endsWith(".rar") || lower.endsWith(".doc") || lower.endsWith(".docx") || lower.endsWith(".xls") || lower.endsWith(".xlsx") || lower.endsWith(".csv")) {
+        return "raw";
+      }
+    }
+    return "raw";
   }
 
   public UploadResult upload(String tenantId, String serviceCode, MultipartFile file) {
@@ -117,6 +141,7 @@ public class StorageUploadService {
     params.put("timestamp", String.valueOf(timestamp));
     params.put("folder", folder);
     params.put("public_id", publicId);
+    params.put("access_mode", "public");
     if (uploadPreset != null && !uploadPreset.isBlank()) {
       params.put("upload_preset", uploadPreset);
     }
@@ -125,12 +150,14 @@ public class StorageUploadService {
     Map<String, Object> fields = new HashMap<>(params);
     fields.put("api_key", apiKey);
     fields.put("signature", signature);
-    fields.put("resource_type", "auto");
+    String resourceType = resolveCloudinaryResourceType(file.getContentType(), file.getOriginalFilename());
+    fields.put("resource_type", resourceType);
 
     String boundary = "----NeriaBoundary" + UUID.randomUUID();
     byte[] body = buildMultipart(boundary, fields, file);
 
-    String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/auto/upload";
+    String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/" + resourceType + "/upload";
+    log.info("[storage] cloudinary upload tenant={} service={} resourceType={} access_mode=public preset={}", tenantId, serviceCode, resourceType, (uploadPreset != null && !uploadPreset.isBlank()));
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
@@ -180,6 +207,105 @@ public class StorageUploadService {
       return sb.toString();
     } catch (Exception ex) {
       throw new IllegalStateException("Unable to sign Cloudinary request", ex);
+    }
+  }
+
+
+  public String signCloudinaryDeliveryUrl(String tenantId, String serviceCode, String url) {
+    if (url == null || url.isBlank()) {
+      return url;
+    }
+    TenantServiceStorageService.ResolvedStorage resolved = storageService.resolve(tenantId, serviceCode);
+    String provider = resolved.provider != null ? resolved.provider.toLowerCase(Locale.ROOT) : "";
+    if (!"cloudinary".equals(provider)) {
+      return url;
+    }
+    String apiSecret = asString(resolved.config.get("apiSecret"));
+    if (apiSecret == null || apiSecret.isBlank()) {
+      return url;
+    }
+
+    try {
+      URI uri = URI.create(url);
+      String host = uri.getHost();
+      if (host == null || !host.contains("cloudinary.com")) {
+        return url;
+      }
+      String path = uri.getPath();
+      if (path == null || path.isBlank()) {
+        return url;
+      }
+      String[] parts = path.split("/");
+      if (parts.length < 5) {
+        return url;
+      }
+      // /<cloud_name>/<resource_type>/<type>/<rest...>
+      String restPath = String.join("/", java.util.Arrays.copyOfRange(parts, 4, parts.length));
+      if (restPath.startsWith("s--") || restPath.contains("/s--")) {
+        return url; // ya firmado
+      }
+
+      String signature = signCloudinaryDeliveryPath(restPath, apiSecret);
+      String signedPath = String.format("/%s/%s/%s/s--%s--/%s", parts[1], parts[2], parts[3], signature, restPath);
+      String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
+      return scheme + "://" + host + signedPath;
+    } catch (Exception ex) {
+      return url;
+    }
+  }
+
+  private String signCloudinaryDeliveryPath(String pathToSign, String apiSecret) {
+    try {
+      String payload = pathToSign + apiSecret;
+      MessageDigest md = MessageDigest.getInstance("SHA-1");
+      byte[] digest = md.digest(payload.getBytes(StandardCharsets.UTF_8));
+      String base64 = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+      return base64.length() > 8 ? base64.substring(0, 8) : base64;
+    } catch (Exception ex) {
+      throw new IllegalStateException("Unable to sign Cloudinary delivery URL", ex);
+    }
+  }
+
+
+  public byte[] downloadCloudinary(String tenantId, String serviceCode, String publicId, String resourceType) {
+    if (publicId == null || publicId.isBlank()) {
+      throw new IllegalArgumentException("publicId is required");
+    }
+    TenantServiceStorageService.ResolvedStorage resolved = storageService.resolve(tenantId, serviceCode);
+    String provider = resolved.provider != null ? resolved.provider.toLowerCase(Locale.ROOT) : "";
+    if (!"cloudinary".equals(provider)) {
+      throw new IllegalStateException("Storage provider is not cloudinary");
+    }
+    String cloudName = asString(resolved.config.get("cloudName"));
+    String apiKey = asString(resolved.config.get("apiKey"));
+    String apiSecret = asString(resolved.config.get("apiSecret"));
+    if (cloudName == null || apiKey == null || apiSecret == null) {
+      throw new IllegalStateException("Cloudinary config missing");
+    }
+    String type = (resourceType != null && !resourceType.isBlank()) ? resourceType : "image";
+    String endpoint =
+        "https://api.cloudinary.com/v1_1/" + cloudName + "/" + type + "/download?public_id=" +
+            java.net.URLEncoder.encode(publicId, java.nio.charset.StandardCharsets.UTF_8);
+
+    try {
+      String basic = Base64.getEncoder().encodeToString((apiKey + ":" + apiSecret).getBytes(StandardCharsets.UTF_8));
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(endpoint))
+              .header("Authorization", "Basic " + basic)
+              .GET()
+              .build();
+      HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      if (response.statusCode() < 200 || response.statusCode() >= 300) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Cloudinary download failed: " + response.statusCode());
+      }
+      return response.body();
+    } catch (Exception ex) {
+      if (ex instanceof ResponseStatusException) {
+        throw (ResponseStatusException) ex;
+      }
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cloudinary download failed", ex);
     }
   }
 
@@ -320,6 +446,7 @@ public class StorageUploadService {
     params.put("timestamp", String.valueOf(timestamp));
     params.put("folder", folder);
     params.put("public_id", publicId);
+    params.put("access_mode", "public");
     if (uploadPreset != null && !uploadPreset.isBlank()) {
       params.put("upload_preset", uploadPreset);
     }
@@ -328,12 +455,14 @@ public class StorageUploadService {
     Map<String, Object> fields = new HashMap<>(params);
     fields.put("api_key", apiKey);
     fields.put("signature", signature);
-    fields.put("resource_type", "auto");
+    String resourceType = resolveCloudinaryResourceType(contentType, filename);
+    fields.put("resource_type", resourceType);
 
     String boundary = "----NeriaBoundary" + UUID.randomUUID();
     byte[] body = buildMultipart(boundary, fields, filename, contentType, bytes);
 
-    String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/auto/upload";
+    String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/" + resourceType + "/upload";
+    log.info("[storage] cloudinary upload tenant={} service={} resourceType={} access_mode=public preset={}", tenantId, serviceCode, resourceType, (uploadPreset != null && !uploadPreset.isBlank()));
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
