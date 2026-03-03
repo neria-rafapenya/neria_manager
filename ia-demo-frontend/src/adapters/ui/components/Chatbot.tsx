@@ -108,7 +108,9 @@ export const Chatbot = () => {
       )}
 
       <div className="ia-chatbot-messages">
-        {messages.map((msg) =>
+        {messages
+          .filter((msg) => msg.role !== "system")
+          .map((msg) =>
           msg.role === "user" ? (
             <MessageHuman key={msg.id} message={msg} />
           ) : (
