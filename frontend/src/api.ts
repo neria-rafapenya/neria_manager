@@ -305,8 +305,8 @@ async function requestJsonPublic<T>(
     ...defaultHeaders,
     ...normalizeHeaders(init?.headers),
   };
-  const response = await fetch(`${resolvedBaseUrl}${path}`, {
-    ...restInit,
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
     credentials: "omit",
     headers: mergedHeaders,
   });
@@ -334,6 +334,34 @@ async function requestJsonPublic<T>(
 
 
 
+
+
+type ClinicflowEndpointKey = "settings" | "services" | "protocols" | "faq" | "triage" | "reports";
+
+const buildClinicflowPath = (
+  tenantId: string,
+  serviceCode: string,
+  key: ClinicflowEndpointKey,
+  id?: string,
+): string => {
+  if (clinicflowBaseUrl) {
+    const base = (clinicflowEndpointConfig as Record<string, string>)[key] || "";
+    const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const fullPath = id ? `${normalizedBase}/${id}` : normalizedBase;
+    const connector = fullPath.includes("?") ? "&" : "?";
+    return `${fullPath}${connector}tenantId=${encodeURIComponent(
+      tenantId,
+    )}&serviceCode=${encodeURIComponent(serviceCode)}`;
+  }
+  const base = `/tenants/${tenantId}/services/${serviceCode}/clinicflow/${key}`;
+  return id ? `${base}/${id}` : base;
+};
+
+const clinicflowRequest = <T>(path: string, init?: RequestInitWithBase) =>
+  requestJson<T>(
+    path,
+    clinicflowBaseUrl ? { ...init, baseUrl: clinicflowBaseUrl } : init,
+  );
 export const api = {
   issueToken: (payload: { clientId: string; clientSecret: string }) =>
     requestJson<{ accessToken: string; expiresIn: number }>("/auth/token", {
@@ -817,29 +845,29 @@ export const api = {
 
 
   getClinicFlowSettings: (tenantId: string, serviceCode: string) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/settings`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "settings"),
     ),
   updateClinicFlowSettings: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/settings`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "settings"),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   listClinicFlowServices: (tenantId: string, serviceCode: string) =>
-    requestJson<any[]>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/services`,
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "services"),
     ),
   createClinicFlowService: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/services`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services"),
       { method: "POST", body: JSON.stringify(payload) },
     ),
   updateClinicFlowService: (
@@ -848,8 +876,8 @@ export const api = {
     id: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/services/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services", id),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   deleteClinicFlowService: (
@@ -857,21 +885,21 @@ export const api = {
     serviceCode: string,
     id: string,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/services/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "services", id),
       { method: "DELETE" },
     ),
   listClinicFlowProtocols: (tenantId: string, serviceCode: string) =>
-    requestJson<any[]>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/protocols`,
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols"),
     ),
   createClinicFlowProtocol: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/protocols`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols"),
       { method: "POST", body: JSON.stringify(payload) },
     ),
   updateClinicFlowProtocol: (
@@ -880,8 +908,8 @@ export const api = {
     id: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/protocols/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols", id),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   deleteClinicFlowProtocol: (
@@ -889,21 +917,21 @@ export const api = {
     serviceCode: string,
     id: string,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/protocols/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "protocols", id),
       { method: "DELETE" },
     ),
   listClinicFlowFaq: (tenantId: string, serviceCode: string) =>
-    requestJson<any[]>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/faq`,
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "faq"),
     ),
   createClinicFlowFaq: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/faq`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq"),
       { method: "POST", body: JSON.stringify(payload) },
     ),
   updateClinicFlowFaq: (
@@ -912,8 +940,8 @@ export const api = {
     id: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/faq/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq", id),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   deleteClinicFlowFaq: (
@@ -921,21 +949,21 @@ export const api = {
     serviceCode: string,
     id: string,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/faq/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "faq", id),
       { method: "DELETE" },
     ),
   listClinicFlowTriageFlows: (tenantId: string, serviceCode: string) =>
-    requestJson<any[]>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/triage`,
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "triage"),
     ),
   createClinicFlowTriageFlow: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/triage`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage"),
       { method: "POST", body: JSON.stringify(payload) },
     ),
   updateClinicFlowTriageFlow: (
@@ -944,8 +972,8 @@ export const api = {
     id: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/triage/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage", id),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   deleteClinicFlowTriageFlow: (
@@ -953,21 +981,21 @@ export const api = {
     serviceCode: string,
     id: string,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/triage/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "triage", id),
       { method: "DELETE" },
     ),
   listClinicFlowReportTemplates: (tenantId: string, serviceCode: string) =>
-    requestJson<any[]>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/reports`,
+    clinicflowRequest<any[]>(
+      buildClinicflowPath(tenantId, serviceCode, "reports"),
     ),
   createClinicFlowReportTemplate: (
     tenantId: string,
     serviceCode: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/reports`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports"),
       { method: "POST", body: JSON.stringify(payload) },
     ),
   updateClinicFlowReportTemplate: (
@@ -976,8 +1004,8 @@ export const api = {
     id: string,
     payload: any,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/reports/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports", id),
       { method: "PUT", body: JSON.stringify(payload) },
     ),
   deleteClinicFlowReportTemplate: (
@@ -985,8 +1013,8 @@ export const api = {
     serviceCode: string,
     id: string,
   ) =>
-    requestJson<any>(
-      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/reports/${id}`,
+    clinicflowRequest<any>(
+      buildClinicflowPath(tenantId, serviceCode, "reports", id),
       { method: "DELETE" },
     ),
 
