@@ -4,16 +4,17 @@ export interface AuthUser {
   email: string;
   name?: string | null;
   status?: string | null;
+  role?: string | null;
+  mustChangePassword?: boolean | null;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
-  serviceCode?: string;
-  tenantServiceId?: string;
 }
 
 export interface LoginResponse {
   accessToken: string;
+  expiresIn?: number;
   user: AuthUser;
 }

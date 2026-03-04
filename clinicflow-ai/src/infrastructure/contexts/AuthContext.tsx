@@ -13,8 +13,6 @@ import {
   getApiBaseUrl,
   getAuthToken,
   getServiceApiKey,
-  getServiceCode,
-  getServiceId,
   getTenantId,
   isAuthDebugEnabled,
   setAuthToken,
@@ -90,16 +88,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setError("");
     try {
       const apiKey = getServiceApiKey();
-      const serviceCode = getServiceCode();
-      const serviceId = getServiceId();
       const tenantId = getTenantId();
 
       if (isAuthDebugEnabled()) {
         console.info("[clinicflow auth] env", {
           apiBaseUrl: getApiBaseUrl(),
           tenantId,
-          serviceCode,
-          serviceId,
           apiKey: maskSecret(apiKey),
         });
       }
@@ -109,18 +103,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setLoading(false);
         return;
       }
-      if (!serviceCode && !serviceId && !body.serviceCode && !body.tenantServiceId) {
-        setError("Falta VITE_SERVICE_CODE o VITE_SERVICE_ID.");
-        setLoading(false);
-        return;
-      }
-
-      const payload = {
-        ...body,
-        serviceCode: body.serviceCode || serviceCode,
-        tenantServiceId: body.tenantServiceId || serviceId,
-      } as LoginRequest;
-      const response = await authService.login(payload);
+      const response = await authService.login(body);
       setToken(response.accessToken);
       setUser(response.user);
       persistUser(response.user);

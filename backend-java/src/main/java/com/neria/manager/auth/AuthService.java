@@ -53,6 +53,18 @@ public class AuthService {
     return new TokenResult(token, jwtService.getTtlSeconds());
   }
 
+  public TokenResult issueClinicToken(String tenantId, String userId, String clinicRole) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("sub", userId);
+    claims.put("role", "clinicflow");
+    claims.put("tenantId", tenantId);
+    if (clinicRole != null && !clinicRole.isBlank()) {
+      claims.put("clinicRole", clinicRole);
+    }
+    String token = jwtService.sign(claims);
+    return new TokenResult(token, jwtService.getTtlSeconds());
+  }
+
   public AuthContext validateJwt(String token) {
     Claims claims = jwtService.verify(token);
     return AuthContext.builder()

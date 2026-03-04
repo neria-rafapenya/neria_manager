@@ -1018,6 +1018,49 @@ export const api = {
       { method: "DELETE" },
     ),
 
+  listClinicFlowUsers: (tenantId: string, serviceCode: string) =>
+    requestJson<any[]>(
+      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/users`,
+    ),
+  createClinicFlowUser: (
+    tenantId: string,
+    serviceCode: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/users`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  updateClinicFlowUser: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/users/${id}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    ),
+  resetClinicFlowUserPassword: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+    payload: any,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/users/${id}/reset-password`,
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+  deleteClinicFlowUser: (
+    tenantId: string,
+    serviceCode: string,
+    id: string,
+  ) =>
+    requestJson<any>(
+      `/tenants/${tenantId}/services/${serviceCode}/clinicflow/users/${id}`,
+      { method: "DELETE" },
+    ),
+
   listTenantServiceOperationalSupport: (tenantId: string, serviceCode: string) =>
     requestJson<any[]>(
       `/tenants/${tenantId}/services/${serviceCode}/operational-support`,
