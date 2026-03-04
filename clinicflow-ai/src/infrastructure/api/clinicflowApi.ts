@@ -19,11 +19,7 @@ const resolveContext = () => {
   return { tenantId, serviceCode };
 };
 
-const withContextQuery = (
-  path: string,
-  tenantId: string,
-  serviceCode: string,
-): string => {
+const withContextQuery = (path: string, tenantId: string, serviceCode: string): string => {
   const connector = path.includes("?") ? "&" : "?";
   return `${path}${connector}tenantId=${encodeURIComponent(
     tenantId,
@@ -47,64 +43,53 @@ const getClinicflowBaseUrl = (): string => getClinicflowApiBaseUrl();
 export const clinicflowApi = {
   getSettings: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any>(
-      resolveEndpoint("settings", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any>(resolveEndpoint("settings", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
   updateSettings: (payload: any) => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any>(
-      resolveEndpoint("settings", tenantId, serviceCode),
-      {
-        baseUrl: getClinicflowBaseUrl(),
-        method: "PUT",
-        body: JSON.stringify(payload),
-      },
-    );
+    return fetchWithAuth<any>(resolveEndpoint("settings", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
   },
   listServices: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any[]>(
-      resolveEndpoint("services", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any[]>(resolveEndpoint("services", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
   listProtocols: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any[]>(
-      resolveEndpoint("protocols", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any[]>(resolveEndpoint("protocols", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
   listFaq: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any[]>(
-      resolveEndpoint("faq", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any[]>(resolveEndpoint("faq", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
   listTriage: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any[]>(
-      resolveEndpoint("triage", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any[]>(resolveEndpoint("triage", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
   listReports: () => {
     const { tenantId, serviceCode } = resolveContext();
-    return fetchWithAuth<any[]>(
-      resolveEndpoint("reports", tenantId, serviceCode),
-      { baseUrl: getClinicflowBaseUrl() },
-    );
+    return fetchWithAuth<any[]>(resolveEndpoint("reports", tenantId, serviceCode), {
+      baseUrl: getClinicflowBaseUrl(),
+    });
   },
-  listPatientInteractions: () => {
-    return fetchWithAuth<any[]>(
-      "/clinicflow/patient/interactions",
-      { baseUrl: getApiBaseUrl() },
-    );
-  },
-
+  listPatientInteractions: () =>
+    fetchWithAuth<any[]>("/clinicflow/patient/interactions", {
+      baseUrl: getApiBaseUrl(),
+    }),
+};
 
 export const patientApi = {
   summary: () =>
@@ -134,23 +119,17 @@ export const patientApi = {
       body: JSON.stringify(payload),
     }),
   requestAppointmentChange: (appointmentId: string, message: string) =>
-    fetchWithAuth<any>(
-      `/clinicflow/patient/appointments/${appointmentId}/request-change`,
-      {
-        baseUrl: getApiBaseUrl(),
-        method: "POST",
-        body: JSON.stringify({ message }),
-      },
-    ),
+    fetchWithAuth<any>(`/clinicflow/patient/appointments/${appointmentId}/request-change`, {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
   requestAppointmentCancel: (appointmentId: string, message: string) =>
-    fetchWithAuth<any>(
-      `/clinicflow/patient/appointments/${appointmentId}/request-cancel`,
-      {
-        baseUrl: getApiBaseUrl(),
-        method: "POST",
-        body: JSON.stringify({ message }),
-      },
-    ),
+    fetchWithAuth<any>(`/clinicflow/patient/appointments/${appointmentId}/request-cancel`, {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
 };
 
 export const staffApi = {
@@ -235,5 +214,4 @@ export const staffApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-};
 };

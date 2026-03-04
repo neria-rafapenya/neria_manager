@@ -19,7 +19,7 @@ export const AppShell = () => {
   const location = useLocation();
   const root = location.pathname.split("/").slice(0, 2).join("/") || "/";
   const title = routeTitles[root] || "ClinicFlow AI";
-
+  console.log(title);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
-import { staffApi } from "../../infrastructure/api/clinicflowApi";
-import { useAuthContext } from "../../infrastructure/contexts/AuthContext";
-import { getRolePermissions, normalizeClinicRole } from "../../../core/domain/roles";
+
+import {
+  getRolePermissions,
+  normalizeClinicRole,
+} from "../../../core/domain/roles";
+import { useAuthContext } from "../../../infrastructure/contexts/AuthContext";
+import { staffApi } from "../../../infrastructure/api/clinicflowApi";
 
 export const PatientsPage = () => {
   const { user } = useAuthContext();
@@ -140,7 +144,12 @@ export const PatientsPage = () => {
       ...newInteraction,
       patientUserId: selectedPatientId,
     });
-    setNewInteraction({ title: "Nota", summary: "", type: "note", status: "open" });
+    setNewInteraction({
+      title: "Nota",
+      summary: "",
+      type: "note",
+      status: "open",
+    });
     loadPatientData(selectedPatientId);
   };
 
@@ -245,7 +254,10 @@ export const PatientsPage = () => {
                     />
                   </label>
                 </div>
-                <button className="btn primary" onClick={handleCreateAppointment}>
+                <button
+                  className="btn primary"
+                  onClick={handleCreateAppointment}
+                >
                   Añadir cita
                 </button>
               </>
@@ -398,7 +410,10 @@ export const PatientsPage = () => {
                     }
                   />
                 </div>
-                <button className="btn primary" onClick={handleCreateInteraction}>
+                <button
+                  className="btn primary"
+                  onClick={handleCreateInteraction}
+                >
                   Añadir nota
                 </button>
               </>

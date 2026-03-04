@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { patientApi } from "../../infrastructure/api/clinicflowApi";
+import { patientApi } from "../../../infrastructure/api/clinicflowApi";
 
 export const PatientHomePage = () => {
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,10 @@ export const PatientHomePage = () => {
 
   const nextAppointment = useMemo(() => {
     if (!appointments.length) return null;
-    return appointments.find((appt) => appt.status !== "cancelled") || appointments[0];
+    return (
+      appointments.find((appt) => appt.status !== "cancelled") ||
+      appointments[0]
+    );
   }, [appointments]);
 
   const handleAsk = async () => {
@@ -61,7 +64,9 @@ export const PatientHomePage = () => {
   };
 
   const handleRequestChange = async (appointmentId: string) => {
-    const message = window.prompt("Indica el motivo o preferencia para el cambio");
+    const message = window.prompt(
+      "Indica el motivo o preferencia para el cambio",
+    );
     if (!message) return;
     await patientApi.requestAppointmentChange(appointmentId, message);
     const updated = await patientApi.listInteractions();
@@ -99,7 +104,9 @@ export const PatientHomePage = () => {
             <div className="card">
               <p className="eyebrow">Documentos pendientes</p>
               <h4>{documents.length}</h4>
-              <p className="muted">Acceso rápido a consentimientos y preparación.</p>
+              <p className="muted">
+                Acceso rápido a consentimientos y preparación.
+              </p>
             </div>
           </div>
         ) : null}
@@ -161,7 +168,12 @@ export const PatientHomePage = () => {
                   </div>
                   <div className="list-meta">
                     {doc.url ? (
-                      <a className="link" href={doc.url} target="_blank" rel="noreferrer">
+                      <a
+                        className="link"
+                        href={doc.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Ver
                       </a>
                     ) : (
@@ -178,7 +190,9 @@ export const PatientHomePage = () => {
       <section className="grid two-columns">
         <div className="card">
           <h3>Chat de dudas</h3>
-          <p className="muted">Resolvemos dudas generales y te contactaremos si hace falta.</p>
+          <p className="muted">
+            Resolvemos dudas generales y te contactaremos si hace falta.
+          </p>
           <div className="list">
             {interactions.slice(0, 4).map((item) => (
               <div key={item.id} className="list-row">
@@ -200,7 +214,11 @@ export const PatientHomePage = () => {
               onChange={(event) => setQuestion(event.target.value)}
             />
           </div>
-          <button className="btn primary" onClick={handleAsk} disabled={!question.trim()}>
+          <button
+            className="btn primary"
+            onClick={handleAsk}
+            disabled={!question.trim()}
+          >
             Enviar consulta
           </button>
           <p className="muted" style={{ marginTop: "8px" }}>
