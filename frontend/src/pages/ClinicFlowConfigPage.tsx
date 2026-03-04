@@ -495,6 +495,7 @@ export function ClinicFlowConfigPage() {
               <option value="manager">{t("Gestor")}</option>
               <option value="staff">{t("Personal")}</option>
               <option value="assistant">{t("Asistente")}</option>
+              <option value="patient">{t("Paciente")}</option>
             </select>
           </label>
           <label className="form-field">
@@ -584,6 +585,7 @@ export function ClinicFlowConfigPage() {
                     <option value="manager">{t("Gestor")}</option>
                     <option value="staff">{t("Personal")}</option>
                     <option value="assistant">{t("Asistente")}</option>
+                    <option value="patient">{t("Paciente")}</option>
                   </select>
                 </span>
                 <span>
@@ -837,6 +839,7 @@ export function ClinicFlowConfigPage() {
               <option value="manager">{t("Gestor")}</option>
               <option value="staff">{t("Personal")}</option>
               <option value="assistant">{t("Asistente")}</option>
+              <option value="patient">{t("Paciente")}</option>
             </select>
           </label>
           <label className="form-field">
@@ -926,6 +929,7 @@ export function ClinicFlowConfigPage() {
                     <option value="manager">{t("Gestor")}</option>
                     <option value="staff">{t("Personal")}</option>
                     <option value="assistant">{t("Asistente")}</option>
+                    <option value="patient">{t("Paciente")}</option>
                   </select>
                 </span>
                 <span>
@@ -1049,6 +1053,7 @@ export function ClinicFlowConfigPage() {
               <option value="manager">{t("Gestor")}</option>
               <option value="staff">{t("Personal")}</option>
               <option value="assistant">{t("Asistente")}</option>
+              <option value="patient">{t("Paciente")}</option>
             </select>
           </label>
           <label className="form-field">
@@ -1138,6 +1143,7 @@ export function ClinicFlowConfigPage() {
                     <option value="manager">{t("Gestor")}</option>
                     <option value="staff">{t("Personal")}</option>
                     <option value="assistant">{t("Asistente")}</option>
+                    <option value="patient">{t("Paciente")}</option>
                   </select>
                 </span>
                 <span>

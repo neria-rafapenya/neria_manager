@@ -12,3 +12,27 @@
   height: 2px;
   background-color: #000;
 }
+
+/* HEADER STICKY */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  transition: background 0.25s ease;
+}
+
+/* TOPBAR DEFAULT */
+
+.topbar.navbar {
+  padding-top: 25px;
+  padding-bottom: 25px;
+  transition: padding 0.25s ease;
+}
+
+.app-header.is-scrolled .topbar.navbar {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

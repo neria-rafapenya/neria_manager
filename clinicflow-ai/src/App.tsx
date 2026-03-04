@@ -8,28 +8,107 @@ import { TriagePage } from "./adapters/ui/pages/TriagePage";
 import { ReportsPage } from "./adapters/ui/pages/ReportsPage";
 import { AnalyticsPage } from "./adapters/ui/pages/AnalyticsPage";
 import { AdminPage } from "./adapters/ui/pages/AdminPage";
+import { PatientsPage } from "./adapters/ui/pages/PatientsPage";
 import { NotFoundPage } from "./adapters/ui/pages/NotFoundPage";
+import { PatientHomePage } from "./adapters/ui/pages/PatientHomePage";
 import { LoginPage } from "./adapters/ui/pages/LoginPage";
 import { useAuthContext } from "./infrastructure/contexts/AuthContext";
+import { getRolePermissions, normalizeClinicRole } from "./core/domain/roles";
 
 const App = () => {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
 
   if (!token) {
     return <LoginPage />;
+  }
+
+  const role = normalizeClinicRole(user?.role);
+  const permissions = getRolePermissions(role);
+
+  if (permissions.isPatient) {
+    return (
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/paciente" element={<PatientHomePage />} />
+        </Route>
+        <Route path="/" element={<Navigate to="/paciente" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    );
   }
 
   return (
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/conversaciones" element={<ConversationsPage />} />
-        <Route path="/agenda" element={<AgendaPage />} />
-        <Route path="/protocolos" element={<ProtocolsPage />} />
-        <Route path="/triaje" element={<TriagePage />} />
-        <Route path="/informes" element={<ReportsPage />} />
-        <Route path="/metricas" element={<AnalyticsPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route
+          path="/conversaciones"
+          element={
+            permissions.canViewConversations ? (
+              <ConversationsPage />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/agenda"
+          element={
+            permissions.canViewAgenda ? <AgendaPage /> : <Navigate to="/" replace />
+          }
+        />
+        <Route
+          path="/pacientes"
+          element={
+            permissions.canViewPatients ? (
+              <PatientsPage />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/protocolos"
+          element={
+            permissions.canViewProtocols ? (
+              <ProtocolsPage />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/triaje"
+          element={
+            permissions.canViewTriage ? <TriagePage /> : <Navigate to="/" replace />
+          }
+        />
+        <Route
+          path="/informes"
+          element={
+            permissions.canViewReports ? (
+              <ReportsPage />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/metricas"
+          element={
+            permissions.canViewMetrics ? (
+              <AnalyticsPage />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            permissions.canViewAdmin ? <AdminPage /> : <Navigate to="/" replace />
+          }
+        />
       </Route>
       <Route path="/home" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFoundPage />} />

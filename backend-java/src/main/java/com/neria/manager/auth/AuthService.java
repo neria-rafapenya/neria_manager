@@ -71,6 +71,7 @@ public class AuthService {
         .type("jwt")
         .sub(String.valueOf(claims.get("sub")))
         .role(String.valueOf(claims.get("role")))
+        .clinicRole(claims.get("clinicRole") != null ? String.valueOf(claims.get("clinicRole")) : null)
         .tenantId(claims.get("tenantId") != null ? String.valueOf(claims.get("tenantId")) : null)
         .build();
   }

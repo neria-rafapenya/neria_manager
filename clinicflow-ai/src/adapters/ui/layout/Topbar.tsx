@@ -1,32 +1,30 @@
-import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuthContext } from "../../../infrastructure/contexts/AuthContext";
-
-interface TopbarProps {
-  title: string;
-}
+import { IconExit } from "../components/shared/icons";
+import { getRolePermissions, normalizeClinicRole } from "../../../core/domain/roles";
 
 const navItems = [
-  { label: "Dashboard", to: "/" },
-  { label: "Conversaciones", to: "/conversaciones" },
-  { label: "Agenda", to: "/agenda" },
-  { label: "Protocolos", to: "/protocolos" },
-  { label: "Triaje", to: "/triaje" },
-  { label: "Informes", to: "/informes" },
-  { label: "Métricas", to: "/metricas" },
-  { label: "Admin", to: "/admin" },
-];
+  { label: "Dashboard", to: "/", permission: "canViewDashboard" },
+  { label: "Conversaciones", to: "/conversaciones", permission: "canViewConversations" },
+  { label: "Agenda", to: "/agenda", permission: "canViewAgenda" },
+  { label: "Pacientes", to: "/pacientes", permission: "canViewPatients" },
+  { label: "Protocolos", to: "/protocolos", permission: "canViewProtocols" },
+  { label: "Triaje", to: "/triaje", permission: "canViewTriage" },
+  { label: "Informes", to: "/informes", permission: "canViewReports" },
+  { label: "Métricas", to: "/metricas", permission: "canViewMetrics" },
+  { label: "Admin", to: "/admin", permission: "canViewAdmin" },
+] as const;
 
-export const Topbar = ({ title }: TopbarProps) => {
+const patientNavItems = [{ label: "Mi área", to: "/paciente" }];
+
+type PermissionKey = (typeof navItems)[number]["permission"];
+
+export const Topbar = () => {
   const { user, logout } = useAuthContext();
-
-  const dateLabel = useMemo(() => {
-    return new Intl.DateTimeFormat("es-ES", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    }).format(new Date());
-  }, []);
+  const permissions = getRolePermissions(normalizeClinicRole(user?.role));
+  const activeItems = permissions.isPatient
+    ? patientNavItems
+    : navItems.filter((item) => permissions[item.permission as PermissionKey]);
 
   return (
     <nav className="navbar navbar-light bg-white border-bottom topbar">
@@ -35,8 +33,7 @@ export const Topbar = ({ title }: TopbarProps) => {
         <div className="navbar-brand d-flex align-items-center gap-3 m-0">
           <div className="brand-mark">CF</div>
           <div>
-            <p className="topbar-title mb-0">{title}</p>
-            <p className="topbar-subtitle mb-0">{dateLabel}</p>
+            <p className="topbar-title mb-0">Neria Clinic</p>
           </div>
         </div>
 
@@ -46,7 +43,6 @@ export const Topbar = ({ title }: TopbarProps) => {
           type="button"
           data-bs-toggle="offcanvas"
           data-bs-target="#topbarMenu"
-          aria-controls="topbarMenu"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
@@ -54,7 +50,7 @@ export const Topbar = ({ title }: TopbarProps) => {
         {/* DESKTOP NAV */}
         <div className="d-none d-xl-flex flex-grow-1 justify-content-center">
           <ul className="navbar-nav flex-row gap-4 align-items-center">
-            {navItems.map((item) => (
+            {activeItems.map((item) => (
               <li key={item.to} className="nav-item">
                 <NavLink
                   to={item.to}
@@ -70,19 +66,20 @@ export const Topbar = ({ title }: TopbarProps) => {
           </ul>
         </div>
 
-        {/* USER RIGHT */}
+        {/* USER */}
         <div className="d-none d-xl-flex align-items-center gap-2">
           <span className="topbar-user-label">{user?.email ?? ""}</span>
 
           <button
-            className="btn btn-outline-secondary btn-sm"
+            className="btn-ghost p-0 m-0 ms-2"
             onClick={logout}
             type="button"
           >
-            Salir
+            <IconExit className="icon-style" />
           </button>
         </div>
       </div>
+
       {/* MOBILE MENU */}
       <div className="offcanvas offcanvas-start" tabIndex={-1} id="topbarMenu">
         <div className="offcanvas-header">
@@ -100,7 +97,7 @@ export const Topbar = ({ title }: TopbarProps) => {
 
         <div className="offcanvas-body d-flex flex-column">
           <ul className="navbar-nav">
-            {navItems.map((item) => (
+            {activeItems.map((item) => (
               <li key={item.to} className="nav-item">
                 <NavLink
                   to={item.to}

@@ -100,3 +100,67 @@ CREATE TABLE IF NOT EXISTS clinic_users (
   UNIQUE KEY uq_clinic_users_tenant_email (tenantId, email),
   KEY idx_clinic_users_tenant (tenantId)
 );
+
+CREATE TABLE IF NOT EXISTS clinic_patient_interactions (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  title VARCHAR(180) NULL,
+  type VARCHAR(60) NULL,
+  status VARCHAR(60) NULL,
+  summary VARCHAR(255) NULL,
+  metadata JSON NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_patient_tenant (tenantId),
+  KEY idx_clinic_patient_user (patientUserId)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_patient_appointments (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  title VARCHAR(180) NULL,
+  practitionerName VARCHAR(120) NULL,
+  location VARCHAR(120) NULL,
+  scheduledAt DATETIME NULL,
+  durationMin INT NULL,
+  status VARCHAR(32) NULL,
+  notes TEXT NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_patient_appt_tenant (tenantId),
+  KEY idx_clinic_patient_appt_user (patientUserId)
+);
+
+
+CREATE TABLE IF NOT EXISTS clinic_patient_documents (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  title VARCHAR(180) NULL,
+  category VARCHAR(120) NULL,
+  url VARCHAR(512) NULL,
+  status VARCHAR(32) NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_patient_doc_tenant (tenantId),
+  KEY idx_clinic_patient_doc_user (patientUserId)
+);
+
+
+CREATE TABLE IF NOT EXISTS clinic_patient_treatments (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  name VARCHAR(180) NULL,
+  status VARCHAR(32) NULL,
+  nextStep VARCHAR(180) NULL,
+  notes TEXT NULL,
+  startedAt DATETIME NULL,
+  completedAt DATETIME NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_patient_treatment_tenant (tenantId),
+  KEY idx_clinic_patient_treatment_user (patientUserId)
+);

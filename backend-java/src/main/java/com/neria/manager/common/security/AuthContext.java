@@ -9,6 +9,7 @@ public class AuthContext {
   private final String type;
   private final String sub;
   private final String role;
+  private final String clinicRole;
   private final String tenantId;
   private final String apiKeyId;
   private final String serviceCode;

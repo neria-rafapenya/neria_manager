@@ -1,6 +1,7 @@
 import { fetchWithAuth } from "./api";
 import {
   getClinicflowApiBaseUrl,
+  getApiBaseUrl,
   getClinicflowEndpoint,
   getServiceCode,
   getTenantId,
@@ -97,4 +98,142 @@ export const clinicflowApi = {
       { baseUrl: getClinicflowBaseUrl() },
     );
   },
+  listPatientInteractions: () => {
+    return fetchWithAuth<any[]>(
+      "/clinicflow/patient/interactions",
+      { baseUrl: getApiBaseUrl() },
+    );
+  },
+
+
+export const patientApi = {
+  summary: () =>
+    fetchWithAuth<any>("/clinicflow/patient/summary", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  listAppointments: () =>
+    fetchWithAuth<any[]>("/clinicflow/patient/appointments", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  listDocuments: () =>
+    fetchWithAuth<any[]>("/clinicflow/patient/documents", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  listTreatments: () =>
+    fetchWithAuth<any[]>("/clinicflow/patient/treatments", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  listInteractions: () =>
+    fetchWithAuth<any[]>("/clinicflow/patient/interactions", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  createInteraction: (payload: any) =>
+    fetchWithAuth<any>("/clinicflow/patient/interactions", {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  requestAppointmentChange: (appointmentId: string, message: string) =>
+    fetchWithAuth<any>(
+      `/clinicflow/patient/appointments/${appointmentId}/request-change`,
+      {
+        baseUrl: getApiBaseUrl(),
+        method: "POST",
+        body: JSON.stringify({ message }),
+      },
+    ),
+  requestAppointmentCancel: (appointmentId: string, message: string) =>
+    fetchWithAuth<any>(
+      `/clinicflow/patient/appointments/${appointmentId}/request-cancel`,
+      {
+        baseUrl: getApiBaseUrl(),
+        method: "POST",
+        body: JSON.stringify({ message }),
+      },
+    ),
+};
+
+export const staffApi = {
+  listPatients: () =>
+    fetchWithAuth<any[]>("/clinicflow/staff/patients", {
+      baseUrl: getApiBaseUrl(),
+    }),
+  listAppointments: (patientUserId?: string) =>
+    fetchWithAuth<any[]>(
+      `/clinicflow/staff/appointments${patientUserId ? `?patientUserId=${encodeURIComponent(patientUserId)}` : ""}`,
+      { baseUrl: getApiBaseUrl() },
+    ),
+  createAppointment: (payload: any) =>
+    fetchWithAuth<any>("/clinicflow/staff/appointments", {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateAppointment: (id: string, payload: any) =>
+    fetchWithAuth<any>(`/clinicflow/staff/appointments/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteAppointment: (id: string) =>
+    fetchWithAuth<any>(`/clinicflow/staff/appointments/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "DELETE",
+    }),
+  listDocuments: (patientUserId?: string) =>
+    fetchWithAuth<any[]>(
+      `/clinicflow/staff/documents${patientUserId ? `?patientUserId=${encodeURIComponent(patientUserId)}` : ""}`,
+      { baseUrl: getApiBaseUrl() },
+    ),
+  createDocument: (payload: any) =>
+    fetchWithAuth<any>("/clinicflow/staff/documents", {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateDocument: (id: string, payload: any) =>
+    fetchWithAuth<any>(`/clinicflow/staff/documents/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteDocument: (id: string) =>
+    fetchWithAuth<any>(`/clinicflow/staff/documents/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "DELETE",
+    }),
+  listTreatments: (patientUserId?: string) =>
+    fetchWithAuth<any[]>(
+      `/clinicflow/staff/treatments${patientUserId ? `?patientUserId=${encodeURIComponent(patientUserId)}` : ""}`,
+      { baseUrl: getApiBaseUrl() },
+    ),
+  createTreatment: (payload: any) =>
+    fetchWithAuth<any>("/clinicflow/staff/treatments", {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateTreatment: (id: string, payload: any) =>
+    fetchWithAuth<any>(`/clinicflow/staff/treatments/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteTreatment: (id: string) =>
+    fetchWithAuth<any>(`/clinicflow/staff/treatments/${id}`, {
+      baseUrl: getApiBaseUrl(),
+      method: "DELETE",
+    }),
+  listInteractions: (patientUserId?: string) =>
+    fetchWithAuth<any[]>(
+      `/clinicflow/staff/interactions${patientUserId ? `?patientUserId=${encodeURIComponent(patientUserId)}` : ""}`,
+      { baseUrl: getApiBaseUrl() },
+    ),
+  createInteraction: (payload: any) =>
+    fetchWithAuth<any>("/clinicflow/staff/interactions", {
+      baseUrl: getApiBaseUrl(),
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
 };

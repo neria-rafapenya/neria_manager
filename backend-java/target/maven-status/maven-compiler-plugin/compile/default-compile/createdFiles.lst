@@ -80,6 +80,7 @@ com/neria/manager/dbconnections/DbConnectionsController.class
 com/neria/manager/chat/ChatAdminController.class
 com/neria/manager/ocr/OcrDocumentsController.class
 com/neria/manager/common/repos/TenantServiceTaxAssistantRepository.class
+com/neria/manager/clinicflow/repos/ClinicPatientInteractionRepository.class
 com/neria/manager/common/repos/ChatMessageRepository.class
 com/neria/manager/common/entities/TenantServiceSurveyQuestion.class
 com/neria/manager/pricing/PricingController.class
@@ -108,6 +109,7 @@ com/neria/manager/adapters/GoogleVertexAdapter.class
 com/neria/manager/chat/ChatAuthService$RegisterChatUserRequest.class
 com/neria/manager/emailautomation/TenantServiceEmailService$JiraIssueClient.class
 com/neria/manager/common/entities/UsageEvent.class
+com/neria/manager/clinicflow/controllers/ClinicFlowPatientController.class
 com/neria/manager/tenantservices/TenantServicesService$TenantServiceUserView.class
 com/neria/manager/emailautomation/TenantServiceEmailService$JiraIssueClient$IssueResult.class
 com/neria/manager/tenantservices/TenantServicesService$TenantServiceEndpointResponse.class
@@ -193,6 +195,7 @@ com/neria/manager/common/repos/TenantPricingRepository.class
 com/neria/manager/common/entities/NotificationChannel.class
 com/neria/manager/tenantservices/TenantServicesController$TenantServiceUserRequest.class
 com/neria/manager/operationsupport/OperationalSupportService.class
+com/neria/manager/clinicflow/entities/ClinicPatientInteraction.class
 com/neria/manager/pricing/PricingService.class
 com/neria/manager/selfassessment/SelfAssessmentsService.class
 com/neria/manager/runtime/RuntimeService.class
@@ -361,6 +364,7 @@ com/neria/manager/common/repos/SubscriptionServiceRepository.class
 com/neria/manager/common/entities/Provider.class
 com/neria/manager/webhooks/WebhooksService.class
 com/neria/manager/selfassessment/SelfAssessmentsService$AssessmentResult.class
+com/neria/manager/clinicflow/services/ClinicPatientService.class
 com/neria/manager/common/entities/TenantServiceJira.class
 com/neria/manager/common/entities/Policy.class
 com/neria/manager/common/repos/WebhookRepository.class

@@ -42,6 +42,14 @@ public class ClinicUserService {
         .toList();
   }
 
+  public List<ClinicUserResponse> listPatients(String tenantId) {
+    return repository.findAllByTenantId(tenantId).stream()
+        .filter(user -> user.getRole() != null && user.getRole().equalsIgnoreCase("patient"))
+        .sorted(Comparator.comparing(ClinicUser::getCreatedAt).reversed())
+        .map(ClinicUserResponse::fromEntity)
+        .toList();
+  }
+
   public ClinicUserResponse create(String tenantId, CreateClinicUserRequest dto) {
     if (dto == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing payload");

@@ -3207,6 +3207,7 @@ export function TenantServiceDetailPage() {
                         <option value="manager">{t("Gestor")}</option>
                         <option value="staff">{t("Personal")}</option>
                         <option value="assistant">{t("Asistente")}</option>
+                        <option value="patient">{t("Paciente")}</option>
                       </select>
                     </label>
                   </div>
@@ -3297,6 +3298,7 @@ export function TenantServiceDetailPage() {
                           <option value="manager">{t("Gestor")}</option>
                           <option value="staff">{t("Personal")}</option>
                           <option value="assistant">{t("Asistente")}</option>
+                          <option value="patient">{t("Paciente")}</option>
                         </select>
                       ),
                     },

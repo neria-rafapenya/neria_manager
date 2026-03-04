@@ -32,7 +32,9 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/chatbots/ChatbotsService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/controllers/ClinicFlowAdminController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/controllers/ClinicFlowAuthController.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/controllers/ClinicFlowPatientController.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicFaqEntry.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicPatientInteraction.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicProtocol.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicReportTemplate.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicService.java
@@ -40,6 +42,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicTriageFlow.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/entities/ClinicUser.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicFaqEntryRepository.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicPatientInteractionRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicProtocolRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicReportTemplateRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicServiceRepository.java
@@ -47,6 +50,7 @@
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicTriageFlowRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/repos/ClinicUserRepository.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/services/ClinicFlowService.java
+/Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/services/ClinicPatientService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/clinicflow/services/ClinicUserService.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/AdminPasswordReset.java
 /Users/rafa_penya/Documents/GitHub/neria_manager/backend-java/src/main/java/com/neria/manager/common/entities/AdminUser.java
