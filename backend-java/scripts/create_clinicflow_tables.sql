@@ -85,3 +85,18 @@ CREATE TABLE IF NOT EXISTS clinic_report_templates (
   updatedAt DATETIME NULL,
   KEY idx_clinic_reports_tenant (tenantId)
 );
+
+CREATE TABLE IF NOT EXISTS clinic_users (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  email VARCHAR(160) NOT NULL,
+  name VARCHAR(120) NULL,
+  role VARCHAR(32) NOT NULL,
+  status VARCHAR(16) NOT NULL,
+  passwordHash VARCHAR(255) NULL,
+  mustChangePassword TINYINT(1) NOT NULL DEFAULT 0,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  UNIQUE KEY uq_clinic_users_tenant_email (tenantId, email),
+  KEY idx_clinic_users_tenant (tenantId)
+);

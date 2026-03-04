@@ -33,13 +33,20 @@ const getRuntimeEnv = (): RuntimeEnv => {
   return ((window as any).__ENV__ ?? {}) as RuntimeEnv;
 };
 
+const isPlaceholder = (value: string): boolean =>
+  /^%VITE_[A-Z0-9_]+%$/.test(value.trim());
+
 const sanitizeEnvValue = (value: string): string => {
   const trimmed = value.trim();
+  if (!trimmed || isPlaceholder(trimmed)) {
+    return "";
+  }
   if (
     (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
     (trimmed.startsWith("'") && trimmed.endsWith("'"))
   ) {
-    return trimmed.slice(1, -1).trim();
+    const unquoted = trimmed.slice(1, -1).trim();
+    return isPlaceholder(unquoted) ? "" : unquoted;
   }
   return trimmed;
 };
@@ -48,11 +55,17 @@ const readEnv = (key: string, fallback = ""): string => {
   const runtime = getRuntimeEnv();
   const fromRuntime = runtime[key];
   if (typeof fromRuntime === "string" && fromRuntime.length > 0) {
-    return sanitizeEnvValue(fromRuntime);
+    const sanitized = sanitizeEnvValue(fromRuntime);
+    if (sanitized) {
+      return sanitized;
+    }
   }
   const fromVite = (import.meta as any)?.env?.[key];
   if (typeof fromVite === "string" && fromVite.length > 0) {
-    return sanitizeEnvValue(fromVite);
+    const sanitized = sanitizeEnvValue(fromVite);
+    if (sanitized) {
+      return sanitized;
+    }
   }
   return fallback;
 };

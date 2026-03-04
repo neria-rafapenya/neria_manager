@@ -66,7 +66,7 @@ export async function fetchWithAuth<T = unknown>(
     headers["x-tenant-id"] = tenantId;
   }
   if (token) {
-    headers["x-chat-token"] = token;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   let response: Response;

@@ -747,3 +747,16 @@ export type ClinicFlowReportTemplate = {
   createdAt?: string | null;
   updatedAt?: string | null;
 };
+
+export type ClinicFlowUser = {
+  id: string;
+  tenantId: string;
+  name?: string | null;
+  email: string;
+  role?: string | null;
+  status?: string | null;
+  mustChangePassword?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+

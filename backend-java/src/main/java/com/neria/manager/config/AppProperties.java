@@ -42,6 +42,7 @@ public class AppProperties {
     private String apiKeySalt = "dev_api_key_salt_please_change";
     private String adminPasswordSalt = "dev_admin_password_salt_change_me";
     private String tenantPasswordSalt = "dev_tenant_password_salt_change_me";
+    private String clinicPasswordSalt = "dev_clinic_password_salt_change_me";
     private String encryptionKey = "";
   }
 

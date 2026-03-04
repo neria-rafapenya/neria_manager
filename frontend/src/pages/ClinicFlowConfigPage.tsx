@@ -10,6 +10,7 @@ import type {
   ClinicFlowService,
   ClinicFlowSettings,
   ClinicFlowTriageFlow,
+  ClinicFlowUser,
 } from "../types";
 
 type OpeningHours = {
@@ -91,6 +92,17 @@ export function ClinicFlowConfigPage() {
   const [faqEntries, setFaqEntries] = useState<ClinicFlowFaq[]>([]);
   const [triageFlows, setTriageFlows] = useState<ClinicFlowTriageFlow[]>([]);
   const [reports, setReports] = useState<ClinicFlowReportTemplate[]>([]);
+  const [users, setUsers] = useState<ClinicFlowUser[]>([]);
+  const [userDraft, setUserDraft] = useState({
+    name: "",
+    email: "",
+    role: "manager",
+    status: "active",
+    password: "",
+    mustChangePassword: true,
+  });
+  const [userBusy, setUserBusy] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,6 +122,7 @@ export function ClinicFlowConfigPage() {
         faqList,
         triageList,
         reportList,
+        userList,
       ] = await Promise.all([
         api.getClinicFlowSettings(tenantId, serviceCode),
         api.listClinicFlowServices(tenantId, serviceCode),
@@ -117,6 +130,7 @@ export function ClinicFlowConfigPage() {
         api.listClinicFlowFaq(tenantId, serviceCode),
         api.listClinicFlowTriageFlows(tenantId, serviceCode),
         api.listClinicFlowReportTemplates(tenantId, serviceCode),
+        api.listClinicFlowUsers(tenantId, serviceCode),
       ]);
 
       const mergedSettings = {
@@ -136,6 +150,7 @@ export function ClinicFlowConfigPage() {
       setFaqEntries((faqList as ClinicFlowFaq[]) || []);
       setTriageFlows((triageList as ClinicFlowTriageFlow[]) || []);
       setReports((reportList as ClinicFlowReportTemplate[]) || []);
+      setUsers((userList as ClinicFlowUser[]) || []);
     } catch (err: any) {
       setError(err.message || t("No se pudo cargar ClinicFlow"));
     } finally {
@@ -169,6 +184,112 @@ export function ClinicFlowConfigPage() {
       setError(err.message || t("No se pudo guardar la configuración"));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!tenantId) return;
+    setUserBusy(true);
+    setUserError(null);
+    try {
+      const payload = {
+        name: userDraft.name || undefined,
+        email: userDraft.email,
+        role: userDraft.role,
+        status: userDraft.status,
+        password: userDraft.password,
+        mustChangePassword: userDraft.mustChangePassword,
+      };
+      const created = (await api.createClinicFlowUser(
+        tenantId,
+        serviceCode,
+        payload,
+      )) as ClinicFlowUser;
+      setUsers((prev) => [created, ...prev]);
+      setUserDraft({
+        name: "",
+        email: "",
+        role: "manager",
+        status: "active",
+        password: "",
+        mustChangePassword: true,
+      });
+      emitToast(t("Usuario creado"));
+    } catch (err: any) {
+      setUserError(err.message || t("No se pudo crear el usuario"));
+    } finally {
+      setUserBusy(false);
+    }
+  };
+
+  const updateUserLocal = (id: string, patch: Partial<ClinicFlowUser>) => {
+    setUsers((prev) =>
+      prev.map((user) => (user.id === id ? { ...user, ...patch } : user)),
+    );
+  };
+
+  const handleUpdateUser = async (userId: string) => {
+    if (!tenantId) return;
+    const user = users.find((item) => item.id === userId);
+    if (!user) return;
+    setUserBusy(true);
+    setUserError(null);
+    try {
+      const payload = {
+        name: user.name || undefined,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        mustChangePassword: user.mustChangePassword ?? false,
+      };
+      const updated = (await api.updateClinicFlowUser(
+        tenantId,
+        serviceCode,
+        userId,
+        payload,
+      )) as ClinicFlowUser;
+      updateUserLocal(userId, updated);
+      emitToast(t("Usuario actualizado"));
+    } catch (err: any) {
+      setUserError(err.message || t("No se pudo actualizar el usuario"));
+    } finally {
+      setUserBusy(false);
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    if (!tenantId) return;
+    const password = window.prompt(t("Nueva contraseña"));
+    if (!password) return;
+    setUserBusy(true);
+    setUserError(null);
+    try {
+      await api.resetClinicFlowUserPassword(tenantId, serviceCode, userId, {
+        password,
+        mustChangePassword: true,
+      });
+      emitToast(t("Contraseña restablecida"));
+    } catch (err: any) {
+      setUserError(err.message || t("No se pudo restablecer la contraseña"));
+    } finally {
+      setUserBusy(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!tenantId) return;
+    const confirmed = window.confirm(t("¿Eliminar este usuario?"));
+    if (!confirmed) return;
+    setUserBusy(true);
+    setUserError(null);
+    try {
+      await api.deleteClinicFlowUser(tenantId, serviceCode, userId);
+      setUsers((prev) => prev.filter((item) => item.id !== userId));
+      emitToast(t("Usuario eliminado"));
+    } catch (err: any) {
+      setUserError(err.message || t("No se pudo eliminar el usuario"));
+    } finally {
+      setUserBusy(false);
     }
   };
 
@@ -329,6 +450,182 @@ export function ClinicFlowConfigPage() {
               }
             />
           </label>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>{t("Usuarios del equipo")}</h3>
+        <div className="form-grid form-grid-2">
+          <label className="form-field">
+            {t("Nombre")}
+            <input
+              value={userDraft.name}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  name: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Correo")}
+            <input
+              type="email"
+              value={userDraft.email}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  email: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Rol")}
+            <select
+              value={userDraft.role}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  role: event.target.value,
+                }))
+              }
+            >
+              <option value="manager">{t("Gestor")}</option>
+              <option value="staff">{t("Personal")}</option>
+              <option value="assistant">{t("Asistente")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Estado")}
+            <select
+              value={userDraft.status}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  status: event.target.value,
+                }))
+              }
+            >
+              <option value="active">{t("Activo")}</option>
+              <option value="inactive">{t("Inactivo")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Contraseña inicial")}
+            <input
+              type="password"
+              value={userDraft.password}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  password: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Forzar cambio de contraseña")}
+            <select
+              value={userDraft.mustChangePassword ? "yes" : "no"}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  mustChangePassword: event.target.value === "yes",
+                }))
+              }
+            >
+              <option value="yes">{t("Sí")}</option>
+              <option value="no">{t("No")}</option>
+            </select>
+          </label>
+        </div>
+        {userError ? <div className="error-banner">{userError}</div> : null}
+        <button
+          className="btn primary"
+          type="button"
+          disabled={!userDraft.email || !userDraft.password || userBusy}
+          onClick={handleCreateUser}
+        >
+          {userBusy ? t("Guardando...") : t("Crear usuario")}
+        </button>
+
+        <div className="table" style={{ marginTop: "16px" }}>
+          <div className="table-header">
+            <span>{t("Usuario")}</span>
+            <span>{t("Rol")}</span>
+            <span>{t("Estado")}</span>
+            <span>{t("Acciones")}</span>
+          </div>
+          {users.length === 0 ? (
+            <div className="table-row">
+              <span className="muted">{t("Sin usuarios aún")}</span>
+              <span>—</span>
+              <span>—</span>
+              <span>—</span>
+            </div>
+          ) : (
+            users.map((row) => (
+              <div key={row.id} className="table-row">
+                <span>
+                  <strong>{row.name || row.email}</strong>
+                  <span className="muted" style={{ display: "block" }}>
+                    {row.email}
+                  </span>
+                </span>
+                <span>
+                  <select
+                    value={row.role || "staff"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { role: event.target.value })
+                    }
+                  >
+                    <option value="manager">{t("Gestor")}</option>
+                    <option value="staff">{t("Personal")}</option>
+                    <option value="assistant">{t("Asistente")}</option>
+                  </select>
+                </span>
+                <span>
+                  <select
+                    value={row.status || "active"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { status: event.target.value })
+                    }
+                  >
+                    <option value="active">{t("Activo")}</option>
+                    <option value="inactive">{t("Inactivo")}</option>
+                  </select>
+                </span>
+                <span className="table-actions">
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleUpdateUser(row.id)}
+                  >
+                    {t("Guardar")}
+                  </button>
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleResetPassword(row.id)}
+                  >
+                    {t("Reset pass")}
+                  </button>
+                  <button
+                    className="btn danger"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleDeleteUser(row.id)}
+                  >
+                    {t("Eliminar")}
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -498,6 +795,182 @@ export function ClinicFlowConfigPage() {
         </button>
       </div>
 
+      <div className="card">
+        <h3>{t("Usuarios del equipo")}</h3>
+        <div className="form-grid form-grid-2">
+          <label className="form-field">
+            {t("Nombre")}
+            <input
+              value={userDraft.name}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  name: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Correo")}
+            <input
+              type="email"
+              value={userDraft.email}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  email: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Rol")}
+            <select
+              value={userDraft.role}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  role: event.target.value,
+                }))
+              }
+            >
+              <option value="manager">{t("Gestor")}</option>
+              <option value="staff">{t("Personal")}</option>
+              <option value="assistant">{t("Asistente")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Estado")}
+            <select
+              value={userDraft.status}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  status: event.target.value,
+                }))
+              }
+            >
+              <option value="active">{t("Activo")}</option>
+              <option value="inactive">{t("Inactivo")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Contraseña inicial")}
+            <input
+              type="password"
+              value={userDraft.password}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  password: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Forzar cambio de contraseña")}
+            <select
+              value={userDraft.mustChangePassword ? "yes" : "no"}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  mustChangePassword: event.target.value === "yes",
+                }))
+              }
+            >
+              <option value="yes">{t("Sí")}</option>
+              <option value="no">{t("No")}</option>
+            </select>
+          </label>
+        </div>
+        {userError ? <div className="error-banner">{userError}</div> : null}
+        <button
+          className="btn primary"
+          type="button"
+          disabled={!userDraft.email || !userDraft.password || userBusy}
+          onClick={handleCreateUser}
+        >
+          {userBusy ? t("Guardando...") : t("Crear usuario")}
+        </button>
+
+        <div className="table" style={{ marginTop: "16px" }}>
+          <div className="table-header">
+            <span>{t("Usuario")}</span>
+            <span>{t("Rol")}</span>
+            <span>{t("Estado")}</span>
+            <span>{t("Acciones")}</span>
+          </div>
+          {users.length === 0 ? (
+            <div className="table-row">
+              <span className="muted">{t("Sin usuarios aún")}</span>
+              <span>—</span>
+              <span>—</span>
+              <span>—</span>
+            </div>
+          ) : (
+            users.map((row) => (
+              <div key={row.id} className="table-row">
+                <span>
+                  <strong>{row.name || row.email}</strong>
+                  <span className="muted" style={{ display: "block" }}>
+                    {row.email}
+                  </span>
+                </span>
+                <span>
+                  <select
+                    value={row.role || "staff"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { role: event.target.value })
+                    }
+                  >
+                    <option value="manager">{t("Gestor")}</option>
+                    <option value="staff">{t("Personal")}</option>
+                    <option value="assistant">{t("Asistente")}</option>
+                  </select>
+                </span>
+                <span>
+                  <select
+                    value={row.status || "active"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { status: event.target.value })
+                    }
+                  >
+                    <option value="active">{t("Activo")}</option>
+                    <option value="inactive">{t("Inactivo")}</option>
+                  </select>
+                </span>
+                <span className="table-actions">
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleUpdateUser(row.id)}
+                  >
+                    {t("Guardar")}
+                  </button>
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleResetPassword(row.id)}
+                  >
+                    {t("Reset pass")}
+                  </button>
+                  <button
+                    className="btn danger"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleDeleteUser(row.id)}
+                  >
+                    {t("Eliminar")}
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="grid two-columns">
         <div className="card">
           <h3>{t("Protocolos + FAQ")}</h3>
@@ -531,6 +1004,182 @@ export function ClinicFlowConfigPage() {
           >
             {t("Editar flujos")}
           </button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>{t("Usuarios del equipo")}</h3>
+        <div className="form-grid form-grid-2">
+          <label className="form-field">
+            {t("Nombre")}
+            <input
+              value={userDraft.name}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  name: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Correo")}
+            <input
+              type="email"
+              value={userDraft.email}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  email: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Rol")}
+            <select
+              value={userDraft.role}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  role: event.target.value,
+                }))
+              }
+            >
+              <option value="manager">{t("Gestor")}</option>
+              <option value="staff">{t("Personal")}</option>
+              <option value="assistant">{t("Asistente")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Estado")}
+            <select
+              value={userDraft.status}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  status: event.target.value,
+                }))
+              }
+            >
+              <option value="active">{t("Activo")}</option>
+              <option value="inactive">{t("Inactivo")}</option>
+            </select>
+          </label>
+          <label className="form-field">
+            {t("Contraseña inicial")}
+            <input
+              type="password"
+              value={userDraft.password}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  password: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="form-field">
+            {t("Forzar cambio de contraseña")}
+            <select
+              value={userDraft.mustChangePassword ? "yes" : "no"}
+              onChange={(event) =>
+                setUserDraft((prev) => ({
+                  ...prev,
+                  mustChangePassword: event.target.value === "yes",
+                }))
+              }
+            >
+              <option value="yes">{t("Sí")}</option>
+              <option value="no">{t("No")}</option>
+            </select>
+          </label>
+        </div>
+        {userError ? <div className="error-banner">{userError}</div> : null}
+        <button
+          className="btn primary"
+          type="button"
+          disabled={!userDraft.email || !userDraft.password || userBusy}
+          onClick={handleCreateUser}
+        >
+          {userBusy ? t("Guardando...") : t("Crear usuario")}
+        </button>
+
+        <div className="table" style={{ marginTop: "16px" }}>
+          <div className="table-header">
+            <span>{t("Usuario")}</span>
+            <span>{t("Rol")}</span>
+            <span>{t("Estado")}</span>
+            <span>{t("Acciones")}</span>
+          </div>
+          {users.length === 0 ? (
+            <div className="table-row">
+              <span className="muted">{t("Sin usuarios aún")}</span>
+              <span>—</span>
+              <span>—</span>
+              <span>—</span>
+            </div>
+          ) : (
+            users.map((row) => (
+              <div key={row.id} className="table-row">
+                <span>
+                  <strong>{row.name || row.email}</strong>
+                  <span className="muted" style={{ display: "block" }}>
+                    {row.email}
+                  </span>
+                </span>
+                <span>
+                  <select
+                    value={row.role || "staff"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { role: event.target.value })
+                    }
+                  >
+                    <option value="manager">{t("Gestor")}</option>
+                    <option value="staff">{t("Personal")}</option>
+                    <option value="assistant">{t("Asistente")}</option>
+                  </select>
+                </span>
+                <span>
+                  <select
+                    value={row.status || "active"}
+                    onChange={(event) =>
+                      updateUserLocal(row.id, { status: event.target.value })
+                    }
+                  >
+                    <option value="active">{t("Activo")}</option>
+                    <option value="inactive">{t("Inactivo")}</option>
+                  </select>
+                </span>
+                <span className="table-actions">
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleUpdateUser(row.id)}
+                  >
+                    {t("Guardar")}
+                  </button>
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleResetPassword(row.id)}
+                  >
+                    {t("Reset pass")}
+                  </button>
+                  <button
+                    className="btn danger"
+                    type="button"
+                    disabled={userBusy}
+                    onClick={() => handleDeleteUser(row.id)}
+                  >
+                    {t("Eliminar")}
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

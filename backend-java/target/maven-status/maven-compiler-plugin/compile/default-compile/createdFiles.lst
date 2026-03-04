@@ -1,4 +1,5 @@
 com/neria/manager/runtime/ExecuteRequest.class
+com/neria/manager/clinicflow/entities/ClinicUser.class
 com/neria/manager/tenantservices/TenantServicesController.class
 com/neria/manager/preevaluation/PreEvaluationsService.class
 com/neria/manager/ocr/OcrDocumentsService.class
@@ -6,6 +7,7 @@ com/neria/manager/common/repos/TenantServicePreEvaluationRepository.class
 com/neria/manager/auth/ApiKeysService.class
 com/neria/manager/chat/TenantChatAuthController.class
 com/neria/manager/financialsim/FinancialSimulationsService$SimulationSummary.class
+com/neria/manager/clinicflow/services/ClinicUserService$LoginRequest.class
 com/neria/manager/jira/JiraIssuesService$IssueDraft.class
 com/neria/manager/common/entities/TenantServiceSurvey.class
 com/neria/manager/logs/TenantRequestLogsService.class
@@ -81,6 +83,7 @@ com/neria/manager/common/repos/TenantServiceTaxAssistantRepository.class
 com/neria/manager/common/repos/ChatMessageRepository.class
 com/neria/manager/common/entities/TenantServiceSurveyQuestion.class
 com/neria/manager/pricing/PricingController.class
+com/neria/manager/clinicflow/controllers/ClinicFlowAdminController.class
 com/neria/manager/adapters/AdaptersService.class
 com/neria/manager/common/entities/ApiKey.class
 com/neria/manager/clinicflow/services/ClinicFlowService$ClinicServiceResponse.class
@@ -96,6 +99,7 @@ com/neria/manager/common/entities/DbConnection.class
 com/neria/manager/common/entities/SubscriptionHistory.class
 com/neria/manager/surveys/SurveysService$SurveyDetail.class
 com/neria/manager/common/entities/TenantPricing.class
+com/neria/manager/clinicflow/services/ClinicUserService$ClinicUserResponse.class
 com/neria/manager/storage/TenantServiceStorageService$StorageResponse.class
 com/neria/manager/common/services/KillSwitchService$CacheEntry.class
 com/neria/manager/chatbots/ChatbotsController.class
@@ -115,12 +119,14 @@ com/neria/manager/tenantservices/TenantServicesService$JiraSettingsUpdateRequest
 com/neria/manager/common/repos/TenantServiceUserRepository.class
 com/neria/manager/common/entities/TenantServiceSelfAssessment.class
 com/neria/manager/jira/TenantServiceJiraService$1.class
+com/neria/manager/clinicflow/services/ClinicUserService$LoginResponse.class
 com/neria/manager/usage/UsageAlertsService$UsageAlert.class
 com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportInput.class
 com/neria/manager/operationsupport/OperationalSupportService$OperationalSupportSummary.class
 com/neria/manager/tenantpricing/TenantPricingService$TenantPricingResponse.class
 com/neria/manager/common/repos/PricingModelRepository.class
 com/neria/manager/common/repos/DocumentationEntryRepository.class
+com/neria/manager/clinicflow/services/ClinicUserService.class
 com/neria/manager/surveys/SurveysService$QuestionRequest.class
 com/neria/manager/taxassistant/TaxAssistantService$TaxAssistantInput.class
 com/neria/manager/common/repos/AdminPasswordResetRepository.class
@@ -181,6 +187,7 @@ com/neria/manager/storage/TenantServiceStorageService.class
 com/neria/manager/common/entities/ChatMessage.class
 com/neria/manager/common/repos/TenantServiceFileRepository.class
 com/neria/manager/common/repos/TenantInvoiceRepository.class
+com/neria/manager/clinicflow/controllers/ClinicFlowAuthController.class
 com/neria/manager/auth/TenantServiceApiKeysService.class
 com/neria/manager/common/repos/TenantPricingRepository.class
 com/neria/manager/common/entities/NotificationChannel.class
@@ -224,6 +231,7 @@ com/neria/manager/docs/DocsService.class
 com/neria/manager/taxassistant/TaxAssistantService.class
 com/neria/manager/common/repos/ServiceCatalogRepository.class
 com/neria/manager/surveys/SurveysService$SurveyRequest.class
+com/neria/manager/clinicflow/services/ClinicUserService$UpdateClinicUserRequest.class
 com/neria/manager/servicecatalog/ServiceCatalogService$UpdateServiceCatalogRequest.class
 com/neria/manager/subscriptions/SubscriptionsService.class
 com/neria/manager/documents/EmbeddingsService$2.class
@@ -258,6 +266,7 @@ com/neria/manager/auth/AdminUsersService.class
 com/neria/manager/financialsim/FinancialSimulationsController.class
 com/neria/manager/common/security/AuthContext.class
 com/neria/manager/clinicflow/repos/ClinicReportTemplateRepository.class
+com/neria/manager/clinicflow/services/ClinicUserService$ResetPasswordRequest.class
 com/neria/manager/preevaluation/PreEvaluationsService$AiPreEvaluationOutput.class
 com/neria/manager/chat/ChatService.class
 com/neria/manager/common/services/EmailService.class
@@ -266,6 +275,7 @@ com/neria/manager/chat/ChatService$ScoredEndpoint.class
 com/neria/manager/tenants/TenantsService$UpdateTenantBase.class
 com/neria/manager/policies/PoliciesService.class
 com/neria/manager/chat/ChatAuthService.class
+com/neria/manager/clinicflow/services/ClinicUserService$CreateClinicUserRequest.class
 com/neria/manager/emailautomation/TenantServiceEmailService$EmailSnapshot.class
 com/neria/manager/tenantpricing/TenantPricingService$TenantPricingUpdateRequest.class
 com/neria/manager/ocr/OcrDocumentsService$CreateOcrDocumentRequest.class
@@ -355,6 +365,7 @@ com/neria/manager/common/entities/TenantServiceJira.class
 com/neria/manager/common/entities/Policy.class
 com/neria/manager/common/repos/WebhookRepository.class
 com/neria/manager/surveys/SurveysService$SurveyQuestionResponse.class
+com/neria/manager/clinicflow/repos/ClinicUserRepository.class
 com/neria/manager/financialsim/FinancialSimulationsService.class
 com/neria/manager/storage/TenantServiceStorageService$1.class
 com/neria/manager/runtime/RuntimeController.class
