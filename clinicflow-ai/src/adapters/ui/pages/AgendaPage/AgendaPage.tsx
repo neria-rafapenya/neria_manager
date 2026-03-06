@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DayPicker, type DateRange } from "react-day-picker";
+import { type DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 import { weekdayOptions } from "./constants/weekdayOptions";
