@@ -7,7 +7,11 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { AuthUser, LoginRequest, RegisterRequest } from "../../core/domain/auth";
+import type {
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
+} from "../../core/domain/auth";
 import { AuthService } from "../../core/application/services/AuthService";
 import { AuthRepository } from "../repositories/AuthRepository";
 import { ApiError } from "../api/api";
@@ -142,7 +146,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setError("");
     try {
       const apiKey = getServiceApiKey();
-      const tenantId = getTenantId();
 
       if (!apiKey) {
         setError("Falta VITE_API_KEY para este servicio.");

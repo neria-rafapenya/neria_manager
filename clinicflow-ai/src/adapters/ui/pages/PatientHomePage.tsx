@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { patientApi } from "../../../infrastructure/api/clinicflowApi";
 import { Modal } from "../components/shared/Modal";
 import { ChatBotFAQs } from "../components/ChatBotFAQs";
