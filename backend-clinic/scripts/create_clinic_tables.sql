@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS clinic_users (
   tenantId VARCHAR(36) NOT NULL,
   email VARCHAR(160) NOT NULL,
   name VARCHAR(120) NULL,
+  avatarUrl VARCHAR(512) NULL,
   role VARCHAR(32) NOT NULL,
   status VARCHAR(16) NOT NULL,
   passwordHash VARCHAR(255) NULL,
@@ -114,6 +115,23 @@ CREATE TABLE IF NOT EXISTS clinic_patient_interactions (
   updatedAt DATETIME NULL,
   KEY idx_clinic_patient_tenant (tenantId),
   KEY idx_clinic_patient_user (patientUserId)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_patient_preferences (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  preferredTimeOfDay VARCHAR(32) NULL,
+  preferredPractitionerName VARCHAR(120) NULL,
+  preferredTreatment VARCHAR(160) NULL,
+  preferredDays JSON NULL,
+  unavailableDays JSON NULL,
+  notes TEXT NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  UNIQUE KEY uq_clinic_patient_prefs (tenantId, patientUserId),
+  KEY idx_clinic_patient_prefs_tenant (tenantId),
+  KEY idx_clinic_patient_prefs_user (patientUserId)
 );
 
 CREATE TABLE IF NOT EXISTS clinic_patient_appointments (
@@ -157,10 +175,114 @@ CREATE TABLE IF NOT EXISTS clinic_patient_treatments (
   status VARCHAR(32) NULL,
   nextStep VARCHAR(180) NULL,
   notes TEXT NULL,
+  reportTitle VARCHAR(180) NULL,
+  reportText TEXT NULL,
+  reportFileUrl VARCHAR(512) NULL,
+  reportFileName VARCHAR(255) NULL,
+  reportFileMime VARCHAR(120) NULL,
   startedAt DATETIME NULL,
   completedAt DATETIME NULL,
   createdAt DATETIME NULL,
   updatedAt DATETIME NULL,
   KEY idx_clinic_patient_treatment_tenant (tenantId),
   KEY idx_clinic_patient_treatment_user (patientUserId)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_patient_treatment_reports (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  treatmentId VARCHAR(36) NOT NULL,
+  title VARCHAR(180) NULL,
+  text TEXT NULL,
+  fileUrl VARCHAR(512) NULL,
+  fileName VARCHAR(255) NULL,
+  fileMime VARCHAR(120) NULL,
+  createdByUserId VARCHAR(36) NULL,
+  createdByName VARCHAR(160) NULL,
+  createdAt DATETIME NULL,
+  KEY idx_clinic_treatment_reports_tenant (tenantId),
+  KEY idx_clinic_treatment_reports_treatment (treatmentId)
+);
+
+
+CREATE TABLE IF NOT EXISTS clinic_availability (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  startAt DATETIME NOT NULL,
+  endAt DATETIME NOT NULL,
+  serviceCode VARCHAR(80) NULL,
+  practitionerName VARCHAR(120) NULL,
+  status VARCHAR(32) NULL,
+  reservedByPatientUserId VARCHAR(36) NULL,
+  reservedByPatientEmail VARCHAR(160) NULL,
+  reservedByPatientName VARCHAR(160) NULL,
+  reservedAppointmentId VARCHAR(36) NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_availability_tenant (tenantId),
+  KEY idx_clinic_availability_time (startAt, endAt)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_time_off (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  startDate DATE NOT NULL,
+  endDate DATE NOT NULL,
+  startAt DATETIME NULL,
+  endAt DATETIME NULL,
+  reason VARCHAR(255) NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_time_off_tenant (tenantId),
+  KEY idx_clinic_time_off_range (startDate, endDate)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_holidays (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  date DATE NOT NULL,
+  name VARCHAR(180) NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_holidays_tenant (tenantId),
+  KEY idx_clinic_holidays_date (date)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_prompts (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  `key` VARCHAR(80) NOT NULL,
+  content TEXT NOT NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_prompts_tenant (tenantId),
+  KEY idx_clinic_prompts_key (`key`)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_faq_logs (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  createdAt DATETIME NULL,
+  KEY idx_clinic_faq_logs_tenant (tenantId),
+  KEY idx_clinic_faq_logs_patient (patientUserId)
+);
+
+CREATE TABLE IF NOT EXISTS clinic_faq_handoffs (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  patientUserId VARCHAR(36) NOT NULL,
+  patientEmail VARCHAR(180) NULL,
+  patientName VARCHAR(180) NULL,
+  status VARCHAR(40) NULL,
+  messages JSON NULL,
+  responseText TEXT NULL,
+  respondedByUserId VARCHAR(36) NULL,
+  respondedByName VARCHAR(180) NULL,
+  requestedAt DATETIME NULL,
+  respondedAt DATETIME NULL,
+  createdAt DATETIME NULL,
+  updatedAt DATETIME NULL,
+  KEY idx_clinic_faq_handoffs_tenant (tenantId),
+  KEY idx_clinic_faq_handoffs_patient (patientUserId)
 );

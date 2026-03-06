@@ -21,4 +21,23 @@ export class AiService {
       temperature: 0.2,
     });
   }
+
+  async chatJson<T>(
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+    fallback: T,
+  ): Promise<T> {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+    });
+    const content = response.choices?.[0]?.message?.content ?? "";
+    if (!content) return fallback;
+    try {
+      return JSON.parse(content) as T;
+    } catch {
+      return fallback;
+    }
+  }
 }

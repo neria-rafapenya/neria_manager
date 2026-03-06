@@ -7,7 +7,7 @@ export const NotFoundPage = () => {
         <p className="eyebrow">404</p>
         <h2>Ruta no disponible</h2>
         <p className="muted">Vuelve al panel para continuar.</p>
-        <Link to="/" className="btn btn-primary">
+        <Link to="/" className="btn btn-primary btn-normal">
           Volver al dashboard
         </Link>
       </div>

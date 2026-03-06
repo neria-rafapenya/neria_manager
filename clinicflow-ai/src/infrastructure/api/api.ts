@@ -3,6 +3,7 @@ import {
   getAuthToken,
   getServiceApiKey,
   getTenantId,
+  setAuthToken,
 } from "../config/env";
 
 export class ApiError extends Error {
@@ -128,6 +129,12 @@ export async function fetchWithAuth<T = unknown>(
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      setAuthToken(null);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("clinicflow:auth-expired"));
+      }
+    }
     const messageFromBody =
       (json as any)?.message ||
       (json as any)?.error ||

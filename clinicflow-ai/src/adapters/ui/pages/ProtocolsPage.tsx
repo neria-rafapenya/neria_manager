@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { Tag } from "../components/Tag";
-import { clinicflowApi } from "../../../infrastructure/api/clinicflowApi";
+import { clinicflowApi, staffApi } from "../../../infrastructure/api/clinicflowApi";
 
 interface ProtocolItem {
   id: string;
@@ -23,19 +23,25 @@ export const ProtocolsPage = () => {
   const [protocols, setProtocols] = useState<ProtocolItem[]>([]);
   const [faqEntries, setFaqEntries] = useState<FaqItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [promptContent, setPromptContent] = useState("");
+  const [promptUpdatedAt, setPromptUpdatedAt] = useState<string | null>(null);
+  const [promptSaving, setPromptSaving] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       setError(null);
       try {
-        const [protocolList, faqList] = await Promise.all([
+        const [protocolList, faqList, prompt] = await Promise.all([
           clinicflowApi.listProtocols(),
           clinicflowApi.listFaq(),
+          staffApi.getPrompt("faq_chat"),
         ]);
         if (!mounted) return;
         setProtocols((protocolList as ProtocolItem[]) || []);
         setFaqEntries((faqList as FaqItem[]) || []);
+        setPromptContent(prompt?.content || "");
+        setPromptUpdatedAt(prompt?.updatedAt || null);
       } catch (err: any) {
         if (!mounted) return;
         setError(err.message || "No se pudieron cargar los protocolos.");
@@ -56,6 +62,31 @@ export const ProtocolsPage = () => {
       owner: protocol.approvedBy || "Equipo clínico",
     }));
   }, [protocols]);
+
+  const handleSavePrompt = async () => {
+    setPromptSaving(true);
+    try {
+      const updated = await staffApi.updatePrompt("faq_chat", promptContent);
+      setPromptUpdatedAt(updated?.updatedAt || new Date().toISOString());
+    } catch (err: any) {
+      setError(err?.message || "No se pudo guardar el prompt.");
+    } finally {
+      setPromptSaving(false);
+    }
+  };
+
+  const formatUpdatedAt = () => {
+    if (!promptUpdatedAt) return "Sin guardar todavía";
+    const date = new Date(promptUpdatedAt);
+    if (Number.isNaN(date.getTime())) return promptUpdatedAt;
+    return date.toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const faqRows = useMemo(() => {
     return faqEntries.map((entry) => ({
@@ -143,6 +174,32 @@ export const ProtocolsPage = () => {
           <li>Revisión médica pendiente</li>
           <li>Política de retención definida</li>
         </ul>
+      </section>
+
+      <section className="card">
+        <h3>Prompt del chat FAQ</h3>
+        <p className="muted">
+          Ajusta el tono y las reglas del asistente. No incluyas datos
+          personales ni diagnósticos definitivos.
+        </p>
+        <div className="form-field">
+          <label>Prompt activo</label>
+          <textarea
+            rows={8}
+            value={promptContent}
+            onChange={(event) => setPromptContent(event.target.value)}
+          />
+        </div>
+        <div className="summary-actions">
+          <button
+            className="btn btn-primary btn-normal"
+            onClick={handleSavePrompt}
+            disabled={promptSaving}
+          >
+            {promptSaving ? "Guardando..." : "Guardar cambios"}
+          </button>
+          <span className="muted">Última actualización: {formatUpdatedAt()}</span>
+        </div>
       </section>
     </div>
   );

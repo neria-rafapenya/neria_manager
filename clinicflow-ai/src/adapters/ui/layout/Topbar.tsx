@@ -1,11 +1,19 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { useAuthContext } from "../../../infrastructure/contexts/AuthContext";
-import { IconExit } from "../components/shared/icons";
-import { getRolePermissions, normalizeClinicRole } from "../../../core/domain/roles";
+import { IconExit, IconFacebook, IconGoogle } from "../components/shared/icons";
+import {
+  getRolePermissions,
+  normalizeClinicRole,
+} from "../../../core/domain/roles";
+import { LogoClinica } from "../components/LogoClinica";
 
 const navItems = [
   { label: "Dashboard", to: "/", permission: "canViewDashboard" },
-  { label: "Conversaciones", to: "/conversaciones", permission: "canViewConversations" },
+  {
+    label: "Conversaciones",
+    to: "/conversaciones",
+    permission: "canViewConversations",
+  },
   { label: "Agenda", to: "/agenda", permission: "canViewAgenda" },
   { label: "Pacientes", to: "/pacientes", permission: "canViewPatients" },
   { label: "Protocolos", to: "/protocolos", permission: "canViewProtocols" },
@@ -15,23 +23,33 @@ const navItems = [
   { label: "Admin", to: "/admin", permission: "canViewAdmin" },
 ] as const;
 
-const patientNavItems = [{ label: "Mi área", to: "/paciente" }];
+const patientNavItems = [
+  { label: "Mi área", to: "/paciente" },
+  { label: "Reservar cita", to: "/paciente/visitas" },
+  { label: "Mi perfil", to: "/paciente/ajustes" },
+];
 
 type PermissionKey = (typeof navItems)[number]["permission"];
 
 export const Topbar = () => {
-  const { user, logout } = useAuthContext();
+  const { user, token, logout, loginWithProvider } = useAuthContext();
   const permissions = getRolePermissions(normalizeClinicRole(user?.role));
-  const activeItems = permissions.isPatient
-    ? patientNavItems
-    : navItems.filter((item) => permissions[item.permission as PermissionKey]);
+  const activeItems = !token
+    ? [{ label: "Reservar cita", to: "/paciente/visitas" }]
+    : permissions.isPatient
+      ? patientNavItems
+      : navItems.filter(
+          (item) => permissions[item.permission as PermissionKey],
+        );
 
   return (
-    <nav className="navbar navbar-light bg-white border-bottom topbar">
+    <nav className="navbar navbar-light bg-white topbar">
       <div className="container-fluid">
         {/* BRAND */}
         <div className="navbar-brand d-flex align-items-center gap-3 m-0">
-          <div className="brand-mark">CF</div>
+          <div className="brand-mark ms-4">
+            <LogoClinica />
+          </div>
           <div>
             <p className="topbar-title mb-0">Neria Clinic</p>
           </div>
@@ -54,7 +72,7 @@ export const Topbar = () => {
               <li key={item.to} className="nav-item">
                 <NavLink
                   to={item.to}
-                  end={item.to === "/"}
+                  end={item.to === "/" || item.to === "/paciente"}
                   className={({ isActive }) =>
                     `nav-link${isActive ? " active" : ""}`
                   }
@@ -68,15 +86,40 @@ export const Topbar = () => {
 
         {/* USER */}
         <div className="d-none d-xl-flex align-items-center gap-2">
-          <span className="topbar-user-label">{user?.email ?? ""}</span>
-
-          <button
-            className="btn-ghost p-0 m-0 ms-2"
-            onClick={logout}
-            type="button"
-          >
-            <IconExit className="icon-style" />
-          </button>
+          {token ? (
+            <>
+              <span className="topbar-user-label">{user?.email ?? ""}</span>
+              <button
+                className="btn-ghost p-0 m-0 ms-2"
+                onClick={logout}
+                type="button"
+              >
+                <IconExit className="icon-style" />
+              </button>
+            </>
+          ) : (
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-google"
+                type="button"
+                onClick={() => loginWithProvider("google")}
+              >
+                <IconGoogle />
+                Google
+              </button>
+              <button
+                className="btn btn-facebook"
+                type="button"
+                onClick={() => loginWithProvider("facebook")}
+              >
+                <IconFacebook />
+                Facebook
+              </button>
+              <Link className="btn secondary" to="/">
+                Acceder
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -116,14 +159,44 @@ export const Topbar = () => {
           <div className="flex-grow-1" />
 
           <div className="pt-3 border-top">
-            <button
-              className="btn btn-outline-secondary w-100"
-              type="button"
-              data-bs-dismiss="offcanvas"
-              onClick={logout}
-            >
-              Salir
-            </button>
+            {token ? (
+              <button
+                className="btn btn-outline-secondary w-100"
+                type="button"
+                data-bs-dismiss="offcanvas"
+                onClick={logout}
+              >
+                Salir
+              </button>
+            ) : (
+              <div className="d-grid gap-2">
+                <button
+                  className="btn btn-google w-100"
+                  type="button"
+                  onClick={() => loginWithProvider("google")}
+                  data-bs-dismiss="offcanvas"
+                >
+                  <IconGoogle />
+                  Google
+                </button>
+                <button
+                  className="btn btn-facebook w-100"
+                  type="button"
+                  onClick={() => loginWithProvider("facebook")}
+                  data-bs-dismiss="offcanvas"
+                >
+                  <IconFacebook />
+                  Facebook
+                </button>
+                <Link
+                  className="btn btn-outline-secondary w-100"
+                  to="/"
+                  data-bs-dismiss="offcanvas"
+                >
+                  Acceder
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

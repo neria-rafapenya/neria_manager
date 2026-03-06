@@ -31,9 +31,9 @@ export const getRolePermissions = (role: ClinicRole) => {
     canViewReports: isManager || isStaff,
     canViewMetrics: isManager,
     canViewAdmin: isManager,
-    canManageAppointments: isManager || isStaff,
+    canManageAppointments: isManager || isStaff || isAssistant,
     canManageDocuments: isManager || isStaff,
-    canManageTreatments: isManager,
+    canManageTreatments: isManager || isStaff || isAssistant,
     canManageInteractions: isManager || isStaff || isAssistant,
   };
 };

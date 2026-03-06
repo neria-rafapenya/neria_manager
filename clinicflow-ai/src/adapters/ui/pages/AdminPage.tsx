@@ -137,7 +137,9 @@ export const AdminPage = () => {
     setBusy(true);
     setError(null);
     try {
-      await adminApi.updateServiceUser(tenantId, serviceCode, userId, { status });
+      await adminApi.updateServiceUser(tenantId, serviceCode, userId, {
+        status,
+      });
       await loadUsers();
     } catch (err: any) {
       setError(err.message || "No se pudo actualizar el usuario.");
@@ -211,7 +213,7 @@ export const AdminPage = () => {
               />
             </label>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-normal"
               onClick={handleAdminLogin}
               disabled={busy}
             >
@@ -239,7 +241,9 @@ export const AdminPage = () => {
                 <div className="list-row">
                   <div>
                     <p className="list-title">Sin usuarios asignados</p>
-                    <p className="muted">Asigna usuarios para habilitar el login.</p>
+                    <p className="muted">
+                      Asigna usuarios para habilitar el login.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -253,7 +257,7 @@ export const AdminPage = () => {
                     </div>
                     <div className="list-meta">
                       <select
-                        className="select"
+                        className="form-select"
                         value={assignment.status || "active"}
                         onChange={(event) =>
                           handleUpdateAssignment(
@@ -268,7 +272,9 @@ export const AdminPage = () => {
                       </select>
                       <button
                         className="btn btn-ghost"
-                        onClick={() => handleRemoveAssignment(assignment.userId)}
+                        onClick={() =>
+                          handleRemoveAssignment(assignment.userId)
+                        }
                       >
                         Quitar
                       </button>
@@ -308,7 +314,7 @@ export const AdminPage = () => {
                 />
               </label>
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-normal"
                 onClick={handleCreateUser}
                 disabled={busy}
               >

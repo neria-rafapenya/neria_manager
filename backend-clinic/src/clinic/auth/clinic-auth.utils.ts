@@ -5,6 +5,7 @@ export interface ClinicJwtPayload {
   tenantId: string;
   role: string;
   clinicRole?: string;
+  name?: string;
 }
 
 export const normalizeClinicRole = (role?: string | null): string => {

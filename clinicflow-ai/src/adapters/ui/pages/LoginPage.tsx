@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useAuthContext } from "../../../infrastructure/contexts/AuthContext";
+import { RegisterModal } from "../components/shared/RegisterModal";
+import { IconGoogle, IconFacebook } from "../components/shared/icons";
 
 export const LoginPage = () => {
-  const { login, loading, error } = useAuthContext();
+  const { login, register, loginWithProvider, loading, error } =
+    useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: React.FormEvent | React.MouseEvent) => {
+    event?.preventDefault();
     await login({ email, password });
   };
 
@@ -43,14 +47,51 @@ export const LoginPage = () => {
             />
           </label>
           {error ? <p className="login-error">{error}</p> : null}
-          <button className="btn btn-primary" type="submit" disabled={loading}>
+          <button
+            className="btn btn-primary btn-normal"
+            type="submit"
+            disabled={loading}
+            onClick={handleSubmit}
+          >
             {loading ? "Conectando..." : "Entrar"}
+          </button>
+          <div className="d-flex gap-2">
+            <button
+              className="btn btn-google"
+              type="button"
+              onClick={() => loginWithProvider("google")}
+            >
+              <IconGoogle />
+              Continuar con Google
+            </button>
+            <button
+              className="btn btn-facebook"
+              type="button"
+              onClick={() => loginWithProvider("facebook")}
+            >
+              <IconFacebook />
+              Continuar con Facebook
+            </button>
+          </div>
+          <button
+            className="btn secondary"
+            type="button"
+            onClick={() => setIsRegisterOpen(true)}
+          >
+            Crear una cuenta
           </button>
           <p className="login-hint">
             Este acceso usa los usuarios asignados al servicio ClinicFlow.
           </p>
         </form>
       </div>
+
+      <RegisterModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        onRegister={register}
+        onSocialLogin={loginWithProvider}
+      />
     </div>
   );
 };

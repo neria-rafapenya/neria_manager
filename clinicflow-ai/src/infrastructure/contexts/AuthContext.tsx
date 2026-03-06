@@ -1,11 +1,13 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
-import type { AuthUser, LoginRequest } from "../../core/domain/auth";
+import type { AuthUser, LoginRequest, RegisterRequest } from "../../core/domain/auth";
 import { AuthService } from "../../core/application/services/AuthService";
 import { AuthRepository } from "../repositories/AuthRepository";
 import { ApiError } from "../api/api";
@@ -27,6 +29,8 @@ interface AuthContextValue {
   loading: boolean;
   error: string;
   login: (body: LoginRequest) => Promise<void>;
+  register: (body: RegisterRequest) => Promise<void>;
+  loginWithProvider: (provider: "google" | "facebook") => Promise<void>;
   logout: () => void;
 }
 
@@ -108,6 +112,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(response.user);
       persistUser(response.user);
     } catch (err: unknown) {
+      console.error("[clinicflow auth] login error", err);
       if (err instanceof ApiError) {
         if (err.status === 0) {
           setError("No se ha podido conectar con el servidor.");
@@ -118,6 +123,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
           setError(err.message || "Error al iniciar sesión.");
         }
+      } else if (err instanceof Error) {
+        setError(err.message || "Error al iniciar sesión.");
       } else {
         setError("Error al iniciar sesión.");
       }
@@ -130,12 +137,144 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = () => {
+  const register = async (body: RegisterRequest) => {
+    setLoading(true);
+    setError("");
+    try {
+      const apiKey = getServiceApiKey();
+      const tenantId = getTenantId();
+
+      if (!apiKey) {
+        setError("Falta VITE_API_KEY para este servicio.");
+        setLoading(false);
+        return;
+      }
+      const response = await authService.register(body);
+      setToken(response.accessToken);
+      setUser(response.user);
+      persistUser(response.user);
+    } catch (err: unknown) {
+      let message = "Error al registrarse.";
+      if (err instanceof ApiError) {
+        if (err.status === 0) {
+          message = "No se ha podido conectar con el servidor.";
+        } else if (err.status === 409) {
+          message = "El email ya está registrado.";
+        } else {
+          message = err.message || "Error al registrarse.";
+        }
+      } else {
+        message = "Error al registrarse.";
+      }
+      setError(message);
+      setToken(null);
+      setUser(null);
+      setAuthToken(null);
+      persistUser(null);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithProvider = async (provider: "google" | "facebook") => {
+    if (typeof window === "undefined") return;
+    setLoading(true);
+    setError("");
+    try {
+      const tenantId = getTenantId();
+      if (!tenantId) {
+        throw new Error("Missing tenant");
+      }
+      const baseUrl = getApiBaseUrl();
+      const origin = new URL(baseUrl).origin;
+      const width = 520;
+      const height = 640;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      const url = `${baseUrl}/clinicflow/auth/${provider}?tenantId=${encodeURIComponent(
+        tenantId,
+      )}`;
+      const popup = window.open(
+        url,
+        `clinicflow-${provider}`,
+        `width=${width},height=${height},left=${left},top=${top}`,
+      );
+      if (!popup) {
+        throw new Error("No se pudo abrir la ventana de acceso.");
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const handleMessage = (event: MessageEvent) => {
+          if (event.origin !== origin) return;
+          const payload = event.data;
+          if (payload?.type === "clinicflow:auth-success") {
+            const auth = payload.data;
+            setAuthToken(auth.accessToken);
+            setToken(auth.accessToken);
+            setUser(auth.user);
+            persistUser(auth.user);
+            cleanup();
+            resolve();
+          }
+          if (payload?.type === "clinicflow:auth-error") {
+            const message = payload?.data?.message || "No se pudo autenticar.";
+            cleanup();
+            reject(new Error(message));
+          }
+        };
+
+        const timer = window.setInterval(() => {
+          if (popup.closed) {
+            cleanup();
+            reject(new Error("Ventana cerrada."));
+          }
+        }, 400);
+
+        const cleanup = () => {
+          window.removeEventListener("message", handleMessage);
+          window.clearInterval(timer);
+        };
+
+        window.addEventListener("message", handleMessage);
+      });
+    } catch (err: any) {
+      const message = err?.message || "No se pudo autenticar.";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = useCallback(() => {
     setAuthToken(null);
     setToken(null);
     setUser(null);
     persistUser(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleAuthExpired = () => {
+      setError("La sesión ha expirado. Vuelve a iniciar sesión.");
+      window.dispatchEvent(
+        new CustomEvent("clinicflow:toast", {
+          detail: {
+            title: "Sesión caducada",
+            message: "Tu sesión ha expirado. Vuelve a iniciar sesión.",
+            variant: "warning",
+          },
+        }),
+      );
+      logout();
+      window.history.replaceState(null, "", "/");
+    };
+    window.addEventListener("clinicflow:auth-expired", handleAuthExpired);
+    return () => {
+      window.removeEventListener("clinicflow:auth-expired", handleAuthExpired);
+    };
+  }, [logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -144,6 +283,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       loading,
       error,
       login,
+      register,
+      loginWithProvider,
       logout,
     }),
     [user, token, loading, error],

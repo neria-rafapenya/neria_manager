@@ -14,6 +14,9 @@ export class ClinicUserEntity {
   @Column({ type: "varchar", length: 120, nullable: true })
   name!: string | null;
 
+  @Column({ type: "varchar", length: 512, nullable: true })
+  avatarUrl!: string | null;
+
   @Column({ type: "varchar", length: 32 })
   role!: string;
 

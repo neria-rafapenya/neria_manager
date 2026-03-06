@@ -21,8 +21,10 @@ export const DashboardPage = () => {
             informes con protocolos clínicos.
           </p>
           <div className="hero-actions">
-            <button className="btn btn-primary">Crear flujo de triaje</button>
-            <button className="btn btn-ghost">Ver métricas</button>
+            <button className="btn btn-primary btn-normal">
+              Crear flujo de triaje
+            </button>
+            <button className="btn btn-secondary">Ver métricas</button>
           </div>
         </div>
         <div className="hero-panel">

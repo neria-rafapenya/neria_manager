@@ -25,7 +25,12 @@ export const AppShell = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = document.documentElement.scrollTop;
-      setScrolled(scrollTop > 20);
+      setScrolled((prev) => {
+        if (prev) {
+          return scrollTop > 8;
+        }
+        return scrollTop > 24;
+      });
     };
 
     document.addEventListener("scroll", handleScroll);

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { ClinicUserEntity } from "./entities/clinic-user.entity";
 import { PasswordService } from "./auth/password.service";
 import { randomUUID } from "crypto";
@@ -22,6 +22,7 @@ export interface ClinicUserCreateDto {
 export interface ClinicUserUpdateDto {
   name?: string;
   email?: string;
+  avatarUrl?: string | null;
   role?: string;
   status?: string;
   mustChangePassword?: boolean;
@@ -47,6 +48,20 @@ export class ClinicUserService {
   async listPatients(tenantId: string) {
     const rows = await this.users.find({ where: { tenantId }, order: { createdAt: "DESC" } });
     return rows.filter((user) => user.role?.toLowerCase() === "patient");
+  }
+
+  async searchPatients(tenantId: string, query: string, limit = 12) {
+    const term = query.trim().toLowerCase();
+    if (!term) return [];
+    const like = `%${term}%`;
+    return this.users
+      .createQueryBuilder("u")
+      .where("u.tenantId = :tenantId", { tenantId })
+      .andWhere("LOWER(u.role) = 'patient'")
+      .andWhere("(LOWER(u.name) LIKE :like OR LOWER(u.email) LIKE :like)", { like })
+      .orderBy("u.createdAt", "DESC")
+      .limit(limit)
+      .getMany();
   }
 
   async create(tenantId: string, dto: ClinicUserCreateDto) {
@@ -92,6 +107,7 @@ export class ClinicUserService {
       }
     }
     if (dto.name !== undefined) user.name = dto.name ?? null;
+    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl ?? null;
     if (dto.role) user.role = dto.role;
     if (dto.status) user.status = dto.status;
     if (dto.mustChangePassword !== undefined) {
@@ -115,6 +131,28 @@ export class ClinicUserService {
     return this.users.save(user);
   }
 
+  async changePassword(
+    tenantId: string,
+    id: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException("Missing password");
+    }
+    const user = await this.users.findOne({ where: { tenantId, id } });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    if (!this.passwordService.matches(currentPassword, user.passwordHash)) {
+      throw new BadRequestException("Invalid password");
+    }
+    user.passwordHash = this.passwordService.hash(newPassword);
+    user.mustChangePassword = false;
+    user.updatedAt = new Date();
+    return this.users.save(user);
+  }
+
   async delete(tenantId: string, id: string) {
     const user = await this.users.findOne({ where: { tenantId, id } });
     if (!user) {
@@ -129,5 +167,10 @@ export class ClinicUserService {
       throw new NotFoundException("User not found");
     }
     return user;
+  }
+
+  async listByIds(tenantId: string, ids: string[]) {
+    if (!ids.length) return [];
+    return this.users.find({ where: { tenantId, id: In(ids) } });
   }
 }

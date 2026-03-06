@@ -23,6 +23,21 @@ export class ClinicPatientTreatmentEntity {
   @Column({ type: "text", nullable: true })
   notes!: string | null;
 
+  @Column({ type: "varchar", length: 180, nullable: true })
+  reportTitle!: string | null;
+
+  @Column({ type: "text", nullable: true })
+  reportText!: string | null;
+
+  @Column({ type: "varchar", length: 512, nullable: true })
+  reportFileUrl!: string | null;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  reportFileName!: string | null;
+
+  @Column({ type: "varchar", length: 120, nullable: true })
+  reportFileMime!: string | null;
+
   @Column({ type: "datetime", nullable: true })
   startedAt!: Date | null;
 
