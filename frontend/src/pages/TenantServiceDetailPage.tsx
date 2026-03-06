@@ -27,7 +27,6 @@ import type {
   TenantServiceOverview,
   TenantServiceStorage,
   TenantServiceUser,
-  ClinicFlowUser,
 } from "../types";
 
 export function TenantServiceDetailPage() {
@@ -45,7 +44,6 @@ export function TenantServiceDetailPage() {
   const isPreEvaluationService = serviceCode === "pre-evaluacion";
   const isOperationalSupportService = serviceCode === "asistente-operativo";
   const isTaxAssistantService = serviceCode === "asistente-renta";
-  const isClinicFlowService = serviceCode === "clinicflow";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,17 +123,6 @@ export function TenantServiceDetailPage() {
   ]);
 
   const [serviceUsers, setServiceUsers] = useState<TenantServiceUser[]>([]);
-  const [clinicUsers, setClinicUsers] = useState<ClinicFlowUser[]>([]);
-  const [clinicUserDraft, setClinicUserDraft] = useState({
-    name: "",
-    email: "",
-    role: "manager",
-    status: "active",
-    password: "",
-    mustChangePassword: true,
-  });
-  const [clinicUserBusy, setClinicUserBusy] = useState(false);
-  const [clinicUserError, setClinicUserError] = useState<string | null>(null);
   const [chatUserModalOpen, setChatUserModalOpen] = useState(false);
   const [newChatUser, setNewChatUser] = useState({
     name: "",
@@ -560,21 +547,17 @@ export function TenantServiceDetailPage() {
         setServiceEndpointMode("create");
         setServiceAssignUserId("");
 
-        const [endpoints, users, clinicUsers] = await Promise.all([
+        const [endpoints, users] = await Promise.all([
           match.endpointsEnabled !== false
             ? api.listTenantServiceEndpoints(tenantId, serviceCode)
             : Promise.resolve([]),
           api.listTenantServiceUsers(tenantId, serviceCode),
-          isClinicFlowService
-            ? api.listClinicFlowUsers(tenantId, serviceCode)
-            : Promise.resolve([]),
         ]);
         if (!active) {
           return;
         }
         setServiceEndpoints(endpoints as TenantServiceEndpoint[]);
         setServiceUsers(users as TenantServiceUser[]);
-        setClinicUsers(clinicUsers as ClinicFlowUser[]);
         setError(null);
       } catch (err: any) {
         if (active) {
@@ -1433,122 +1416,6 @@ export function TenantServiceDetailPage() {
       setServiceBusy(false);
     }
   };
-
-  const updateClinicUserLocal = (id: string, patch: Partial<ClinicFlowUser>) => {
-    setClinicUsers((prev) =>
-      prev.map((user) => (user.id === id ? { ...user, ...patch } : user)),
-    );
-  };
-
-  const handleCreateClinicUser = async () => {
-    if (!tenantId || !serviceCode) {
-      return;
-    }
-    if (!clinicUserDraft.email.trim() || !clinicUserDraft.password.trim()) {
-      emitToast(t("Email y password son obligatorios."), "error");
-      return;
-    }
-    setClinicUserBusy(true);
-    setClinicUserError(null);
-    try {
-      const created = (await api.createClinicFlowUser(tenantId, serviceCode, {
-        name: clinicUserDraft.name.trim() || undefined,
-        email: clinicUserDraft.email.trim(),
-        role: clinicUserDraft.role,
-        status: clinicUserDraft.status,
-        password: clinicUserDraft.password,
-        mustChangePassword: clinicUserDraft.mustChangePassword,
-      })) as ClinicFlowUser;
-      setClinicUsers((prev) => [created, ...prev]);
-      setClinicUserDraft({
-        name: "",
-        email: "",
-        role: "manager",
-        status: "active",
-        password: "",
-        mustChangePassword: true,
-      });
-      emitToast(t("Usuario creado."));
-    } catch (err: any) {
-      setClinicUserError(err.message || t("No se pudo crear el usuario"));
-    } finally {
-      setClinicUserBusy(false);
-    }
-  };
-
-  const handleUpdateClinicUser = async (userId: string) => {
-    if (!tenantId || !serviceCode) {
-      return;
-    }
-    const user = clinicUsers.find((item) => item.id === userId);
-    if (!user) return;
-    setClinicUserBusy(true);
-    setClinicUserError(null);
-    try {
-      const updated = (await api.updateClinicFlowUser(tenantId, serviceCode, userId, {
-        name: user.name || undefined,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        mustChangePassword: user.mustChangePassword ?? false,
-      })) as ClinicFlowUser;
-      updateClinicUserLocal(userId, updated);
-      emitToast(t("Usuario actualizado."));
-    } catch (err: any) {
-      setClinicUserError(err.message || t("No se pudo actualizar el usuario"));
-    } finally {
-      setClinicUserBusy(false);
-    }
-  };
-
-  const handleResetClinicUserPassword = async (userId: string) => {
-    if (!tenantId || !serviceCode) {
-      return;
-    }
-    const password = window.prompt(t("Nueva contraseña"));
-    if (!password) return;
-    setClinicUserBusy(true);
-    setClinicUserError(null);
-    try {
-      await api.resetClinicFlowUserPassword(tenantId, serviceCode, userId, {
-        password,
-        mustChangePassword: true,
-      });
-      emitToast(t("Contraseña restablecida."));
-    } catch (err: any) {
-      setClinicUserError(err.message || t("No se pudo restablecer la contraseña"));
-    } finally {
-      setClinicUserBusy(false);
-    }
-  };
-
-  const handleDeleteClinicUser = async (userId: string) => {
-    if (!tenantId || !serviceCode) {
-      return;
-    }
-    const result = await Swal.fire({
-      title: t("¿Eliminar usuario?"),
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: t("Eliminar"),
-      cancelButtonText: t("Cancelar"),
-    });
-    if (!result.isConfirmed) {
-      return;
-    }
-    setClinicUserBusy(true);
-    setClinicUserError(null);
-    try {
-      await api.deleteClinicFlowUser(tenantId, serviceCode, userId);
-      setClinicUsers((prev) => prev.filter((item) => item.id !== userId));
-      emitToast(t("Usuario eliminado."));
-    } catch (err: any) {
-      setClinicUserError(err.message || t("No se pudo eliminar el usuario"));
-    } finally {
-      setClinicUserBusy(false);
-    }
-  };
-
 
   const handleSelectConversation = async (conversationId: string) => {
     if (!tenantId) {
@@ -3141,339 +3008,110 @@ export function TenantServiceDetailPage() {
             <div>
               <h4 id="section-users">{t("Usuarios asignados")}</h4>
             </div>
-            {isClinicFlowService ? (
-              <>
-                <div className="row g-3 form-grid-13">
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Nombre")}
-                      <input
-                        className="form-control"
-                        value={clinicUserDraft.name}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            name: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Correo")}
-                      <input
-                        className="form-control"
-                        type="email"
-                        value={clinicUserDraft.email}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            email: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Contraseña inicial")}
-                      <input
-                        className="form-control"
-                        type="password"
-                        value={clinicUserDraft.password}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            password: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Rol")}
-                      <select
-                        className="form-select"
-                        value={clinicUserDraft.role}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            role: event.target.value,
-                          }))
-                        }
-                      >
-                        <option value="manager">{t("Gestor")}</option>
-                        <option value="staff">{t("Personal")}</option>
-                        <option value="assistant">{t("Asistente")}</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Estado")}
-                      <select
-                        className="form-select"
-                        value={clinicUserDraft.status}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            status: event.target.value,
-                          }))
-                        }
-                      >
-                        <option value="active">{t("Activo")}</option>
-                        <option value="inactive">{t("Inactivo")}</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Forzar cambio de contraseña")}
-                      <select
-                        className="form-select"
-                        value={clinicUserDraft.mustChangePassword ? "yes" : "no"}
-                        onChange={(event) =>
-                          setClinicUserDraft((prev) => ({
-                            ...prev,
-                            mustChangePassword: event.target.value === "yes",
-                          }))
-                        }
-                      >
-                        <option value="yes">{t("Sí")}</option>
-                        <option value="no">{t("No")}</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-
-                {clinicUserError ? (
-                  <div className="error-banner">{clinicUserError}</div>
-                ) : null}
-
-                <div className="row">
-                  <div className="col-12 text-end">
-                    <button
-                      className="btn primary"
-                      onClick={handleCreateClinicUser}
-                      disabled={
-                        clinicUserBusy ||
-                        !clinicUserDraft.email.trim() ||
-                        !clinicUserDraft.password.trim()
-                      }
-                    >
-                      {clinicUserBusy ? t("Guardando...") : t("Crear usuario")}
-                    </button>
-                  </div>
-                </div>
-
-                <DataTable
-                  columns={[
-                    {
-                      key: "name",
-                      label: t("Usuario"),
-                      sortable: true,
-                      render: (row: any) => (
-                        <div>
-                          <div>{row.name || row.email}</div>
-                          <div className="muted">{row.email}</div>
-                        </div>
-                      ),
-                    },
-                    {
-                      key: "role",
-                      label: t("Rol"),
-                      render: (row: any) => (
-                        <select
-                          className="form-select"
-                          value={row.role || "staff"}
-                          onChange={(event) =>
-                            updateClinicUserLocal(row.id, {
-                              role: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="manager">{t("Gestor")}</option>
-                          <option value="staff">{t("Personal")}</option>
-                          <option value="assistant">{t("Asistente")}</option>
-                        </select>
-                      ),
-                    },
-                    {
-                      key: "status",
-                      label: t("Estado"),
-                      render: (row: any) => (
-                        <select
-                          className="form-select"
-                          value={row.status || "active"}
-                          onChange={(event) =>
-                            updateClinicUserLocal(row.id, {
-                              status: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="active">{t("Activo")}</option>
-                          <option value="inactive">{t("Inactivo")}</option>
-                        </select>
-                      ),
-                    },
-                    {
-                      key: "actions",
-                      label: t("Acciones"),
-                      render: (row: any) => (
-                        <div className="row-actions">
-                          <button
-                            className="link"
-                            onClick={() => handleUpdateClinicUser(row.id)}
-                            disabled={clinicUserBusy}
-                          >
-                            {t("Guardar")}
-                          </button>
-                          <button
-                            className="link"
-                            onClick={() => handleResetClinicUserPassword(row.id)}
-                            disabled={clinicUserBusy}
-                          >
-                            {t("Reset pass")}
-                          </button>
-                          <button
-                            className="link danger"
-                            onClick={() => handleDeleteClinicUser(row.id)}
-                            disabled={clinicUserBusy}
-                          >
-                            {t("Eliminar")}
-                          </button>
-                        </div>
-                      ),
-                    },
-                  ]}
-                  data={clinicUsers as any[]}
-                  getRowId={(row: any) => row.id}
-                  pageSize={6}
-                  filterKeys={["name", "email", "role", "status"]}
-                />
-                {clinicUsers.length === 0 && (
-                  <div className="muted">{t("Sin usuarios aún.")}</div>
+            <div className="row">
+              <div className="col-12 text-end">
+                {canManageChatUsers && (
+                  <button
+                    className="btn"
+                    onClick={() => setChatUserModalOpen(true)}
+                  >
+                    {t("Crear usuario")}
+                  </button>
                 )}
-              </>
-            ) : (
-              <>
-                <div className="row">
-                  <div className="col-12 text-end">
-                    {canManageChatUsers && (
-                      <button
-                        className="btn"
-                        onClick={() => setChatUserModalOpen(true)}
-                      >
-                        {t("Crear usuario")}
-                      </button>
-                    )}
-                  </div>
+              </div>
+            </div>
+            <div className="row g-3 form-grid-13">
+              <div className="col-12 col-md-4">
+                <label>
+                  {t("Asignar usuario existente")}
+                  <select
+                    className="form-select"
+                    value={serviceAssignUserId}
+                    onChange={(event) =>
+                      setServiceAssignUserId(event.target.value)
+                    }
+                    disabled={!canManageChatUsers}
+                  >
+                    <option value="">{t("Selecciona un usuario")}</option>
+                    {availableServiceUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="col-12 col-md-4">
+                <div className="form-actions">
+                  <button
+                    className="btn primary"
+                    onClick={handleAssignServiceUser}
+                    disabled={
+                      serviceBusy ||
+                      !serviceAssignUserId ||
+                      !canManageChatUsers
+                    }
+                  >
+                    {t("Asignar")}
+                  </button>
                 </div>
-                <div className="row g-3 form-grid-13">
-                  <div className="col-12 col-md-4">
-                    <label>
-                      {t("Asignar usuario existente")}
-                      <select
-                        className="form-select"
-                        value={serviceAssignUserId}
-                        onChange={(event) =>
-                          setServiceAssignUserId(event.target.value)
+              </div>
+            </div>
+
+            <DataTable
+              columns={[
+                {
+                  key: "name",
+                  label: t("Usuario"),
+                  sortable: true,
+                  render: (row: any) => row.name || row.email,
+                },
+                { key: "email", label: t("Email"), sortable: true },
+                {
+                  key: "status",
+                  label: t("Estado"),
+                  sortable: true,
+                  render: (row: any) => <StatusBadgeIcon status={row.status} />,
+                },
+                {
+                  key: "actions",
+                  label: t("Acciones"),
+                  render: (row: any) => (
+                    <div className="row-actions">
+                      <button
+                        className="link"
+                        onClick={() =>
+                          handleUpdateServiceUserStatus(
+                            row,
+                            row.status === "active" ? "suspended" : "active",
+                          )
                         }
                         disabled={!canManageChatUsers}
                       >
-                        <option value="">{t("Selecciona un usuario")}</option>
-                        {availableServiceUsers.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.name || user.email}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <div className="form-actions">
+                        {row.status === "active"
+                          ? t("Suspender")
+                          : t("Activar")}
+                      </button>
                       <button
-                        className="btn primary"
-                        onClick={handleAssignServiceUser}
-                        disabled={
-                          serviceBusy ||
-                          !serviceAssignUserId ||
-                          !canManageChatUsers
-                        }
+                        className="link danger"
+                        onClick={() => handleRemoveServiceUser(row)}
+                        disabled={!canManageChatUsers}
                       >
-                        {t("Asignar")}
+                        {t("Quitar")}
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                <DataTable
-                  columns={[
-                    {
-                      key: "name",
-                      label: t("Usuario"),
-                      sortable: true,
-                      render: (row: any) => row.name || row.email,
-                    },
-                    { key: "email", label: t("Email"), sortable: true },
-                    {
-                      key: "status",
-                      label: t("Estado"),
-                      sortable: true,
-                      render: (row: any) => (
-                        <StatusBadgeIcon status={row.status} />
-                      ),
-                    },
-                    {
-                      key: "actions",
-                      label: t("Acciones"),
-                      render: (row: any) => (
-                        <div className="row-actions">
-                          <button
-                            className="link"
-                            onClick={() =>
-                              handleUpdateServiceUserStatus(
-                                row,
-                                row.status === "active" ? "suspended" : "active",
-                              )
-                            }
-                            disabled={!canManageChatUsers}
-                          >
-                            {row.status === "active"
-                              ? t("Suspender")
-                              : t("Activar")}
-                          </button>
-                          <button
-                            className="link danger"
-                            onClick={() => handleRemoveServiceUser(row)}
-                            disabled={!canManageChatUsers}
-                          >
-                            {t("Quitar")}
-                          </button>
-                        </div>
-                      ),
-                    },
-                  ]}
-                  data={serviceUserRows as any[]}
-                  getRowId={(row: any) => row.userId}
-                  pageSize={6}
-                  filterKeys={["name", "email", "status"]}
-                />
-                {serviceUserRows.length === 0 && (
-                  <div className="muted">{t("Sin usuarios asignados.")}</div>
-                )}
-              </>
+                  ),
+                },
+              ]}
+              data={serviceUserRows as any[]}
+              getRowId={(row: any) => row.userId}
+              pageSize={6}
+              filterKeys={["name", "email", "status"]}
+            />
+            {serviceUserRows.length === 0 && (
+              <div className="muted">{t("Sin usuarios asignados.")}</div>
             )}
-
             <div className="section-divider" />
-
-            <h4 id="section-conversations">
-              {t("Conversaciones del servicio")}
-            </h4>
-            <div className="section-divider" />
-
             <h4 id="section-conversations">
               {t("Conversaciones del servicio")}
             </h4>

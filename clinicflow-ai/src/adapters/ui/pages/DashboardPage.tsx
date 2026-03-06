@@ -2,12 +2,17 @@ import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { Tag } from "../components/Tag";
 import { ProgressBar } from "../components/ProgressBar";
-import { kpis, tasks, conversations, appointments } from "../../../core/domain/mockData";
+import {
+  kpis,
+  tasks,
+  conversations,
+  appointments,
+} from "../../../core/domain/mockData";
 
 export const DashboardPage = () => {
   return (
     <div className="page">
-      <section className="hero card">
+      <section className="hero card ">
         <div className="hero-copy">
           <p className="eyebrow">ClinicFlow AI</p>
           <h1>Menos llamadas, más citas confirmadas.</h1>
@@ -16,8 +21,10 @@ export const DashboardPage = () => {
             informes con protocolos clínicos.
           </p>
           <div className="hero-actions">
-            <button className="btn btn-primary">Crear flujo de triaje</button>
-            <button className="btn btn-ghost">Ver métricas</button>
+            <button className="btn btn-primary btn-normal">
+              Crear flujo de triaje
+            </button>
+            <button className="btn btn-secondary">Ver métricas</button>
           </div>
         </div>
         <div className="hero-panel">
@@ -89,7 +96,9 @@ export const DashboardPage = () => {
                   <p className="muted">{conv.reason}</p>
                 </div>
                 <div className="list-meta">
-                  <Tag tone={conv.status === "Resuelto" ? "success" : "warning"}>
+                  <Tag
+                    tone={conv.status === "Resuelto" ? "success" : "warning"}
+                  >
                     {conv.status}
                   </Tag>
                   <span className="muted">{conv.channel}</span>

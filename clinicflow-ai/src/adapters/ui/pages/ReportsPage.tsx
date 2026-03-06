@@ -95,8 +95,10 @@ export const ReportsPage = () => {
             <p>Anamnesis + hallazgos + plan de tratamiento</p>
           </div>
           <div className="copy-actions">
-            <button className="btn btn-primary">Crear borrador</button>
-            <button className="btn btn-ghost">Dictado</button>
+            <button className="btn btn-primary btn-normal">
+              Crear borrador
+            </button>
+            <button className="btn btn-secondary">Dictado</button>
           </div>
         </div>
       </section>

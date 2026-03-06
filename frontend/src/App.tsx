@@ -39,7 +39,6 @@ import { TenantServiceSurveysPage } from "./pages/TenantServiceSurveysPage";
 import { TenantServiceFinancialSimulationsPage } from "./pages/TenantServiceFinancialSimulationsPage";
 import { TenantServiceSelfAssessmentsPage } from "./pages/TenantServiceSelfAssessmentsPage";
 import { TenantServiceOperationalSupportPage } from "./pages/TenantServiceOperationalSupportPage";
-import { ClinicFlowConfigPage } from "./pages/ClinicFlowConfigPage";
 import { TenantServiceTaxAssistantPage } from "./pages/TenantServiceTaxAssistantPage";
 import { TenantServicePreEvaluationsPage } from "./pages/TenantServicePreEvaluationsPage";
 import { PublicSurveyPage } from "./pages/PublicSurveyPage";
@@ -135,10 +134,6 @@ function App() {
                         defaultServiceCode="asistente-operativo"
                       />
                     }
-                  />
-                  <Route
-                    path="clients/:tenantId/clinicflow"
-                    element={<ClinicFlowConfigPage />}
                   />
                   <Route
                     path="clients/:tenantId/services/:serviceCode/surveys"
