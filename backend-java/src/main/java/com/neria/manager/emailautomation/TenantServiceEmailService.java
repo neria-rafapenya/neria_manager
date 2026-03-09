@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.Comparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -138,7 +139,18 @@ public class TenantServiceEmailService {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email account not found");
     }
     validateAccountRequest(request, false);
+    boolean credentialsChanged =
+        request.email != null && !request.email.trim().equalsIgnoreCase(account.getEmail())
+            || request.username != null && !request.username.trim().equals(account.getUsername())
+            || request.host != null && !request.host.trim().equals(account.getHost())
+            || request.folder != null
+                && (account.getFolder() == null
+                    || !request.folder.trim().equals(account.getFolder()));
     applyAccount(account, request, false);
+    if (credentialsChanged) {
+      account.setLastUid(null);
+      account.setLastSyncAt(null);
+    }
     account.setUpdatedAt(LocalDateTime.now());
     return EmailAccountResponse.fromEntity(accountRepository.save(account));
   }
@@ -162,17 +174,44 @@ public class TenantServiceEmailService {
       String tenantId, String serviceCode, int limit) {
     requireEmailAutomationService(serviceCode);
     int normalized = Math.max(1, Math.min(limit, 200));
-    return messageRepository
-        .findByTenantIdAndServiceCodeOrderByReceivedAtDesc(
-            tenantId, serviceCode, PageRequest.of(0, normalized))
-        .stream()
-        .map(EmailMessageResponse::fromEntity)
-        .toList();
+    Optional<TenantServiceEmailAccount> active =
+        resolveActiveAccount(tenantId, serviceCode);
+    if (active.isEmpty()) {
+      return List.of();
+    }
+    TenantServiceEmailAccount account = active.get();
+    LocalDateTime cutoff =
+        account.getUpdatedAt() != null ? account.getUpdatedAt() : account.getCreatedAt();
+    List<TenantServiceEmailMessage> messages;
+    if (cutoff != null) {
+      messages =
+          messageRepository.findByTenantIdAndAccountIdAndReceivedAtGreaterThanEqualOrderByReceivedAtDesc(
+              tenantId, account.getId(), cutoff, PageRequest.of(0, normalized));
+    } else {
+      messages =
+          messageRepository.findByTenantIdAndAccountIdOrderByReceivedAtDesc(
+              tenantId, account.getId(), PageRequest.of(0, normalized));
+    }
+    return messages.stream().map(EmailMessageResponse::fromEntity).toList();
   }
 
   public List<EmailMessageResponse> listMessagesForChat(
       String tenantId, String serviceCode, int limit) {
     return listMessages(tenantId, serviceCode, limit);
+  }
+
+  private Optional<TenantServiceEmailAccount> resolveActiveAccount(
+      String tenantId, String serviceCode) {
+    List<TenantServiceEmailAccount> accounts =
+        accountRepository.findByTenantIdAndServiceCodeOrderByCreatedAtDesc(tenantId, serviceCode);
+    return accounts.stream()
+        .filter(TenantServiceEmailAccount::isEnabled)
+        .sorted(
+            Comparator.comparing(
+                    TenantServiceEmailAccount::getUpdatedAt,
+                    Comparator.nullsLast(Comparator.naturalOrder()))
+                .reversed())
+        .findFirst();
   }
 
   public void syncTenantService(String tenantId, String serviceCode) {
