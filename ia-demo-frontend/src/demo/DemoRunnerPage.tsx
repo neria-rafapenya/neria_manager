@@ -97,8 +97,8 @@ export const DemoRunnerPage = () => {
       captchaEnabled: demo.captchaEnabled,
       recaptchaSiteKey: demo.recaptchaSiteKey || undefined,
       embedUrl: demo.embedUrl || undefined,
-      attachmentsEnabled: demo.attachmentsEnabled,
-      humanHandoffEnabled: demo.humanHandoffEnabled,
+      attachmentsEnabled: demo.attachmentsEnabled ?? undefined,
+      humanHandoffEnabled: demo.humanHandoffEnabled ?? undefined,
     });
     document.title = demo.name;
     setConfigReady(true);
