@@ -29,4 +29,6 @@ export const API_ENDPOINTS = {
     `/chat/email/messages?serviceCode=${encodeURIComponent(
       serviceCode
     )}&limit=${limit}`,
+  EMAIL_ACCOUNT: (serviceCode: string) =>
+    `/chat/email/account?serviceCode=${encodeURIComponent(serviceCode)}`,
 } as const;
