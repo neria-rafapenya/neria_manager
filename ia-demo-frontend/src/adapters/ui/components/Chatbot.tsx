@@ -13,7 +13,6 @@ import { getChatAuthMode } from "../../../infrastructure/config/chatConfig";
 import { useUploadManager } from "../../../infrastructure/hooks/useUploadManager";
 import type { ChatAttachment } from "../../../interfaces";
 
-
 export const Chatbot = () => {
   const { t } = useTranslation("common");
 
@@ -73,7 +72,7 @@ export const Chatbot = () => {
   }, [messages, isStreaming]);
 
   const handleFileInputChange = async (
-    event: ChangeEvent<HTMLInputElement>
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     await handleFilesSelected(files);
@@ -86,14 +85,14 @@ export const Chatbot = () => {
   const showConversationsList = authMode !== "none";
 
   const runtime = getRuntimeConfig();
-  const serviceCode = getServiceCode();
+  // const serviceCode = getServiceCode();
   const envAttachments = import.meta.env.VITE_CHATBOT_ATTACHMENTS === "true";
   const attachmentsAllowed =
     (typeof runtime?.attachmentsEnabled === "boolean"
       ? runtime.attachmentsEnabled
-      : undefined)
-      ?? envAttachments
-      ?? false;
+      : undefined) ??
+    envAttachments ??
+    false;
 
   const activeConversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,
@@ -127,12 +126,16 @@ export const Chatbot = () => {
         {messages
           .filter((msg) => msg.role !== "system")
           .map((msg) =>
-          msg.role === "user" ? (
-            <MessageHuman key={msg.id} message={msg} />
-          ) : (
-            <MessageBot key={msg.id} message={msg} isStreaming={isStreaming} />
-          )
-        )}
+            msg.role === "user" ? (
+              <MessageHuman key={msg.id} message={msg} />
+            ) : (
+              <MessageBot
+                key={msg.id}
+                message={msg}
+                isStreaming={isStreaming}
+              />
+            ),
+          )}
 
         <div ref={messagesEndRef} />
       </div>
