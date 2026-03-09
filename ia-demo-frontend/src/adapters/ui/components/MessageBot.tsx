@@ -62,6 +62,16 @@ export const MessageBot = ({ message, isStreaming }: MessageBotProps) => {
 
   const hasProductCard = !!productMeta;
 
+  if (hasProductCard) {
+    return (
+      <div className="ia-chatbot-message-row assistant">
+        <div className="ia-chatbot-message-card">
+          <CarCard product={productMeta!.product} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ia-chatbot-message-row assistant">
       <div className="ia-chatbot-message-bubble assistant">
@@ -71,11 +81,7 @@ export const MessageBot = ({ message, isStreaming }: MessageBotProps) => {
             <span className="iachat-loading-dot" />
             <span className="iachat-loading-dot" />
           </span>
-        ) : hasProductCard ? (
-          // 🔹 Mensaje de producto → SOLO card
-          <CarCard product={productMeta!.product} />
         ) : (
-          // 🔹 Mensaje normal → markdown de siempre
           markdownContent && (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}

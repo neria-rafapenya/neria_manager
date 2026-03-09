@@ -57,6 +57,7 @@ interface ChatContextValue {
   sendMessage: (text: string, attachments?: ChatAttachment[]) => Promise<void>;
   createConversation: (title: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
+  requestHandoff: (reason?: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -719,6 +720,30 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   };
 
+  const requestHandoff = async (reason?: string) => {
+    if (isEphemeral()) {
+      return;
+    }
+    setError("");
+    try {
+      let conversationId = selectedConversationId;
+      if (!conversationId) {
+        const created = await conversationService.createConversation(
+          "Atención humana"
+        );
+        conversationId = created.id;
+        setConversations((prev) => [...prev, created]);
+        setSelectedConversationId(conversationId);
+      }
+      await chatService.requestHandoff(conversationId, reason);
+      await selectConversation(conversationId);
+      await reloadConversations();
+    } catch (e) {
+      console.error(e);
+      setError("No se ha podido solicitar atención humana.");
+    }
+  };
+
   const value = useMemo<ChatContextValue>(
     () => ({
       conversations,
@@ -735,6 +760,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       sendMessage,
       createConversation,
       deleteConversation,
+      requestHandoff,
     }),
     [
       conversations,
@@ -746,6 +772,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       error,
       usageMode,
       usageRemainingMs,
+      requestHandoff,
     ]
   );
 
