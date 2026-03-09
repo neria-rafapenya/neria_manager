@@ -565,6 +565,35 @@
   }
 }
 
+.ia-chatbot-inline-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ia-chatbot-inline-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(17, 24, 39, 0.9);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+}
+
+.ia-chatbot-inline-tooltip:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Botón send: círculo blanco pegado al borde derecho */
 .ia-chatbot-send-button {
   border: none;

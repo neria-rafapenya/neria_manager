@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { PageWithDocs } from "../components/PageWithDocs";
@@ -23,6 +23,13 @@ export function TenantSupportPage() {
   const [messageDraft, setMessageDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scrollToReply, setScrollToReply] = useState(false);
+  const replyRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
+  const lastMessageIdRef = useRef<string | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   useEffect(() => {
     if (role !== "tenant" || !authTenantId || !tenantId) {
@@ -88,6 +95,27 @@ export function TenantSupportPage() {
     };
   }, [tenantId, activeConversationId, t]);
 
+  useEffect(() => {
+    if (!scrollToReply) return;
+    if (!activeConversationId) return;
+    if (replyRef.current) {
+      replyRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    setScrollToReply(false);
+  }, [scrollToReply, activeConversationId, messages.length]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    shouldAutoScrollRef.current = true;
+  }, [activeConversationId]);
+
+  const handleMessagesScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    shouldAutoScrollRef.current = distanceFromBottom < 80;
+  };
+
   const activeConversation = useMemo(
     () => handoffs.find((item) => item.id === activeConversationId) || null,
     [handoffs, activeConversationId],
@@ -131,6 +159,7 @@ export function TenantSupportPage() {
       return;
     }
     setBusy(true);
+    shouldAutoScrollRef.current = true;
     try {
       await api.addHumanChatMessage(tenantId, activeConversationId, {
         content: messageDraft.trim(),
@@ -160,6 +189,30 @@ export function TenantSupportPage() {
     return [];
   };
 
+  const visibleMessages = useMemo(
+    () => messages.filter((message) => message.role !== "system"),
+    [messages],
+  );
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    const lastMessage =
+      visibleMessages.length > 0 ? visibleMessages[visibleMessages.length - 1] : null;
+    const lastMessageId = lastMessage?.id ?? null;
+    const newMessageAdded =
+      visibleMessages.length !== lastMessageCountRef.current ||
+      (lastMessageId && lastMessageId !== lastMessageIdRef.current);
+
+    lastMessageCountRef.current = visibleMessages.length;
+    lastMessageIdRef.current = lastMessageId;
+
+    if (!newMessageAdded) return;
+    if (!shouldAutoScrollRef.current) return;
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [visibleMessages, activeConversationId]);
+
   return (
     <PageWithDocs slug="tenant-services">
       {error && <div className="error-banner">{error}</div>}
@@ -182,7 +235,16 @@ export function TenantSupportPage() {
               label: t("Conversación"),
               sortable: true,
               render: (conversation: ChatConversation) =>
-                conversation.title || t("Sin título"),
+                (
+                  <div className="handoff-title-cell">
+                    <span>{conversation.title || t("Sin título")}</span>
+                    {conversation.handoffStatus === "requested" && (
+                      <span className="handoff-badge" aria-label={t("Solicitado")}>
+                        1
+                      </span>
+                    )}
+                  </div>
+                ),
             },
             {
               key: "user",
@@ -215,7 +277,10 @@ export function TenantSupportPage() {
                 <div className="row-actions">
                   <button
                     className="link"
-                    onClick={() => setActiveConversationId(conversation.id)}
+                    onClick={() => {
+                      setActiveConversationId(conversation.id);
+                      setScrollToReply(true);
+                    }}
                     disabled={busy}
                   >
                     {t("Ver")}
@@ -244,6 +309,9 @@ export function TenantSupportPage() {
           getRowId={(conversation) => conversation.id}
           pageSize={6}
           filterKeys={["title", "userId", "handoffStatus"]}
+          rowClassName={(conversation) =>
+            conversation.handoffStatus === "requested" ? "handoff-row-new" : ""
+          }
         />
         {handoffs.length === 0 && (
           <div className="muted">{t("Sin solicitudes pendientes.")}</div>
@@ -262,8 +330,12 @@ export function TenantSupportPage() {
         </div>
         {activeConversation ? (
           <>
-            <div className="mini-list conversation-messages">
-              {messages.map((message) => {
+            <div
+              className="mini-list conversation-messages"
+              ref={messagesContainerRef}
+              onScroll={handleMessagesScroll}
+            >
+              {visibleMessages.map((message) => {
                 const attachments = parseAttachments(message.attachments);
                 return (
                   <div className="mini-row" key={message.id}>
@@ -284,11 +356,12 @@ export function TenantSupportPage() {
                   </div>
                 );
               })}
-              {messages.length === 0 && (
+              {visibleMessages.length === 0 && (
                 <div className="muted">{t("Sin mensajes.")}</div>
               )}
+              <div ref={messagesEndRef} />
             </div>
-            <div className="form-grid" style={{ marginTop: 16 }}>
+            <div className="form-grid" style={{ marginTop: 16 }} ref={replyRef}>
               <label>
                 {t("Responder como humano")}
                 <textarea
@@ -296,6 +369,12 @@ export function TenantSupportPage() {
                   rows={3}
                   value={messageDraft}
                   onChange={(event) => setMessageDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder={t("Escribe la respuesta...")}
                 />
               </label>
@@ -306,6 +385,13 @@ export function TenantSupportPage() {
                   disabled={busy || !messageDraft.trim()}
                 >
                   {t("Enviar")}
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => handleResolve(activeConversation.id)}
+                  disabled={busy}
+                >
+                  {t("Resolver")}
                 </button>
               </div>
             </div>

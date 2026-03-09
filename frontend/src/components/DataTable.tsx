@@ -15,6 +15,7 @@ type Props<T> = {
   pageSize?: number;
   filterKeys?: (keyof T | string)[];
   onRowClick?: (row: T) => void;
+  rowClassName?: (row: T) => string | undefined | null;
 };
 
 export function DataTable<T extends Record<string, any>>({
@@ -24,6 +25,7 @@ export function DataTable<T extends Record<string, any>>({
   pageSize = 8,
   filterKeys,
   onRowClick,
+  rowClassName,
 }: Props<T>) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
@@ -160,7 +162,13 @@ export function DataTable<T extends Record<string, any>>({
             <tr
               key={getRowId(row)}
               onClick={() => onRowClick?.(row)}
-              className={onRowClick ? "data-table-row clickable" : "data-table-row"}
+              className={[
+                "data-table-row",
+                onRowClick ? "clickable" : "",
+                rowClassName ? rowClassName(row) || "" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
               {columns.map((col) => {
                 const cellValue = col.render

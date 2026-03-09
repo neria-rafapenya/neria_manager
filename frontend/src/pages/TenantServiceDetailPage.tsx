@@ -50,6 +50,7 @@ export function TenantServiceDetailPage() {
   const [service, setService] = useState<TenantServiceOverview | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [pricing, setPricing] = useState<PricingEntry[]>([]);
+  const [tenantPricingIds, setTenantPricingIds] = useState<string[]>([]);
   const [policyCatalog, setPolicyCatalog] = useState<Policy[]>([]);
   const [chatUsers, setChatUsers] = useState<ChatUserSummary[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKeySummary[]>([]);
@@ -299,6 +300,13 @@ export function TenantServiceDetailPage() {
       "",
     [pricing, serviceConfigDraft.pricingId, serviceRuntimeForm.model],
   );
+  const runtimeModelOptions = useMemo(() => {
+    if (!tenantPricingIds.length) {
+      return pricing;
+    }
+    const allowed = new Set(tenantPricingIds);
+    return pricing.filter((entry) => allowed.has(entry.id));
+  }, [pricing, tenantPricingIds]);
   const canSaveServiceConfig = useMemo(
     () =>
       Boolean(
@@ -382,6 +390,7 @@ export function TenantServiceDetailPage() {
           api.getTenantServices(tenantId),
           api.getProviders(tenantId),
           api.getPricing(),
+          api.getTenantPricing(tenantId),
           api.listChatUsers(tenantId),
           api.listChatConversations(tenantId),
           api.listApiKeys(),
@@ -394,6 +403,7 @@ export function TenantServiceDetailPage() {
           servicesList,
           providerList,
           pricingList,
+          tenantPricingList,
           chatUsersList,
           chatConversationsList,
           apiKeyList,
@@ -418,6 +428,12 @@ export function TenantServiceDetailPage() {
         setService(match);
         setProviders((providerList as Provider[]) || []);
         setPricing((pricingList as PricingEntry[]) || []);
+        if (tenantPricingList && typeof tenantPricingList === "object") {
+          const raw = tenantPricingList as { pricingIds?: string[] };
+          setTenantPricingIds(Array.isArray(raw.pricingIds) ? raw.pricingIds : []);
+        } else {
+          setTenantPricingIds([]);
+        }
         setChatUsers((chatUsersList as ChatUserSummary[]) || []);
         if (chatConversationsList) {
           const filtered = (chatConversationsList as ChatConversation[]).filter(
@@ -2435,8 +2451,8 @@ export function TenantServiceDetailPage() {
               <div className="col-12 col-md-6">
                 <label>
                   {t("Modelo")}
-                  <input
-                    className="form-control"
+                  <select
+                    className="form-select"
                     value={serviceRuntimeForm.model}
                     onChange={(event) =>
                       setServiceRuntimeForm((prev) => ({
@@ -2444,9 +2460,15 @@ export function TenantServiceDetailPage() {
                         model: event.target.value,
                       }))
                     }
-                    placeholder="gpt-4o-mini"
                     disabled={!hasTenantApiKey}
-                  />
+                  >
+                    <option value="">{t("Selecciona modelo")}</option>
+                    {runtimeModelOptions.map((entry) => (
+                      <option key={entry.id} value={entry.model}>
+                        {entry.providerType} · {entry.model}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
               <div className="col-12">
