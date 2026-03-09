@@ -175,16 +175,24 @@ export const ChatInputArea = ({
       )}
 
       {handoffEnabled && (
-        <button
-          type="button"
-          className="ia-chatbot-handoff-inline-button"
-          onClick={onRequestHandoff}
-          disabled={disabled || handoffDisabled}
-          title={handoffTitle || "Iniciar chat con una persona humana"}
-          aria-label={handoffTitle || "Iniciar chat con una persona humana"}
+        <span
+          className="ia-chatbot-inline-tooltip"
+          data-tooltip={handoffTitle || "Iniciar chat con una persona humana"}
         >
-          <IconHuman size={18} color={disabled || handoffDisabled ? "#999999" : "#ffffff"} />
-        </button>
+          <button
+            type="button"
+            className="ia-chatbot-handoff-inline-button"
+            onClick={onRequestHandoff}
+            disabled={disabled || handoffDisabled}
+            title={handoffTitle || "Iniciar chat con una persona humana"}
+            aria-label={handoffTitle || "Iniciar chat con una persona humana"}
+          >
+            <IconHuman
+              size={18}
+              color={disabled || handoffDisabled ? "#999999" : "#ffffff"}
+            />
+          </button>
+        </span>
       )}
 
       {/* Botón enviar */}

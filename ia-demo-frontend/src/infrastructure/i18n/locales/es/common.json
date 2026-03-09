@@ -54,7 +54,7 @@
   "chat_attachments_uploading": "Subiendo archivos...",
   "chat_badge_text": "Beta",
   "chat_conversation_attachments_title": "Adjuntos",
-  "chat_handoff_active": "Un agente humano está atendiendo esta conversación.",
+  "chat_handoff_active": "En estos momentos un agente humano está atendiendo esta conversación.",
   "chat_handoff_button": "Hablar con un humano",
   "chat_handoff_requested": "Hemos solicitado asistencia humana. Un agente responderá en breve. Si no hay respuesta en 5 minutos, volveremos al asistente automático.",
   "chat_handoff_resolved": "La conversación ha sido resuelta. Esperamos haber satisfecho tu petición.",
