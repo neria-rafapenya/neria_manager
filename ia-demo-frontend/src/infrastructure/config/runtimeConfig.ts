@@ -20,6 +20,7 @@ export type DemoRuntimeConfig = {
   recaptchaSiteKey?: string;
   embedUrl?: string;
   attachmentsEnabled?: boolean;
+  humanHandoffEnabled?: boolean;
 };
 
 let runtimeConfig: DemoRuntimeConfig | null = null;

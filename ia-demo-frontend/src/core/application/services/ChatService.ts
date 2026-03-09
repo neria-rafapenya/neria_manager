@@ -28,4 +28,12 @@ export class ChatService {
       }
     );
   }
+
+  async requestHandoff(conversationId: string, reason?: string): Promise<void> {
+    return this.repository.requestHandoff(conversationId, reason);
+  }
+
+  async resolveHandoff(conversationId: string): Promise<void> {
+    return this.repository.resolveHandoff(conversationId);
+  }
 }

@@ -28,7 +28,9 @@
       "serviceCode": "chat-sql",
       "serviceId": "31424166-30d1-43bf-b0c1-4e3c9e33dde8",
       "chatEndpoint": "persisted",
-      "chatAuthMode": "local"
+      "chatAuthMode": "local",
+      "attachmentsEnabled": true,
+      "humanHandoffEnabled": true
     },
     {
       "code": "chat-ocr",

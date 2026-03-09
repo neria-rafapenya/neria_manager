@@ -20,6 +20,7 @@ export type DemoConfig = {
   recaptchaSiteKey?: string | null;
   embedUrl?: string | null;
   attachmentsEnabled?: boolean | null;
+  humanHandoffEnabled?: boolean | null;
 };
 
 export type DemoConfigResponse = DemoConfig[] | { demos: DemoConfig[] };

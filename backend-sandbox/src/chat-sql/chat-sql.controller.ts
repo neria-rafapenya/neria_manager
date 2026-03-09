@@ -22,12 +22,16 @@ export class ChatSqlController {
     const params: any[] = [];
 
     if (categoria) {
-      where.push("category = ?");
+      where.push("LOWER(category) = LOWER(?)");
       params.push(categoria);
     }
     if (q) {
-      where.push("(name LIKE ? OR description LIKE ?)");
-      params.push(`%${q}%`, `%${q}%`);
+      const qNormalized = q.trim().toLowerCase();
+      const qLike = `%${qNormalized}%`;
+      where.push(
+        "(LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(category) LIKE ? OR LOWER(CAST(tags AS CHAR)) LIKE ?)",
+      );
+      params.push(qLike, qLike, qLike, qLike);
     }
 
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";

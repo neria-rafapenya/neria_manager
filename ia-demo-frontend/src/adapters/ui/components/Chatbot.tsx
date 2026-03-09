@@ -28,6 +28,7 @@ export const Chatbot = () => {
     sendMessage,
     createConversation,
     deleteConversation,
+    requestHandoff,
   } = useChatContext();
 
   const [input, setInput] = useState<string>("");
@@ -94,6 +95,21 @@ export const Chatbot = () => {
       ?? envAttachments
       ?? (serviceCode ? serviceCode.includes("ocr") : false);
 
+  const activeConversation = conversations.find(
+    (conversation) => conversation.id === selectedConversationId,
+  );
+  const handoffStatus = activeConversation?.handoffStatus ?? "none";
+  const isHandoffActive =
+    handoffStatus === "requested" || handoffStatus === "active";
+  const handoffAllowed =
+    typeof runtime?.humanHandoffEnabled === "boolean"
+      ? runtime.humanHandoffEnabled
+      : import.meta.env.VITE_CHATBOT_HANDOFF === "true";
+
+  const handleRequestHandoff = async () => {
+    await requestHandoff();
+  };
+
   return (
     <div className="ia-chatbot-content">
       {showConversationsList && (
@@ -127,6 +143,25 @@ export const Chatbot = () => {
       {/* Error de subida si no está abierto el modal */}
       {uploadError && !isModalOpen && (
         <div className="ia-chatbot-error">{uploadError}</div>
+      )}
+
+      {isHandoffActive && (
+        <div className="ia-chatbot-handoff-banner">
+          {handoffStatus === "requested"
+            ? t("chat_handoff_requested")
+            : t("chat_handoff_active")}
+        </div>
+      )}
+
+      {!isHandoffActive && handoffAllowed && (
+        <button
+          type="button"
+          className="ia-chatbot-handoff-button"
+          onClick={handleRequestHandoff}
+          disabled={isStreaming || isUploading}
+        >
+          {t("chat_handoff_button")}
+        </button>
       )}
 
       {/* Input + chips de adjuntos pendientes */}
