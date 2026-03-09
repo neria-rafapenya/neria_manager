@@ -57,6 +57,7 @@
   "chat_handoff_active": "Un agente humano está atendiendo esta conversación.",
   "chat_handoff_button": "Hablar con un humano",
   "chat_handoff_requested": "Hemos solicitado asistencia humana. Un agente responderá en breve. Si no hay respuesta en 5 minutos, volveremos al asistente automático.",
+  "chat_handoff_resolved": "La conversación ha sido resuelta. Esperamos haber satisfecho tu petición.",
   "chat_header_minimize_aria": "Minimizar asistente",
   "chat_header_settings_aria": "Ajustes del asistente",
   "chat_input_attach_title": "Adjuntar archivos",

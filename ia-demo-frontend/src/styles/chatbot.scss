@@ -441,6 +441,14 @@
   line-height: 1.35;
 }
 
+.ia-chatbot-message-bubble.assistant.product-bubble {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+}
+
 .ia-chatbot-message-attachments {
   margin-top: 0.5rem;
   display: grid;
