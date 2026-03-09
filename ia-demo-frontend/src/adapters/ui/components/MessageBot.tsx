@@ -36,14 +36,20 @@ interface ProductCardMeta {
 // [[PRODUCT_CARD_META]]{...json...}[[/PRODUCT_CARD_META]]
 const PRODUCT_META_REGEX =
   /\[\[PRODUCT_CARD_META\]\](.+?)\[\[\/PRODUCT_CARD_META\]\]/s;
+const PRODUCT_RESULT_REGEX = /\[\[PRODUCT_RESULT\]\]/g;
 
 export const MessageBot = ({ message, isStreaming }: MessageBotProps) => {
   const rawContent = message.content ?? "";
   const isEmpty = !rawContent || rawContent.trim().length === 0;
+  const isHumanResponse = message.role === "human";
 
   // --- extraemos meta de producto (si existe) ---
   let productMeta: ProductCardMeta | null = null;
   let markdownContent = rawContent;
+  const hasProductResultMarker = PRODUCT_RESULT_REGEX.test(rawContent);
+  if (hasProductResultMarker) {
+    markdownContent = markdownContent.replace(PRODUCT_RESULT_REGEX, "").trim();
+  }
 
   const match = PRODUCT_META_REGEX.exec(rawContent);
   if (match) {
@@ -61,13 +67,15 @@ export const MessageBot = ({ message, isStreaming }: MessageBotProps) => {
   }
 
   const hasProductCard = !!productMeta;
+  const shouldHighlightProduct = hasProductCard || hasProductResultMarker;
 
   return (
     <div className="ia-chatbot-message-row assistant">
       <div
         className={
           "ia-chatbot-message-bubble assistant" +
-          (hasProductCard ? " product-bubble" : "")
+          (shouldHighlightProduct ? " product-bubble" : "") +
+          (isHumanResponse ? " human-response-bubble" : "")
         }
       >
         {isEmpty && isStreaming ? (

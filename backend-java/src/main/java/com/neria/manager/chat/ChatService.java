@@ -403,6 +403,14 @@ public class ChatService {
 
     Object output = runtimeResponse.get("output");
     String assistantContent = extractAssistantContent(output);
+    if (assistantContent == null) {
+      assistantContent = "";
+    }
+    if (endpointContext.hasMatches
+        && conversation.getServiceCode() != null
+        && conversation.getServiceCode().equalsIgnoreCase("chat-sql")) {
+      assistantContent = assistantContent + "\n\n[[PRODUCT_RESULT]]";
+    }
     int tokensIn = extractTokens(output, "prompt_tokens", "input_tokens");
     int tokensOut = extractTokens(output, "completion_tokens", "output_tokens");
 
@@ -1013,6 +1021,7 @@ public class ChatService {
     }
 
     context.context = String.join("\n", blocks);
+    context.hasMatches = anyMatches;
     if (!anyData && !endpoints.isEmpty()) {
       context.refuse = true;
       context.suggestion =
@@ -1503,6 +1512,7 @@ public class ChatService {
     String context = "";
     boolean refuse = false;
     String suggestion = null;
+    boolean hasMatches = false;
     List<Map<String, Object>> debug = new ArrayList<>();
   }
 
