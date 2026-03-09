@@ -62,25 +62,22 @@ export const MessageBot = ({ message, isStreaming }: MessageBotProps) => {
 
   const hasProductCard = !!productMeta;
 
-  if (hasProductCard) {
-    return (
-      <div className="ia-chatbot-message-row assistant">
-        <div className="ia-chatbot-message-card">
-          <CarCard product={productMeta!.product} />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="ia-chatbot-message-row assistant">
-      <div className="ia-chatbot-message-bubble assistant">
+      <div
+        className={
+          "ia-chatbot-message-bubble assistant" +
+          (hasProductCard ? " product-bubble" : "")
+        }
+      >
         {isEmpty && isStreaming ? (
           <span className="iachat-loading-dots">
             <span className="iachat-loading-dot" />
             <span className="iachat-loading-dot" />
             <span className="iachat-loading-dot" />
           </span>
+        ) : hasProductCard ? (
+          <CarCard product={productMeta!.product} />
         ) : (
           markdownContent && (
             <ReactMarkdown

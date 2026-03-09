@@ -57,6 +57,7 @@
   "chat_handoff_active": "Un agent humà està atenent aquesta conversa.",
   "chat_handoff_button": "Parlar amb un humà",
   "chat_handoff_requested": "Hem sol·licitat assistència humana. Un agent respondrà aviat. Si no hi ha resposta en 5 minuts, tornarem a l'assistent automàtic.",
+  "chat_handoff_resolved": "La conversa s'ha resolt. Esperem haver satisfet la teva petició.",
   "chat_header_minimize_aria": "Minimitzar l'assistent",
   "chat_header_settings_aria": "Ajustos de l'assistent",
   "chat_input_attach_title": "Adjuntar fitxers",
