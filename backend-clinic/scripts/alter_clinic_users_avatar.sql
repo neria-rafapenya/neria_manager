@@ -1,0 +1,2 @@
+ALTER TABLE clinic_users
+  ADD COLUMN avatarUrl VARCHAR(512) NULL;

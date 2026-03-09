@@ -13,4 +13,10 @@ public interface TenantServiceEmailMessageRepository
 
   List<TenantServiceEmailMessage> findByTenantIdAndServiceCodeOrderByReceivedAtDesc(
       String tenantId, String serviceCode, Pageable pageable);
+
+  List<TenantServiceEmailMessage> findByTenantIdAndAccountIdOrderByReceivedAtDesc(
+      String tenantId, String accountId, Pageable pageable);
+
+  List<TenantServiceEmailMessage> findByTenantIdAndAccountIdAndReceivedAtGreaterThanEqualOrderByReceivedAtDesc(
+      String tenantId, String accountId, java.time.LocalDateTime receivedAt, Pageable pageable);
 }

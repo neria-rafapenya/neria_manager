@@ -26,12 +26,18 @@ if [[ ! -x "$MYSQL" || ! -x "$MYSQLDUMP" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCHEMA_DIR="$SCRIPT_DIR/../backend-java/scripts"
+SCHEMA_DIRS=(
+  "$SCRIPT_DIR/../backend-java/scripts"
+  "$SCRIPT_DIR/../backend-clinic/scripts"
+  "$SCRIPT_DIR/../backend-seguros/scripts"
+)
 
-if [[ ! -d "$SCHEMA_DIR" ]]; then
-  echo "No se encontro backend-java/scripts en $SCHEMA_DIR" >&2
-  exit 1
-fi
+for dir in "${SCHEMA_DIRS[@]}"; do
+  if [[ ! -d "$dir" ]]; then
+    echo "No se encontro scripts en $dir" >&2
+    exit 1
+  fi
+done
 
 build_schema_patch() {
   local output="$1"
@@ -45,27 +51,36 @@ build_schema_patch() {
       ;;
   esac
 
-  while IFS= read -r -d '' file; do
-    scripts+=("$file")
-  done < <(find "$SCHEMA_DIR" -maxdepth 1 -type f -name 'create_*.sql' -print0)
-
-  while IFS= read -r -d '' file; do
-    if [[ "$file" == *_mysql_compat.sql ]]; then
+  for schema_dir in "${SCHEMA_DIRS[@]}"; do
+    while IFS= read -r -d '' file; do
       scripts+=("$file")
-      continue
-    fi
-    if [[ -f "${file%.sql}_mysql_compat.sql" ]]; then
-      continue
-    fi
-    scripts+=("$file")
-  done < <(find "$SCHEMA_DIR" -maxdepth 1 -type f -name 'alter_*.sql' -print0)
+    done < <(find "$schema_dir" -maxdepth 1 -type f -name '*_schema.sql' -print0)
+
+    while IFS= read -r -d '' file; do
+      scripts+=("$file")
+    done < <(find "$schema_dir" -maxdepth 1 -type f -name 'create_*.sql' -print0)
+
+    while IFS= read -r -d '' file; do
+      if [[ "$file" == *_mysql_compat.sql ]]; then
+        scripts+=("$file")
+        continue
+      fi
+      if [[ -f "${file%.sql}_mysql_compat.sql" ]]; then
+        continue
+      fi
+      scripts+=("$file")
+    done < <(find "$schema_dir" -maxdepth 1 -type f -name 'alter_*.sql' -print0)
+  done
 
   if ((${#scripts[@]} > 0)); then
     IFS=$'\n' read -r -d '' -a scripts <<< "$(printf '%s\n' "${scripts[@]}" | sort)" || true
   fi
 
   {
-    echo "-- Schema patch generado desde $SCHEMA_DIR"
+    echo "-- Schema patch generado desde:"
+    for schema_dir in "${SCHEMA_DIRS[@]}"; do
+      echo "-- - $schema_dir"
+    done
     echo "-- $(date)"
     echo
     for file in "${scripts[@]}"; do
