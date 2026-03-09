@@ -8,7 +8,6 @@ import { MessageBot } from "./MessageBot";
 import { ChatInputArea } from "./ChatInputArea";
 import { useChatContext } from "../../../infrastructure/contexts";
 import { getRuntimeConfig } from "../../../infrastructure/config/runtimeConfig";
-import { getServiceCode } from "../../../infrastructure/config/env";
 import { getChatAuthMode } from "../../../infrastructure/config/chatConfig";
 import { useUploadManager } from "../../../infrastructure/hooks/useUploadManager";
 import type { ChatAttachment } from "../../../interfaces";
