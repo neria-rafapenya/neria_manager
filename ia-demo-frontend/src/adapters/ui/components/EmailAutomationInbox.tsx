@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import DOMPurify from "dompurify";
 import { API_ENDPOINTS } from "../../../core/domain/constants/apiEndpoints";
 import { fetchWithAuth } from "../../../infrastructure/api/api";
 import { getServiceCode } from "../../../infrastructure/config/env";
@@ -27,6 +28,8 @@ export const EmailAutomationInbox = () => {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"text" | "html">("text");
+  const [showImages, setShowImages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,6 +127,20 @@ export const EmailAutomationInbox = () => {
     [filteredMessages, activeId]
   );
 
+  const activeAccountLabel = useMemo(() => {
+    if (activeMessage?.accountLabel) return activeMessage.accountLabel;
+    const fallback = filteredMessages.find((msg) => msg.accountLabel)?.accountLabel;
+    return fallback || "—";
+  }, [activeMessage, filteredMessages]);
+
+  const sanitizedHtml = useMemo(() => {
+    if (!activeMessage?.bodyHtml) return "";
+    const forbidden = showImages ? ["svg", "style"] : ["img", "svg", "style"];
+    return DOMPurify.sanitize(activeMessage.bodyHtml, {
+      FORBID_TAGS: forbidden,
+    });
+  }, [activeMessage, showImages]);
+
   return (
     <section className="email-automation-shell">
       <div className="email-automation-topbar">
@@ -131,6 +148,10 @@ export const EmailAutomationInbox = () => {
           <h2>{t("email_title")}</h2>
           <p>{t("email_subtitle")}</p>
         </div>
+        <p className="email-automation-llm-note">
+          El LLM clasifica y resume cada correo para priorizar y sugerir la
+          acción adecuada.
+        </p>
         <button
           className="ea-btn"
           type="button"
@@ -218,7 +239,12 @@ export const EmailAutomationInbox = () => {
       <div className="email-automation-grid">
         <aside className="email-automation-list">
           <div className="email-automation-list-header">
-            <span>{t("email_inbox")}</span>
+            <div>
+              <span>{t("email_inbox")}</span>
+              <span className="email-automation-account">
+                Cuenta: {normalizeLabel(activeAccountLabel)}
+              </span>
+            </div>
             <span className="email-automation-count">
               {filteredMessages.length}
             </span>
@@ -302,12 +328,56 @@ export const EmailAutomationInbox = () => {
                   {t("email_received")}: {formatDate(activeMessage.receivedAt)}
                 </span>
               </div>
-              {activeMessage.bodyPreview && (
-                <div className="email-detail-preview">
+              <div className="email-detail-preview">
+                <div className="email-detail-preview-header">
                   <h4>{t("email_preview_title")}</h4>
-                  <p>{activeMessage.bodyPreview}</p>
+                  <div className="email-view-toggle">
+                    <button
+                      className={`ea-btn ghost${viewMode === "text" ? " active" : ""}`}
+                      type="button"
+                      onClick={() => setViewMode("text")}
+                    >
+                      Texto
+                    </button>
+                    <button
+                      className={`ea-btn ghost${viewMode === "html" ? " active" : ""}`}
+                      type="button"
+                      onClick={() => setViewMode("html")}
+                    >
+                      HTML
+                    </button>
+                  </div>
+                  <label className="email-image-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showImages}
+                      onChange={(event) => setShowImages(event.target.checked)}
+                    />
+                    Mostrar imágenes
+                  </label>
                 </div>
-              )}
+                {viewMode === "html" ? (
+                  sanitizedHtml ? (
+                    <div
+                      className="email-html-preview"
+                      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+                    />
+                  ) : (
+                    <p>HTML no disponible.</p>
+                  )
+                ) : activeMessage.bodyText ? (
+                  <p>{activeMessage.bodyText}</p>
+                ) : activeMessage.bodyPreview ? (
+                  <p>{activeMessage.bodyPreview}</p>
+                ) : (
+                  <p>Sin contenido para previsualizar.</p>
+                )}
+                <p className="email-html-note">
+                  {showImages
+                    ? "Imágenes remotas habilitadas bajo demanda."
+                    : "Imágenes remotas bloqueadas por seguridad."}
+                </p>
+              </div>
               {activeMessage.jiraIssueUrl && (
                 <div className="email-detail-actions">
                   <a

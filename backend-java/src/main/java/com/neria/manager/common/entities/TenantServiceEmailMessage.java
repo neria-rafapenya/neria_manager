@@ -47,6 +47,9 @@ public class TenantServiceEmailMessage {
   @Column(name = "bodyText", columnDefinition = "text")
   private String bodyText;
 
+  @Column(name = "bodyHtml", columnDefinition = "text")
+  private String bodyHtml;
+
   @Column(name = "status", length = 32, nullable = false)
   private String status;
 
