@@ -3,8 +3,9 @@ export PROD_DB_PASSWORD="HGMFzyaCRfCcSAZPxRHlmoBvHidAKGAu"
 export INT_DB_PASSWORD="qrGmDPTJHmSmZKVEqsBkoyVQDXixgbRz"
 scripts/sync-railway-db.sh
 
-
 scripts/sync-railway-to-local.sh
+
+
 
 
 
