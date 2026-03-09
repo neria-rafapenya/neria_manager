@@ -1547,6 +1547,11 @@ export function TenantServiceDetailPage() {
                     {t("Abrir autoevaluaciones")}
                   </Link>
                 )}
+                {service?.humanHandoffEnabled && (
+                  <Link className="link" to={`/clients/${tenantId}/support`}>
+                    {t("Handoff humano")}
+                  </Link>
+                )}
               </div>
             </div>
           )}
