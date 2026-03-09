@@ -12,5 +12,8 @@ export interface EmailMessage {
   actionStatus?: string | null;
   jiraIssueKey?: string | null;
   jiraIssueUrl?: string | null;
+  bodyText?: string | null;
   bodyPreview?: string | null;
+  bodyHtml?: string | null;
+  accountLabel?: string | null;
 }

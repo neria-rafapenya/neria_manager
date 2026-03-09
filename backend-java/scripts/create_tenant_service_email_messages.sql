@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS tenant_service_email_messages (
   fromEmail VARCHAR(255) NULL,
   receivedAt TIMESTAMP NULL,
   bodyText TEXT NULL,
+  bodyHtml TEXT NULL,
   status VARCHAR(32) NOT NULL,
   intent VARCHAR(64) NULL,
   priority VARCHAR(32) NULL,

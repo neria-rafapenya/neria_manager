@@ -180,6 +180,9 @@ public class TenantServiceEmailService {
       return List.of();
     }
     TenantServiceEmailAccount account = active.get();
+    if (shouldRefreshOnList(account)) {
+      pollAccount(account);
+    }
     LocalDateTime cutoff =
         account.getUpdatedAt() != null ? account.getUpdatedAt() : account.getCreatedAt();
     List<TenantServiceEmailMessage> messages;
@@ -192,7 +195,10 @@ public class TenantServiceEmailService {
           messageRepository.findByTenantIdAndAccountIdOrderByReceivedAtDesc(
               tenantId, account.getId(), PageRequest.of(0, normalized));
     }
-    return messages.stream().map(EmailMessageResponse::fromEntity).toList();
+    String accountLabel = account.getLabel();
+    return messages.stream()
+        .map(message -> EmailMessageResponse.fromEntity(message, accountLabel))
+        .toList();
   }
 
   public List<EmailMessageResponse> listMessagesForChat(
@@ -212,6 +218,14 @@ public class TenantServiceEmailService {
                     Comparator.nullsLast(Comparator.naturalOrder()))
                 .reversed())
         .findFirst();
+  }
+
+  private boolean shouldRefreshOnList(TenantServiceEmailAccount account) {
+    LocalDateTime lastSync = account.getLastSyncAt();
+    if (lastSync == null) {
+      return true;
+    }
+    return lastSync.isBefore(LocalDateTime.now().minusSeconds(20));
   }
 
   public void syncTenantService(String tenantId, String serviceCode) {
@@ -331,6 +345,7 @@ public class TenantServiceEmailService {
       entity.setFromEmail(snapshot.fromEmail);
       entity.setReceivedAt(snapshot.receivedAt);
       entity.setBodyText(snapshot.bodyText);
+      entity.setBodyHtml(snapshot.bodyHtml);
       entity.setStatus("received");
       entity.setCreatedAt(LocalDateTime.now());
       entity.setUpdatedAt(LocalDateTime.now());
@@ -724,9 +739,13 @@ public class TenantServiceEmailService {
     public String actionStatus;
     public String jiraIssueKey;
     public String jiraIssueUrl;
+    public String bodyText;
     public String bodyPreview;
+    public String bodyHtml;
+    public String accountLabel;
 
-    public static EmailMessageResponse fromEntity(TenantServiceEmailMessage entity) {
+    public static EmailMessageResponse fromEntity(
+        TenantServiceEmailMessage entity, String accountLabel) {
       EmailMessageResponse response = new EmailMessageResponse();
       response.id = entity.getId();
       response.accountId = entity.getAccountId();
@@ -741,7 +760,10 @@ public class TenantServiceEmailService {
       response.actionStatus = entity.getActionStatus();
       response.jiraIssueKey = entity.getJiraIssueKey();
       response.jiraIssueUrl = entity.getJiraIssueUrl();
+      response.bodyText = entity.getBodyText();
       response.bodyPreview = buildPreview(entity.getBodyText());
+      response.bodyHtml = entity.getBodyHtml();
+      response.accountLabel = accountLabel;
       return response;
     }
 
@@ -764,6 +786,7 @@ public class TenantServiceEmailService {
     final String fromEmail;
     final LocalDateTime receivedAt;
     final String bodyText;
+    final String bodyHtml;
 
     private EmailSnapshot(
         String messageId,
@@ -771,13 +794,15 @@ public class TenantServiceEmailService {
         String fromName,
         String fromEmail,
         LocalDateTime receivedAt,
-        String bodyText) {
+        String bodyText,
+        String bodyHtml) {
       this.messageId = messageId;
       this.subject = subject;
       this.fromName = fromName;
       this.fromEmail = fromEmail;
       this.receivedAt = receivedAt;
       this.bodyText = bodyText;
+      this.bodyHtml = bodyHtml;
     }
 
     static EmailSnapshot from(Message message) throws Exception {
@@ -800,7 +825,9 @@ public class TenantServiceEmailService {
               ? LocalDateTime.ofInstant(received.toInstant(), ZoneOffset.UTC)
               : LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
       String bodyText = extractText(message);
-      return new EmailSnapshot(messageId, subject, fromName, fromEmail, receivedAt, bodyText);
+      String bodyHtml = extractHtml(message);
+      return new EmailSnapshot(
+          messageId, subject, fromName, fromEmail, receivedAt, bodyText, bodyHtml);
     }
 
     private static String extractText(Part part) throws Exception {
@@ -832,6 +859,24 @@ public class TenantServiceEmailService {
         }
       }
       return "";
+    }
+
+    private static String extractHtml(Part part) throws Exception {
+      if (part.isMimeType("text/html")) {
+        Object content = part.getContent();
+        return content != null ? String.valueOf(content) : null;
+      }
+      if (part.isMimeType("multipart/alternative") || part.isMimeType("multipart/*")) {
+        Multipart multipart = (Multipart) part.getContent();
+        for (int i = 0; i < multipart.getCount(); i++) {
+          Part bodyPart = multipart.getBodyPart(i);
+          if (bodyPart.isMimeType("text/html")) {
+            Object content = bodyPart.getContent();
+            return content != null ? String.valueOf(content) : null;
+          }
+        }
+      }
+      return null;
     }
   }
 
