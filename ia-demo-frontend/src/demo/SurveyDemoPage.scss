@@ -25,6 +25,21 @@
   margin: 0 0 8px;
 }
 
+.survey-ai-intro {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: #384152;
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.survey-ai-intro strong {
+  color: #111827;
+}
+
 .survey-progress {
   min-width: 220px;
   background: rgba(255, 255, 255, 0.9);

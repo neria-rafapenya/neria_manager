@@ -138,31 +138,33 @@ export const ChatInputArea = ({
         )}
 
         {/* Caja de texto */}
-        <textarea
-          ref={textareaRef}
-          className="ia-chatbot-textarea"
-          placeholder={t("chat_input_placeholder")}
-          value={value}
-          onChange={handleTextareaChange}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          style={{ borderRadius: currentRadius }}
-        />
+      <textarea
+        ref={textareaRef}
+        className="ia-chatbot-textarea"
+        placeholder={t("chat_input_placeholder")}
+        value={value}
+        onChange={handleTextareaChange}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        style={{ borderRadius: currentRadius }}
+      />
       </div>
 
       {/* Botón para abrir modal de adjuntos */}
-      <button
-        type="button"
-        className="ia-chatbot-attach-button"
-        onClick={onOpenAttachmentsModal}
-        disabled={disabled || !attachmentsEnabled}
-        title={t("chat_input_attach_title")}
-      >
-        <IconClip size={18} color={disabled ? "#999999" : "#ffffff"} />
-        {isUploadingAttachments && (
-          <span className="ia-chatbot-attach-badge">...</span>
-        )}
-      </button>
+      {attachmentsEnabled && (
+        <button
+          type="button"
+          className="ia-chatbot-attach-button"
+          onClick={onOpenAttachmentsModal}
+          disabled={disabled}
+          title={t("chat_input_attach_title")}
+        >
+          <IconClip size={18} color={disabled ? "#999999" : "#ffffff"} />
+          {isUploadingAttachments && (
+            <span className="ia-chatbot-attach-badge">...</span>
+          )}
+        </button>
+      )}
 
       {/* Botón enviar */}
       <button
