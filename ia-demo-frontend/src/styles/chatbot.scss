@@ -441,6 +441,58 @@
   line-height: 1.35;
 }
 
+.ia-chatbot-message-attachments {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ia-chatbot-message-attachment-card {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.ia-chatbot-message-attachment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #ffffff;
+}
+
+.ia-chatbot-message-attachment-preview {
+  display: block;
+  margin-top: 0.4rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ia-chatbot-message-attachment-preview img {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+}
+
+.ia-chatbot-message-attachment-preview iframe {
+  width: 100%;
+  height: 180px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.ia-chatbot-message-attachment-link {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #ffffff;
+  text-decoration: underline;
+}
+
 .ia-chatbot-message-card {
   max-width: 90%;
   width: 100%;
