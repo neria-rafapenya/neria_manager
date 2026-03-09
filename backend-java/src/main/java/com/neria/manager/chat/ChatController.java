@@ -193,6 +193,20 @@ public class ChatController {
     return emailService.listMessagesForChat(tenantId, serviceCode.trim(), limit);
   }
 
+  @GetMapping("/email/account")
+  public Object getActiveEmailAccount(
+      HttpServletRequest request,
+      @RequestParam("serviceCode") String serviceCode) {
+    String tenantId = resolveTenantId(request);
+    Claims claims = requireChatToken(request, tenantId);
+    String userId = requireUserId(claims);
+    if (serviceCode == null || serviceCode.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing serviceCode");
+    }
+    chatService.requireServiceAccess(tenantId, serviceCode.trim(), userId);
+    return emailService.getActiveAccountForChat(tenantId, serviceCode.trim());
+  }
+
   @PostMapping("/conversations")
   public Object createConversation(
       HttpServletRequest request, @RequestBody ChatService.CreateConversationRequest dto) {

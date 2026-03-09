@@ -30,6 +30,7 @@ export const EmailAutomationInbox = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"text" | "html">("text");
   const [showImages, setShowImages] = useState(false);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,10 +42,14 @@ export const EmailAutomationInbox = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchWithAuth<EmailMessage[]>(
-        API_ENDPOINTS.EMAIL_MESSAGES(serviceCode, 50)
-      );
+      const [data, account] = await Promise.all([
+        fetchWithAuth<EmailMessage[]>(
+          API_ENDPOINTS.EMAIL_MESSAGES(serviceCode, 50)
+        ),
+        fetchWithAuth<any>(API_ENDPOINTS.EMAIL_ACCOUNT(serviceCode)),
+      ]);
       setMessages(Array.isArray(data) ? data : []);
+      setAccountLabel(account?.label || account?.email || null);
     } catch (err: any) {
       setError(err?.message || t("email_error_generic"));
     } finally {
@@ -128,10 +133,11 @@ export const EmailAutomationInbox = () => {
   );
 
   const activeAccountLabel = useMemo(() => {
+    if (accountLabel) return accountLabel;
     if (activeMessage?.accountLabel) return activeMessage.accountLabel;
     const fallback = filteredMessages.find((msg) => msg.accountLabel)?.accountLabel;
     return fallback || "—";
-  }, [activeMessage, filteredMessages]);
+  }, [accountLabel, activeMessage, filteredMessages]);
 
   const sanitizedHtml = useMemo(() => {
     if (!activeMessage?.bodyHtml) return "";

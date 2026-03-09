@@ -206,6 +206,17 @@ public class TenantServiceEmailService {
     return listMessages(tenantId, serviceCode, limit);
   }
 
+  public ActiveEmailAccountResponse getActiveAccountForChat(
+      String tenantId, String serviceCode) {
+    requireEmailAutomationService(serviceCode);
+    Optional<TenantServiceEmailAccount> active =
+        resolveActiveAccount(tenantId, serviceCode);
+    if (active.isEmpty()) {
+      return null;
+    }
+    return ActiveEmailAccountResponse.fromEntity(active.get());
+  }
+
   private Optional<TenantServiceEmailAccount> resolveActiveAccount(
       String tenantId, String serviceCode) {
     List<TenantServiceEmailAccount> accounts =
@@ -218,6 +229,22 @@ public class TenantServiceEmailService {
                     Comparator.nullsLast(Comparator.naturalOrder()))
                 .reversed())
         .findFirst();
+  }
+
+  public static class ActiveEmailAccountResponse {
+    public String id;
+    public String email;
+    public String label;
+    public String folder;
+
+    public static ActiveEmailAccountResponse fromEntity(TenantServiceEmailAccount account) {
+      ActiveEmailAccountResponse response = new ActiveEmailAccountResponse();
+      response.id = account.getId();
+      response.email = account.getEmail();
+      response.label = account.getLabel();
+      response.folder = account.getFolder();
+      return response;
+    }
   }
 
   private boolean shouldRefreshOnList(TenantServiceEmailAccount account) {
