@@ -195,6 +195,33 @@ export const SurveyDemoPage = () => {
         <div>
           <h1>{demo.name}</h1>
           {demo.description && <p className="muted">{demo.description}</p>}
+          <ol className="survey-ai-intro">
+            <li>
+              <strong>Preguntas adaptativas.</strong> Ajusta el flujo según la
+              respuesta: profundiza si hay señales relevantes y acorta si ya
+              tiene lo necesario.
+            </li>
+            <li>
+              <strong>Análisis semántico de texto abierto.</strong> Agrupa y
+              sintetiza comentarios libres (temas, motivos, quejas
+              recurrentes) sin tener que leerlos uno a uno.
+            </li>
+            <li>
+              <strong>Detección de intención y sentimiento.</strong> Clasifica
+              automáticamente si el feedback es positivo/neutral/negativo y por
+              qué.
+            </li>
+            <li>
+              <strong>Insights y resúmenes ejecutivos.</strong> Genera
+              conclusiones directas: “qué duele”, “qué funciona”, “qué
+              priorizar”.
+            </li>
+            <li>
+              <strong>Alertas y prioridades.</strong> Si aparece una señal
+              crítica (“riesgo”, “queja grave”, “fuga”), la eleva como
+              prioridad.
+            </li>
+          </ol>
         </div>
         <div className="survey-progress">
           <span>Progreso de respuesta</span>

@@ -93,7 +93,7 @@ export const Chatbot = () => {
       ? runtime.attachmentsEnabled
       : undefined)
       ?? envAttachments
-      ?? (serviceCode ? serviceCode.includes("ocr") : false);
+      ?? false;
 
   const activeConversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,

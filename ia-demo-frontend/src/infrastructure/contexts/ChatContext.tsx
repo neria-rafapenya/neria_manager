@@ -488,6 +488,56 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   };
 
+  const handoffStatus = useMemo(() => {
+    if (!selectedConversationId) return "none";
+    const active = conversations.find((item) => item.id === selectedConversationId);
+    return active?.handoffStatus ?? "none";
+  }, [selectedConversationId, conversations]);
+
+  useEffect(() => {
+    if (isEphemeral()) return;
+    if (!selectedConversationId) return;
+    if (handoffStatus !== "requested" && handoffStatus !== "active") {
+      return;
+    }
+
+    let alive = true;
+    const poll = async () => {
+      if (!alive) return;
+      if (isStreaming) return;
+      try {
+        const detail = await conversationService.getConversationWithMessages(
+          selectedConversationId,
+        );
+        if (!alive) return;
+        const sortedMessages = Array.isArray(detail.messages)
+          ? [...detail.messages].sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            )
+          : [];
+        setMessages(sortedMessages);
+        if (detail && detail.id) {
+          const { messages: _messages, ...conversationDetail } = detail;
+          setConversations((prev) =>
+            prev.map((item) =>
+              item.id === detail.id ? { ...item, ...conversationDetail } : item,
+            ),
+          );
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    poll();
+    const interval = window.setInterval(poll, 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, [selectedConversationId, handoffStatus, isStreaming]);
+
   const sendMessage = async (
     text: string,
     attachments: ChatAttachment[] = []
