@@ -30,6 +30,8 @@ export const Chatbot = () => {
   } = useChatContext();
 
   const [input, setInput] = useState<string>("");
+  const [showResolvedBanner, setShowResolvedBanner] = useState(false);
+  const resolvedBannerTimeoutRef = useRef<number | null>(null);
 
   // Gestión de adjuntos
   const {
@@ -130,6 +132,33 @@ export const Chatbot = () => {
       ? runtime.humanHandoffEnabled
       : import.meta.env.VITE_CHATBOT_HANDOFF === "true";
 
+  useEffect(() => {
+    if (handoffStatus === "resolved") {
+      setShowResolvedBanner(true);
+      if (resolvedBannerTimeoutRef.current) {
+        window.clearTimeout(resolvedBannerTimeoutRef.current);
+      }
+      resolvedBannerTimeoutRef.current = window.setTimeout(() => {
+        setShowResolvedBanner(false);
+        resolvedBannerTimeoutRef.current = null;
+      }, 60_000);
+      return;
+    }
+    setShowResolvedBanner(false);
+    if (resolvedBannerTimeoutRef.current) {
+      window.clearTimeout(resolvedBannerTimeoutRef.current);
+      resolvedBannerTimeoutRef.current = null;
+    }
+  }, [handoffStatus]);
+
+  const handleDismissResolvedBanner = () => {
+    setShowResolvedBanner(false);
+    if (resolvedBannerTimeoutRef.current) {
+      window.clearTimeout(resolvedBannerTimeoutRef.current);
+      resolvedBannerTimeoutRef.current = null;
+    }
+  };
+
   const handleRequestHandoff = async () => {
     await requestHandoff();
   };
@@ -177,9 +206,17 @@ export const Chatbot = () => {
         <div className="ia-chatbot-error">{uploadError}</div>
       )}
 
-      {handoffStatus === "resolved" && (
+      {handoffStatus === "resolved" && showResolvedBanner && (
         <div className="ia-chatbot-handoff-banner">
-          {t("chat_handoff_resolved")}
+          <span>{t("chat_handoff_resolved")}</span>
+          <button
+            type="button"
+            className="ia-chatbot-handoff-close"
+            onClick={handleDismissResolvedBanner}
+            aria-label={t("common_close")}
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -189,17 +226,6 @@ export const Chatbot = () => {
             ? t("chat_handoff_requested")
             : t("chat_handoff_active")}
         </div>
-      )}
-
-      {!isHandoffActive && handoffAllowed && (
-        <button
-          type="button"
-          className="ia-chatbot-handoff-button"
-          onClick={handleRequestHandoff}
-          disabled={isStreaming || isUploading}
-        >
-          {t("chat_handoff_button")}
-        </button>
       )}
 
       {/* Input + chips de adjuntos pendientes */}
@@ -213,6 +239,10 @@ export const Chatbot = () => {
         onOpenAttachmentsModal={openModal}
         onRemoveAttachment={removeAttachment}
         isUploadingAttachments={isUploading}
+        onRequestHandoff={handleRequestHandoff}
+        handoffEnabled={handoffAllowed && !isHandoffActive}
+        handoffDisabled={isStreaming || isUploading}
+        handoffTitle={t("chat_handoff_start_title")}
       />
 
       {/* Modal de adjuntos dentro del layout/panel */}

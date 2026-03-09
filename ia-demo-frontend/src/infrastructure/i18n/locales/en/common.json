@@ -58,6 +58,7 @@
   "chat_handoff_button": "Talk to a human",
   "chat_handoff_requested": "We have requested human assistance. An agent will reply shortly. If there's no response within 5 minutes, we'll return to the automated assistant.",
   "chat_handoff_resolved": "The conversation has been resolved. We hope we have satisfied your request.",
+  "chat_handoff_start_title": "Start a chat with a human",
   "chat_header_minimize_aria": "Minimize assistant",
   "chat_header_settings_aria": "Assistant settings",
   "chat_input_attach_title": "Attach files",

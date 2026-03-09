@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import type { ChatAttachment } from "../../../interfaces";
-import { IconClip, IconSend } from "./icons";
+import { IconClip, IconHuman, IconSend } from "./icons";
 
 export interface ChatInputAreaProps {
   value: string;
@@ -20,6 +20,10 @@ export interface ChatInputAreaProps {
   onOpenAttachmentsModal: () => void;
   onRemoveAttachment: (key: string) => void;
   isUploadingAttachments: boolean;
+  onRequestHandoff?: () => void;
+  handoffEnabled?: boolean;
+  handoffDisabled?: boolean;
+  handoffTitle?: string;
 }
 
 const MIN_HEIGHT = 38; // altura mínima
@@ -40,6 +44,10 @@ export const ChatInputArea = ({
   onOpenAttachmentsModal,
   onRemoveAttachment,
   isUploadingAttachments,
+  onRequestHandoff,
+  handoffEnabled = false,
+  handoffDisabled = false,
+  handoffTitle,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation("common");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -163,6 +171,19 @@ export const ChatInputArea = ({
           {isUploadingAttachments && (
             <span className="ia-chatbot-attach-badge">...</span>
           )}
+        </button>
+      )}
+
+      {handoffEnabled && (
+        <button
+          type="button"
+          className="ia-chatbot-handoff-inline-button"
+          onClick={onRequestHandoff}
+          disabled={disabled || handoffDisabled}
+          title={handoffTitle || "Iniciar chat con una persona humana"}
+          aria-label={handoffTitle || "Iniciar chat con una persona humana"}
+        >
+          <IconHuman size={18} color={disabled || handoffDisabled ? "#999999" : "#ffffff"} />
         </button>
       )}
 
