@@ -183,18 +183,9 @@ public class TenantServiceEmailService {
     if (shouldRefreshOnList(account)) {
       pollAccount(account);
     }
-    LocalDateTime cutoff =
-        account.getUpdatedAt() != null ? account.getUpdatedAt() : account.getCreatedAt();
-    List<TenantServiceEmailMessage> messages;
-    if (cutoff != null) {
-      messages =
-          messageRepository.findByTenantIdAndAccountIdAndReceivedAtGreaterThanEqualOrderByReceivedAtDesc(
-              tenantId, account.getId(), cutoff, PageRequest.of(0, normalized));
-    } else {
-      messages =
-          messageRepository.findByTenantIdAndAccountIdOrderByReceivedAtDesc(
-              tenantId, account.getId(), PageRequest.of(0, normalized));
-    }
+    List<TenantServiceEmailMessage> messages =
+        messageRepository.findByTenantIdAndAccountIdOrderByReceivedAtDesc(
+            tenantId, account.getId(), PageRequest.of(0, normalized));
     String accountLabel = account.getLabel();
     return messages.stream()
         .map(message -> EmailMessageResponse.fromEntity(message, accountLabel))
