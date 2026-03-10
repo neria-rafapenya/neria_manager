@@ -204,6 +204,10 @@ export const SelfAssessmentPage = () => {
         </div>
         <span className="assessment-pill">{t("assessment_type_label")}</span>
       </div>
+      <div className="assessment-summary">
+        <h3>{t("assessment_summary_title")}</h3>
+        <p>{t("assessment_summary_body")}</p>
+      </div>
 
       {error && <div className="assessment-error">{error}</div>}
 
@@ -272,7 +276,16 @@ export const SelfAssessmentPage = () => {
             {form.items.map((item, index) => (
               <div className="assessment-item" key={`item-${index}`}>
                 <label className="assessment-field">
-                  <span>{t("assessment_question_label")}</span>
+                  <span className="assessment-label">
+                    {t("assessment_question_label")}
+                    <span
+                      className="assessment-info"
+                      data-tooltip={t("assessment_question_tip")}
+                      aria-label={t("assessment_question_tip")}
+                    >
+                      i
+                    </span>
+                  </span>
                   <input
                     value={item.question}
                     onChange={(event) =>
@@ -281,7 +294,16 @@ export const SelfAssessmentPage = () => {
                   />
                 </label>
                 <label className="assessment-field">
-                  <span>{t("assessment_answer_label")}</span>
+                  <span className="assessment-label">
+                    {t("assessment_answer_label")}
+                    <span
+                      className="assessment-info"
+                      data-tooltip={t("assessment_answer_tip")}
+                      aria-label={t("assessment_answer_tip")}
+                    >
+                      i
+                    </span>
+                  </span>
                   <textarea
                     rows={3}
                     value={item.answer}
@@ -292,7 +314,16 @@ export const SelfAssessmentPage = () => {
                 </label>
                 <div className="assessment-row">
                   <label className="assessment-field">
-                    <span>{t("assessment_score_label")}</span>
+                    <span className="assessment-label">
+                      {t("assessment_score_label")}
+                      <span
+                        className="assessment-info"
+                        data-tooltip={t("assessment_score_tip")}
+                        aria-label={t("assessment_score_tip")}
+                      >
+                        i
+                      </span>
+                    </span>
                     <input
                       type="number"
                       min={0}
@@ -304,7 +335,16 @@ export const SelfAssessmentPage = () => {
                     />
                   </label>
                   <label className="assessment-field grow">
-                    <span>{t("assessment_evidence_label")}</span>
+                    <span className="assessment-label">
+                      {t("assessment_evidence_label")}
+                      <span
+                        className="assessment-info"
+                        data-tooltip={t("assessment_evidence_tip")}
+                        aria-label={t("assessment_evidence_tip")}
+                      >
+                        i
+                      </span>
+                    </span>
                     <input
                       value={item.evidence}
                       onChange={(event) =>
