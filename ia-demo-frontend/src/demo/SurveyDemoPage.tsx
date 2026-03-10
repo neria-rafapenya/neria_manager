@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { loadDemos } from "./demoLoader";
 import type { DemoConfig } from "./types";
+import Swal from "sweetalert2";
 
 const STORAGE_KEY = "ia_demo_surveys";
 
@@ -124,7 +125,6 @@ export const SurveyDemoPage = () => {
   const [statusInput, setStatusInput] = useState<"draft" | "active">("active");
   const [formError, setFormError] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string | string[]>>({});
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -200,9 +200,22 @@ export const SurveyDemoPage = () => {
   };
 
   const handleSubmitMock = () => {
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 2500);
     setValues({});
+    void Swal.fire({
+      icon: "success",
+      title: "Respuesta enviada",
+      text: "Gracias por completar la encuesta. En la demo la IA generará insights en segundos.",
+      confirmButtonText: "Perfecto",
+    });
+  };
+
+  const handleOpenPublicLink = () => {
+    void Swal.fire({
+      icon: "info",
+      title: "Enlace público (demo)",
+      text: "En esta demo el enlace público es simulado y no abre una página real todavía.",
+      confirmButtonText: "Entendido",
+    });
   };
 
   if (loading) {
@@ -343,16 +356,14 @@ export const SurveyDemoPage = () => {
                   <strong>Enlace publico</strong>
                   <p className="muted">{publicLink}</p>
                 </div>
-                <a className="survey-submit" href={publicLink} target="_blank" rel="noreferrer">
+                <button
+                  type="button"
+                  className="survey-submit"
+                  onClick={handleOpenPublicLink}
+                >
                   Abrir enlace
-                </a>
+                </button>
               </div>
-
-              {submitted && (
-                <div className="survey-success">
-                  Respuesta enviada (demo). La IA generará insights en segundos.
-                </div>
-              )}
 
               <div className="survey-card">
                 {mockQuestions.map((q) => (
