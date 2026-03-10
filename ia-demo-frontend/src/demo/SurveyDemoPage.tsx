@@ -38,26 +38,61 @@ type SurveyQuestion =
 const mockQuestions: SurveyQuestion[] = [
   {
     id: "q1",
-    label: "¿Cómo valorarías la experiencia general?",
+    label: "¿Cómo valorarías la experiencia general en la clínica?",
     type: "rating",
     scale: 5,
   },
   {
     id: "q2",
-    label: "¿Qué fue lo más útil del servicio?",
+    label: "¿Qué fue lo más útil del servicio médico recibido?",
     type: "text",
   },
   {
     id: "q3",
     label: "Selecciona los puntos destacados",
     type: "multi",
-    options: ["Rapidez", "Claridad", "Resultados", "Soporte"],
+    options: ["Rapidez", "Claridad", "Resultados", "Trato humano", "Instalaciones"],
   },
   {
     id: "q4",
-    label: "¿Recomendarías el servicio?",
+    label: "¿Recomendarías el servicio médico a un familiar o amigo?",
     type: "single",
     options: ["Sí", "No"],
+  },
+  {
+    id: "q5",
+    label: "¿Qué tipo de servicio médico utilizaste?",
+    type: "single",
+    options: ["Consulta general", "Especialista", "Prueba diagnóstica", "Urgencias", "Otro"],
+  },
+  {
+    id: "q6",
+    label: "Tiempo de espera antes de ser atendido",
+    type: "single",
+    options: ["< 10 min", "10–30 min", "30–60 min", "> 60 min"],
+  },
+  {
+    id: "q7",
+    label: "Evalúa la claridad de las explicaciones médicas",
+    type: "rating",
+    scale: 5,
+  },
+  {
+    id: "q8",
+    label: "¿Recibiste instrucciones claras sobre el tratamiento o próximos pasos?",
+    type: "single",
+    options: ["Sí, totalmente", "Parcialmente", "No"],
+  },
+  {
+    id: "q9",
+    label: "Indica qué aspectos mejorarías",
+    type: "multi",
+    options: ["Comunicación", "Tiempo de espera", "Instalaciones", "Seguimiento", "Nada"],
+  },
+  {
+    id: "q10",
+    label: "Comentarios adicionales (opcional)",
+    type: "text",
   },
 ];
 
