@@ -1,0 +1,44 @@
+[
+  {
+    "code": "chat-sql",
+    "name": "Chatbot SQL",
+    "description": "Consulta catálogo y base de datos de productos.",
+    "mode": "chat",
+    "serviceCode": "chat-sql"
+  },
+  {
+    "code": "chat-ocr",
+    "name": "Chat OCR",
+    "description": "Procesamiento documental con OCR y respuestas asistidas.",
+    "mode": "chat",
+    "serviceCode": "chat-ocr"
+  },
+  {
+    "code": "correos-tickets",
+    "name": "Automatización de correos",
+    "description": "Clasifica y prioriza correos entrantes con IA.",
+    "mode": "email",
+    "serviceCode": "correos-tickets"
+  },
+  {
+    "code": "simulador-financiero",
+    "name": "Simulador financiero inteligente",
+    "description": "Simulaciones de préstamos, hipotecas y ahorro.",
+    "mode": "financial",
+    "serviceCode": "simulador-financiero"
+  },
+  {
+    "code": "sistema-encuestas",
+    "name": "Sistema de encuestas inteligentes",
+    "description": "Encuestas con análisis semántico y resúmenes ejecutivos.",
+    "mode": "surveys",
+    "serviceCode": "sistema-encuestas"
+  },
+  {
+    "code": "autoevaluacion",
+    "name": "Autoevaluación inteligente",
+    "description": "Diagnóstico rápido con recomendaciones accionables.",
+    "mode": "self-assessment",
+    "serviceCode": "autoevalucion"
+  }
+]
