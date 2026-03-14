@@ -1,0 +1,83 @@
+@use "variables" as *;
+.auth-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  min-height: 100vh;
+}
+
+.auth-panel {
+  background: $color-bg-dark;
+  color: $color-text-inverse;
+  padding: 48px 32px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.auth-panel h1 {
+  margin: 0;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  color: $color-label;
+  font-size: 12px;
+}
+
+.auth-form button {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  background: $color-accent;
+  color: $color-text;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-form input::placeholder {
+  color: $color-placeholder;
+}
+
+.auth-error {
+  background: $color-overlay-error;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.auth-success {
+  background: $color-overlay-success;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.auth-toggle button {
+  background: transparent;
+  border: none;
+  color: $color-accent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-info {
+  padding: 48px;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-info {
+    padding: 24px;
+  }
+}

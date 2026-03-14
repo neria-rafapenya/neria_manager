@@ -15,5 +15,8 @@ export class AuthService {
   me(): Promise<AuthUser> {
     return this.repository.me();
   }
-}
 
+  listAgents(): Promise<AuthUser[]> {
+    return this.repository.listAgents();
+  }
+}

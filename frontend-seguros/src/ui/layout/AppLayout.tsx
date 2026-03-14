@@ -1,25 +1,19 @@
 import type { PropsWithChildren } from "react";
-import { TopNav } from "../components/TopNav";
-import { SideNav } from "../components/SideNav";
+import { AppHeader } from "../components/AppHeader";
+import { AppFooter } from "../components/AppFooter";
+import { AppBreadcrumb } from "../components/AppBreadcrumb";
 
 export function AppLayout({ children }: PropsWithChildren) {
   return (
     <div className="app-shell">
-      <div className="container-fluid">
-        <div className="row">
-          <div className="col-12">
-            <TopNav />
-          </div>
+      <AppHeader />
+      <main className="main-wrapper">
+        <div className="container-fluid">
+          <AppBreadcrumb />
+          <div className="app-content">{children}</div>
         </div>
-        <div className="row">
-          <div className="col-12 col-lg-2">
-            <SideNav />
-          </div>
-          <div className="col-12 col-lg-10">
-            <main className="app-content">{children}</main>
-          </div>
-        </div>
-      </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

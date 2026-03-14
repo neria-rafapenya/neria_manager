@@ -11,5 +11,6 @@ export interface UserRepository {
   create(input: CreateUserInput): Promise<User>;
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
+  listByRole(role: UserRole): Promise<User[]>;
   updateLastLogin(id: string): Promise<void>;
 }

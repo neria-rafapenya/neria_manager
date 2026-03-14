@@ -21,6 +21,10 @@ export interface Claim {
   urgency: boolean;
   thirdPartyInvolved: boolean;
   completenessStatus: CompletenessStatus;
+  assignedAgentId: string | null;
+  assignedAt: string | null;
+  assignedBy: string | null;
+  pendingDocumentRequests?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +40,20 @@ export interface ClaimDocument {
   extractedFields?: Record<string, unknown> | null;
   evidence?: Record<string, unknown> | null;
   createdAt: string;
+}
+
+export type ClaimDocumentRequestStatus = "pendiente" | "completado" | "cancelado";
+
+export interface ClaimDocumentRequest {
+  id: string;
+  claimId: string;
+  claimNumber: string | null;
+  kind: string;
+  message: string;
+  status: ClaimDocumentRequestStatus;
+  requestedBy: string;
+  createdAt: string;
+  resolvedAt: string | null;
 }
 
 export interface CreateClaimInput {

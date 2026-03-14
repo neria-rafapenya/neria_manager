@@ -1,10 +1,15 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { CLAIM_DOCUMENT_REPOSITORY, STORAGE_REPOSITORY } from "../../claims.constants";
+import {
+  CLAIM_DOCUMENT_REPOSITORY,
+  CLAIM_DOCUMENT_REQUEST_REPOSITORY,
+  STORAGE_REPOSITORY,
+} from "../../claims.constants";
 import type {
   ClaimDocumentRepository,
   CreateClaimDocumentInput,
 } from "../repositories/claim-document.repository";
 import type { StorageRepository } from "../repositories/storage.repository";
+import type { ClaimDocumentRequestRepository } from "../repositories/claim-document-request.repository";
 import { ClaimDocumentKind } from "../entities/claim-document";
 
 export interface CreateClaimDocumentPayload {
@@ -33,6 +38,8 @@ export class ClaimDocumentService {
     private readonly documentRepository: ClaimDocumentRepository,
     @Inject(STORAGE_REPOSITORY)
     private readonly storageRepository: StorageRepository,
+    @Inject(CLAIM_DOCUMENT_REQUEST_REPOSITORY)
+    private readonly requestRepository: ClaimDocumentRequestRepository,
   ) {}
 
   async create(payload: CreateClaimDocumentPayload) {
@@ -47,7 +54,9 @@ export class ClaimDocumentService {
       evidence: payload.evidence ?? null,
     };
 
-    return this.documentRepository.create(input);
+    const document = await this.documentRepository.create(input);
+    await this.requestRepository.markResolvedByClaimAndKind(payload.claimId, payload.kind);
+    return document;
   }
 
   async listByClaim(claimId: string) {
@@ -75,6 +84,8 @@ export class ClaimDocumentService {
       evidence: null,
     };
 
-    return this.documentRepository.create(input);
+    const document = await this.documentRepository.create(input);
+    await this.requestRepository.markResolvedByClaimAndKind(payload.claimId, payload.kind);
+    return document;
   }
 }

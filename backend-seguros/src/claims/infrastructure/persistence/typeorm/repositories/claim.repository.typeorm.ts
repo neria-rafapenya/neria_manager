@@ -7,6 +7,7 @@ import {
   ClaimRepository,
   CreateClaimInput,
   UpdateClaimStatusInput,
+  AssignClaimInput,
 } from "../../../../domain/repositories/claim.repository";
 import { ClaimEntity } from "../entities/claim.entity";
 
@@ -29,6 +30,13 @@ export class ClaimRepositoryTypeOrm implements ClaimRepository {
       urgency: input.urgency,
       thirdPartyInvolved: input.thirdPartyInvolved,
       completenessStatus: input.completenessStatus,
+      assignedAgentId: input.assignedAgentId,
+      assignedAt: input.assignedAt,
+      assignedBy: input.assignedBy,
+      customerUserId: input.customerUserId,
+      userExplanation: input.userExplanation,
+      userExplanationContextHash: input.userExplanationContextHash,
+      userExplanationUpdatedAt: input.userExplanationUpdatedAt,
     });
 
     const saved = await this.repository.save(entity);
@@ -55,8 +63,22 @@ export class ClaimRepositoryTypeOrm implements ClaimRepository {
       where.claimNumber = Like(`%${filters.search}%`);
     }
 
+    if (filters.assignedAgentId) {
+      where.assignedAgentId = filters.assignedAgentId;
+    }
+
     const entities = await this.repository.find({
       where,
+      order: { createdAt: "DESC" },
+      take: 200,
+    });
+
+    return entities.map((entity) => this.toDomain(entity));
+  }
+
+  async listByCustomerUserId(customerUserId: string): Promise<Claim[]> {
+    const entities = await this.repository.find({
+      where: { customerUserId },
       order: { createdAt: "DESC" },
       take: 200,
     });
@@ -79,6 +101,36 @@ export class ClaimRepositoryTypeOrm implements ClaimRepository {
     return this.toDomain(saved);
   }
 
+  async updateUserExplanationCache(input: {
+    id: string;
+    message: string;
+    contextHash: string;
+    updatedAt: Date;
+  }): Promise<void> {
+    await this.repository.update(
+      { id: input.id },
+      {
+        userExplanation: input.message,
+        userExplanationContextHash: input.contextHash,
+        userExplanationUpdatedAt: input.updatedAt,
+      },
+    );
+  }
+
+  async assign(input: AssignClaimInput): Promise<Claim | null> {
+    const entity = await this.repository.findOne({ where: { id: input.id } });
+    if (!entity) {
+      return null;
+    }
+
+    entity.assignedAgentId = input.assignedAgentId;
+    entity.assignedAt = input.assignedAt;
+    entity.assignedBy = input.assignedBy;
+
+    const saved = await this.repository.save(entity);
+    return this.toDomain(saved);
+  }
+
   private toDomain(entity: ClaimEntity): Claim {
     return new Claim({
       id: entity.id,
@@ -92,6 +144,13 @@ export class ClaimRepositoryTypeOrm implements ClaimRepository {
       urgency: entity.urgency,
       thirdPartyInvolved: entity.thirdPartyInvolved,
       completenessStatus: entity.completenessStatus as any,
+      assignedAgentId: entity.assignedAgentId ?? null,
+      assignedAt: entity.assignedAt ?? null,
+      assignedBy: entity.assignedBy ?? null,
+      customerUserId: entity.customerUserId ?? null,
+      userExplanation: entity.userExplanation ?? null,
+      userExplanationContextHash: entity.userExplanationContextHash ?? null,
+      userExplanationUpdatedAt: entity.userExplanationUpdatedAt ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });

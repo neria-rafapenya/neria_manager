@@ -1,0 +1,13 @@
+# Maven
+/target/
+**/target/
+
+# Logs
+*.log
+
+# Env files
+.env.local
+.env
+
+# OS
+.DS_Store

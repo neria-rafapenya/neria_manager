@@ -1064,6 +1064,11 @@ supports-color@^8.1.1:
   dependencies:
     has-flag "^4.0.0"
 
+sweetalert2@^11.26.22:
+  version "11.26.22"
+  resolved "https://registry.npmmirror.com/sweetalert2/-/sweetalert2-11.26.22.tgz#898838958d02d26067da1eb37f552a717cef1b2b"
+  integrity sha512-UtfV5j7gXBRLm0+6Vm+MqIpsMA7CF7lOGeBj1sc8YSb2Q2xKT6mkSV63b4kFUGNs4vYa+Nd7ufZ97ZX9hNfqsA==
+
 sync-child-process@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmmirror.com/sync-child-process/-/sync-child-process-1.0.2.tgz#45e7c72e756d1243e80b547ea2e17957ab9e367f"

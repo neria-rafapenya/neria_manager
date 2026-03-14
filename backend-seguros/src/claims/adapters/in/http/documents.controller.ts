@@ -5,6 +5,9 @@ import { AddClaimDocumentDto } from "../../../ui/dto/add-claim-document.dto";
 import { UploadClaimDocumentDto } from "../../../ui/dto/upload-claim-document.dto";
 import { ClaimDocumentMapper } from "../../../ui/mappers/claim-document.mapper";
 import { JwtAuthGuard } from "../../../../auth/adapters/in/http/guards/jwt-auth.guard";
+import { RolesGuard } from "../../../../auth/adapters/in/http/guards/roles.guard";
+import { Roles } from "../../../../auth/adapters/in/http/decorators/roles.decorator";
+import { CurrentUser } from "../../../../auth/adapters/in/http/decorators/current-user.decorator";
 
 @Controller("claims/:id/documents")
 @UseGuards(JwtAuthGuard)
@@ -15,9 +18,18 @@ export class ClaimDocumentsController {
   ) {}
 
   @Get()
-  async list(@Param("id") id: string) {
+  @UseGuards(RolesGuard)
+  @Roles("admin", "agente", "user")
+  async list(@Param("id") id: string, @CurrentUser() user: { sub: string; role: string }) {
     const claim = await this.claimService.findById(id);
     if (!claim) {
+      throw new NotFoundException("Claim not found");
+    }
+
+    if (user.role === "user" && claim.customerUserId !== user.sub) {
+      throw new NotFoundException("Claim not found");
+    }
+    if (user.role === "agente" && claim.assignedAgentId !== user.sub) {
       throw new NotFoundException("Claim not found");
     }
 
@@ -26,9 +38,22 @@ export class ClaimDocumentsController {
   }
 
   @Post()
-  async create(@Param("id") id: string, @Body() body: AddClaimDocumentDto) {
+  @UseGuards(RolesGuard)
+  @Roles("admin", "agente", "user")
+  async create(
+    @Param("id") id: string,
+    @Body() body: AddClaimDocumentDto,
+    @CurrentUser() user: { sub: string; role: string },
+  ) {
     const claim = await this.claimService.findById(id);
     if (!claim) {
+      throw new NotFoundException("Claim not found");
+    }
+
+    if (user.role === "user" && claim.customerUserId !== user.sub) {
+      throw new NotFoundException("Claim not found");
+    }
+    if (user.role === "agente" && claim.assignedAgentId !== user.sub) {
       throw new NotFoundException("Claim not found");
     }
 
@@ -47,9 +72,22 @@ export class ClaimDocumentsController {
   }
 
   @Post("upload")
-  async upload(@Param("id") id: string, @Body() body: UploadClaimDocumentDto) {
+  @UseGuards(RolesGuard)
+  @Roles("admin", "agente", "user")
+  async upload(
+    @Param("id") id: string,
+    @Body() body: UploadClaimDocumentDto,
+    @CurrentUser() user: { sub: string; role: string },
+  ) {
     const claim = await this.claimService.findById(id);
     if (!claim) {
+      throw new NotFoundException("Claim not found");
+    }
+
+    if (user.role === "user" && claim.customerUserId !== user.sub) {
+      throw new NotFoundException("Claim not found");
+    }
+    if (user.role === "agente" && claim.assignedAgentId !== user.sub) {
       throw new NotFoundException("Claim not found");
     }
 

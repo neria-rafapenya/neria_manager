@@ -10,5 +10,8 @@ export class HttpAuthRepository implements AuthRepository {
   me(): Promise<AuthUser> {
     return httpGet<AuthUser>("/api/auth/me");
   }
-}
 
+  listAgents(): Promise<AuthUser[]> {
+    return httpGet<AuthUser[]>("/api/auth/users?role=agente");
+  }
+}

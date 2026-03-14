@@ -1,5 +1,5 @@
 @use "bootstrap/scss/bootstrap" with (
-  $font-family-sans-serif: "Sora", "Segoe UI", sans-serif,
+  $font-family-sans-serif: ("Sora", "Segoe UI", sans-serif),
   $primary: #0f6ddf,
   $secondary: #1f2a44,
   $body-color: #101828
@@ -25,7 +25,90 @@ body {
 
 .app-shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top left, #f8f1e8 0%, #eef3ff 40%, #f1f7f4 100%);
+}
+
+.main-wrapper {
+  flex: 1;
   padding: 1.5rem 0 2rem;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #111827 0%, #1f2a44 60%, #0f6ddf 100%);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+}
+
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+}
+
+.brand-dot {
+  background: #0f6ddf;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  color: #e2e8f0;
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.user-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.app-breadcrumb {
+  margin-bottom: 1.25rem;
+}
+
+.app-breadcrumb .breadcrumb {
+  margin-bottom: 0;
+  background: transparent;
+}
+
+.app-footer {
+  padding: 1rem 0 1.5rem;
+  background: #0b1220;
+  color: #94a3b8;
+}
+
+.app-footer__inner {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
 }
 
 .top-nav {
@@ -485,6 +568,150 @@ body {
   padding: 1.5rem;
   border-radius: 18px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.assign-cell {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 220px;
+}
+
+.assign-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.assign-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.request-badge {
+  background: #0f6ddf;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.request-badge--inline {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.request-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.request-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.request-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-end;
+}
+
+.request-title {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.request-pill {
+  align-self: flex-start;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  background: #fde68a;
+  color: #92400e;
+}
+
+.request-pill--inline {
+  background: #e2e8f0;
+  color: #1f2937;
+}
+
+.user-claims {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.user-claim {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.user-claim__title {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  color: #0f6ddf;
+  text-decoration: none;
+}
+
+.user-claim__title:hover {
+  text-decoration: underline;
+}
+
+.user-claim__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-summary {
+  display: grid;
+  gap: 0.5rem;
+  color: #111827;
+}
+
+.ai-summary p {
+  margin: 0;
+}
+
+.ai-preview {
+  text-align: left;
+  font-size: 0.95rem;
+  color: #111827;
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.request-pill--completado {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.request-pill--cancelado {
+  background: #fecaca;
+  color: #991b1b;
 }
 
 .microsite-kicker {

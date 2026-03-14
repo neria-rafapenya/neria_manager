@@ -29,6 +29,10 @@ export class UserService {
     return this.userRepository.findById(id);
   }
 
+  async listAgents() {
+    return this.userRepository.listByRole("agente");
+  }
+
   async markLogin(id: string) {
     await this.userRepository.updateLastLogin(id);
   }

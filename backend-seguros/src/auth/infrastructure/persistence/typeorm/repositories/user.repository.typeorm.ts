@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { User } from "../../../../domain/entities/user";
+import { User, UserRole } from "../../../../domain/entities/user";
 import type { CreateUserInput, UserRepository } from "../../../../domain/repositories/user.repository";
 import { UserEntity } from "../entities/user.entity";
 
@@ -32,6 +32,14 @@ export class UserRepositoryTypeOrm implements UserRepository {
   async findById(id: string): Promise<User | null> {
     const entity = await this.repository.findOne({ where: { id } });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async listByRole(role: UserRole): Promise<User[]> {
+    const entities = await this.repository.find({
+      where: { role, isActive: true },
+      order: { createdAt: "DESC" },
+    });
+    return entities.map((entity) => this.toDomain(entity));
   }
 
   async updateLastLogin(id: string): Promise<void> {

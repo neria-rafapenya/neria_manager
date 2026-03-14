@@ -45,6 +45,29 @@ export class ClaimEntity {
   @Column({ name: "completeness_status", type: "varchar", length: 20, default: "incompleto" })
   completenessStatus!: string;
 
+  @Index()
+  @Column({ name: "assigned_agent_id", type: "char", length: 36, nullable: true })
+  assignedAgentId!: string | null;
+
+  @Column({ name: "assigned_at", type: "datetime", nullable: true })
+  assignedAt!: Date | null;
+
+  @Column({ name: "assigned_by", type: "char", length: 36, nullable: true })
+  assignedBy!: string | null;
+
+  @Index()
+  @Column({ name: "customer_user_id", type: "char", length: 36, nullable: true })
+  customerUserId!: string | null;
+
+  @Column({ name: "user_explanation", type: "text", nullable: true })
+  userExplanation!: string | null;
+
+  @Column({ name: "user_explanation_ctx_hash", type: "varchar", length: 64, nullable: true })
+  userExplanationContextHash!: string | null;
+
+  @Column({ name: "user_explanation_updated_at", type: "datetime", nullable: true })
+  userExplanationUpdatedAt!: Date | null;
+
   @CreateDateColumn({ name: "created_at", type: "datetime" })
   createdAt!: Date;
 

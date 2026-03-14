@@ -1,13 +1,16 @@
-export type ClaimDocumentKind =
-  | "parte_amistoso"
-  | "atestados"
-  | "factura"
-  | "presupuesto"
-  | "informe_medico"
-  | "foto"
-  | "poliza"
-  | "dni"
-  | "otro";
+export const CLAIM_DOCUMENT_KINDS = [
+  "parte_amistoso",
+  "atestados",
+  "factura",
+  "presupuesto",
+  "informe_medico",
+  "foto",
+  "poliza",
+  "dni",
+  "otro",
+] as const;
+
+export type ClaimDocumentKind = (typeof CLAIM_DOCUMENT_KINDS)[number];
 
 export interface ClaimDocumentProps {
   id: string;

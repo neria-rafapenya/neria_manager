@@ -1,0 +1,44 @@
+$font-family-sans-serif: "Open Sans", sans-serif;
+
+$color-text: #1b1b1b;
+$color-text-muted: #6f6f6f;
+$color-label: #8b8b8b;
+$color-placeholder: #d3d2d2;
+$color-text-inverse: #f5f3ef;
+$color-bg-page: #f4f3ec;
+$color-bg-white: #ffffff;
+$color-bg-input: #f6f4f2;
+$color-bg-dark: #ff5c21;
+$color-border-light: #d8d2cb;
+$color-border-table: #e1ddd7;
+$color-border-dark: #2f3436;
+$color-bg-input-dark: #1e2426;
+$color-accent: #1ea4dd;
+$color-btn: #1ea4dd;
+$color-btn-hover: #40819d;
+$color-overlay-error: rgba(255, 80, 80, 0.2);
+$color-overlay-success: rgba(80, 180, 120, 0.2);
+$color-success: #2e7d32;
+$color-error: #c62828;
+$color-sidebar-item: rgba(255, 255, 255, 0.08);
+$color-shadow: rgba(24, 24, 24, 0.08);
+$color-bg-highlight: #f3efe8;
+$color-bg-code: #f7f2ec;
+
+$color-bg-gradient-1: #f4f2ef;
+$color-bg-gradient-2: #f7efe8;
+$color-bg-gradient-3: #f0f5f4;
+$color-landing-1: #fdf6ed;
+$color-landing-2: #f3f8f5;
+
+$gradient-body: linear-gradient(
+  160deg,
+  $color-bg-gradient-1 0%,
+  $color-bg-gradient-2 45%,
+  $color-bg-gradient-3 100%
+);
+$gradient-landing: linear-gradient(
+  135deg,
+  $color-landing-1 0%,
+  $color-landing-2 100%
+);

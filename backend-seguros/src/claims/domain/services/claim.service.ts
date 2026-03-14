@@ -5,8 +5,10 @@ import type {
   ClaimListFilters,
   CreateClaimInput,
   UpdateClaimStatusInput,
+  AssignClaimInput,
 } from "../repositories/claim.repository";
 import { ClaimStatus, ClaimType, CompletenessStatus } from "../entities/claim";
+import { UserService } from "../../../auth/domain/services/user.service";
 
 export interface CreateClaimPayload {
   type: ClaimType;
@@ -15,6 +17,7 @@ export interface CreateClaimPayload {
   description?: string | null;
   urgency?: boolean;
   thirdPartyInvolved?: boolean;
+  customerUserId?: string | null;
 }
 
 @Injectable()
@@ -22,6 +25,7 @@ export class ClaimService {
   constructor(
     @Inject(CLAIM_REPOSITORY)
     private readonly claimRepository: ClaimRepository,
+    private readonly userService: UserService,
   ) {}
 
   async create(payload: CreateClaimPayload) {
@@ -36,6 +40,13 @@ export class ClaimService {
       urgency: payload.urgency ?? false,
       thirdPartyInvolved: payload.thirdPartyInvolved ?? false,
       completenessStatus: "incompleto",
+      assignedAgentId: null,
+      assignedAt: null,
+      assignedBy: null,
+      customerUserId: payload.customerUserId ?? null,
+      userExplanation: null,
+      userExplanationContextHash: null,
+      userExplanationUpdatedAt: null,
     };
 
     return this.claimRepository.create(input);
@@ -43,6 +54,10 @@ export class ClaimService {
 
   async list(filters: ClaimListFilters) {
     return this.claimRepository.list(filters);
+  }
+
+  async listByCustomerUserId(customerUserId: string) {
+    return this.claimRepository.listByCustomerUserId(customerUserId);
   }
 
   async findById(id: string) {
@@ -55,6 +70,24 @@ export class ClaimService {
 
   async markCompleteness(id: string, completeness: CompletenessStatus) {
     return this.claimRepository.updateStatus({ id, status: "en_revision", completenessStatus: completeness });
+  }
+
+  async assign(id: string, assignedAgentId: string | null, assignedBy: string | null) {
+    if (assignedAgentId) {
+      const agent = await this.userService.findById(assignedAgentId);
+      if (!agent || agent.role !== "agente") {
+        return null;
+      }
+    }
+
+    const input: AssignClaimInput = {
+      id,
+      assignedAgentId,
+      assignedBy,
+      assignedAt: new Date(),
+    };
+
+    return this.claimRepository.assign(input);
   }
 
   private generateClaimNumber() {

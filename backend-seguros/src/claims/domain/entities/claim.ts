@@ -26,6 +26,13 @@ export interface ClaimProps {
   urgency: boolean;
   thirdPartyInvolved: boolean;
   completenessStatus: CompletenessStatus;
+  assignedAgentId: string | null;
+  assignedAt: Date | null;
+  assignedBy: string | null;
+  customerUserId: string | null;
+  userExplanation: string | null;
+  userExplanationContextHash: string | null;
+  userExplanationUpdatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +82,34 @@ export class Claim {
 
   get completenessStatus() {
     return this.props.completenessStatus;
+  }
+
+  get assignedAgentId() {
+    return this.props.assignedAgentId;
+  }
+
+  get assignedAt() {
+    return this.props.assignedAt;
+  }
+
+  get assignedBy() {
+    return this.props.assignedBy;
+  }
+
+  get customerUserId() {
+    return this.props.customerUserId;
+  }
+
+  get userExplanation() {
+    return this.props.userExplanation;
+  }
+
+  get userExplanationContextHash() {
+    return this.props.userExplanationContextHash;
+  }
+
+  get userExplanationUpdatedAt() {
+    return this.props.userExplanationUpdatedAt;
   }
 
   get createdAt() {

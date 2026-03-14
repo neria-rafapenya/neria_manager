@@ -1,4 +1,4 @@
-import type { Claim, ClaimDocument, CreateClaimInput } from "@/domain/models/claim";
+import type { Claim, ClaimDocument, ClaimDocumentRequest, CreateClaimInput } from "@/domain/models/claim";
 import type { ClaimsRepository } from "@/domain/repositories/claims.repository";
 
 const now = new Date();
@@ -16,6 +16,9 @@ const claims: Claim[] = [
     urgency: true,
     thirdPartyInvolved: true,
     completenessStatus: "parcial",
+    assignedAgentId: null,
+    assignedAt: null,
+    assignedBy: null,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   },
@@ -31,6 +34,9 @@ const claims: Claim[] = [
     urgency: false,
     thirdPartyInvolved: false,
     completenessStatus: "completo",
+    assignedAgentId: "agent-1",
+    assignedAt: now.toISOString(),
+    assignedBy: "admin-1",
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   },
@@ -46,6 +52,9 @@ const claims: Claim[] = [
     urgency: false,
     thirdPartyInvolved: false,
     completenessStatus: "incompleto",
+    assignedAgentId: null,
+    assignedAt: null,
+    assignedBy: null,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   },
@@ -76,6 +85,20 @@ const documents: ClaimDocument[] = [
   },
 ];
 
+const documentRequests: ClaimDocumentRequest[] = [
+  {
+    id: "req-1",
+    claimId: "clm-1",
+    claimNumber: "CF-20260306-4821",
+    kind: "parte_amistoso",
+    message: "Necesitamos el parte amistoso firmado.",
+    status: "pendiente",
+    requestedBy: "admin-1",
+    createdAt: now.toISOString(),
+    resolvedAt: null,
+  },
+];
+
 export class MockClaimsRepository implements ClaimsRepository {
   async list(): Promise<Claim[]> {
     return claims;
@@ -102,6 +125,9 @@ export class MockClaimsRepository implements ClaimsRepository {
       urgency: input.urgency ?? false,
       thirdPartyInvolved: input.thirdPartyInvolved ?? false,
       completenessStatus: "incompleto",
+      assignedAgentId: null,
+      assignedAt: null,
+      assignedBy: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -112,5 +138,98 @@ export class MockClaimsRepository implements ClaimsRepository {
 
   async listDocuments(claimId: string): Promise<ClaimDocument[]> {
     return documents.filter((doc) => doc.claimId === claimId);
+  }
+
+  async assign(claimId: string, agentId: string): Promise<Claim> {
+    const claim = claims.find((item) => item.id === claimId);
+    if (!claim) {
+      throw new Error("Claim not found");
+    }
+    const now = new Date().toISOString();
+    claim.assignedAgentId = agentId;
+    claim.assignedAt = now;
+    claim.updatedAt = now;
+    return claim;
+  }
+
+  async requestDocument(
+    claimId: string,
+    payload: { kind: string; message?: string; aiMessage?: string },
+  ): Promise<ClaimDocumentRequest> {
+    const request: ClaimDocumentRequest = {
+      id: `req-${Date.now()}`,
+      claimId,
+      claimNumber: claims.find((claim) => claim.id === claimId)?.claimNumber ?? null,
+      kind: payload.kind,
+      message: payload.aiMessage ?? payload.message ?? "Solicitud de documento generada.",
+      status: "pendiente",
+      requestedBy: "admin-1",
+      createdAt: new Date().toISOString(),
+      resolvedAt: null,
+    };
+    documentRequests.unshift(request);
+    return request;
+  }
+
+  async previewDocumentRequest(
+    claimId: string,
+    payload: { kind: string; message?: string },
+  ): Promise<{ message: string }> {
+    const claim = claims.find((item) => item.id === claimId);
+    return {
+      message: `IA sugiere solicitar ${payload.kind} para el expediente ${claim?.claimNumber ?? "-"}.`,
+    };
+  }
+
+  async listDocumentRequests(): Promise<ClaimDocumentRequest[]> {
+    return documentRequests;
+  }
+
+  async listMyClaims(): Promise<Claim[]> {
+    return claims;
+  }
+
+  async getMyClaim(claimId: string): Promise<Claim | null> {
+    return claims.find((claim) => claim.id === claimId) ?? null;
+  }
+
+  async getSummary(claimId: string): Promise<{ summary: string }> {
+    const claim = claims.find((item) => item.id === claimId);
+    return {
+      summary: claim
+        ? `Resumen IA: ${claim.description ?? "Expediente sin descripcion."}`
+        : "Resumen IA no disponible.",
+    };
+  }
+
+  async getUserExplanation(claimId: string): Promise<{ explanation: string }> {
+    const claim = claims.find((item) => item.id === claimId);
+    return {
+      explanation: claim
+        ? `Tu expediente ${claim.claimNumber} esta en estado ${claim.status}. Te iremos informando.`
+        : "Explicacion no disponible.",
+    };
+  }
+
+  async listMyDocumentRequests(claimId: string): Promise<ClaimDocumentRequest[]> {
+    return documentRequests.filter((request) => request.claimId === claimId);
+  }
+
+  async uploadDocument(
+    claimId: string,
+    payload: { kind: string; filename: string; mimeType: string; base64: string },
+  ): Promise<ClaimDocument> {
+    const doc: ClaimDocument = {
+      id: `doc-${Date.now()}`,
+      claimId,
+      kind: payload.kind,
+      filename: payload.filename,
+      mimeType: payload.mimeType,
+      storageKey: "mock-upload",
+      sizeBytes: 1000,
+      createdAt: new Date().toISOString(),
+    };
+    documents.unshift(doc);
+    return doc;
   }
 }

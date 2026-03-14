@@ -16,6 +16,6 @@ import { UserRepositoryTypeOrm } from "./infrastructure/persistence/typeorm/repo
     UserService,
     { provide: USER_REPOSITORY, useClass: UserRepositoryTypeOrm },
   ],
-  exports: [AuthService],
+  exports: [AuthService, UserService],
 })
 export class AuthModule {}

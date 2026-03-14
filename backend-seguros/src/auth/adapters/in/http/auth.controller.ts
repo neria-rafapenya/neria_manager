@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { AuthService } from "../../../domain/services/auth.service";
+import { UserService } from "../../../domain/services/user.service";
 import { LoginDto } from "../../../ui/dto/login.dto";
 import { CreateUserDto } from "../../../ui/dto/create-user.dto";
 import { RegisterDto } from "../../../ui/dto/register.dto";
@@ -10,7 +11,10 @@ import { CurrentUser } from "./decorators/current-user.decorator";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post("login")
   async login(@Body() body: LoginDto) {
@@ -37,6 +41,21 @@ export class AuthController {
       email: user.email,
       role: user.role,
     };
+  }
+
+  @Get("users")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  async listUsers(@Query("role") role?: string) {
+    if (role && role !== "agente") {
+      return [];
+    }
+    const users = await this.userService.listAgents();
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    }));
   }
 
   @Get("me")

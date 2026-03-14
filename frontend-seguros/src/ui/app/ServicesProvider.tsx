@@ -3,9 +3,12 @@ import type { PropsWithChildren } from "react";
 import { ClaimsService } from "@/domain/services/claims.service";
 import { HttpClaimsRepository } from "@/infrastructure/repositories/claims.repository.http";
 import { MockClaimsRepository } from "@/infrastructure/repositories/claims.repository.mock";
+import { AuthService } from "@/domain/services/auth.service";
+import { HttpAuthRepository } from "@/infrastructure/repositories/auth.repository.http";
 
 interface Services {
   claimsService: ClaimsService;
+  authService: AuthService;
 }
 
 const ServicesContext = createContext<Services | null>(null);
@@ -20,6 +23,7 @@ export function ServicesProvider({ children }: PropsWithChildren) {
 
     return {
       claimsService: new ClaimsService(repository),
+      authService: new AuthService(new HttpAuthRepository()),
     };
   }, []);
 

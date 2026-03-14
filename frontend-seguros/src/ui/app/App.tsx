@@ -13,6 +13,7 @@ import { RequireAuth } from "./RequireAuth";
 import { RequireRole } from "./RequireRole";
 import { RoleDashboard } from "./RoleDashboard";
 import { UserDashboardPage } from "../pages/UserDashboardPage";
+import { UserClaimDetailPage } from "../pages/UserClaimDetailPage";
 
 export default function App() {
   const appType = (import.meta.env.VITE_APP_TYPE ?? "microsite").toLowerCase();
@@ -46,9 +47,19 @@ export default function App() {
               path="/portal"
               element={
                 <RequireRole roles={["user"]}>
-                  <WidgetLayout>
+                  <AppLayout>
                     <UserDashboardPage />
-                  </WidgetLayout>
+                  </AppLayout>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/portal/claims/:id"
+              element={
+                <RequireRole roles={["user"]}>
+                  <AppLayout>
+                    <UserClaimDetailPage />
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -56,9 +67,9 @@ export default function App() {
               path="/claims"
               element={
                 <RequireRole roles={["admin", "agente"]}>
-                  <WidgetLayout>
+                  <AppLayout>
                     <ClaimsInboxPage />
-                  </WidgetLayout>
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -76,9 +87,9 @@ export default function App() {
               path="/claims/:id"
               element={
                 <RequireRole roles={["admin", "agente"]}>
-                  <WidgetLayout>
+                  <AppLayout>
                     <ClaimDetailPage />
-                  </WidgetLayout>
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -116,9 +127,19 @@ export default function App() {
               path="/portal"
               element={
                 <RequireRole roles={["user"]}>
-                  <MicrositeLayout>
+                  <AppLayout>
                     <UserDashboardPage />
-                  </MicrositeLayout>
+                  </AppLayout>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/portal/claims/:id"
+              element={
+                <RequireRole roles={["user"]}>
+                  <AppLayout>
+                    <UserClaimDetailPage />
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -126,9 +147,9 @@ export default function App() {
               path="/claims"
               element={
                 <RequireRole roles={["admin", "agente"]}>
-                  <MicrositeLayout>
+                  <AppLayout>
                     <ClaimsInboxPage />
-                  </MicrositeLayout>
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -146,9 +167,9 @@ export default function App() {
               path="/claims/:id"
               element={
                 <RequireRole roles={["admin", "agente"]}>
-                  <MicrositeLayout>
+                  <AppLayout>
                     <ClaimDetailPage />
-                  </MicrositeLayout>
+                  </AppLayout>
                 </RequireRole>
               }
             />
@@ -187,6 +208,16 @@ export default function App() {
               <RequireRole roles={["user"]}>
                 <AppLayout>
                   <UserDashboardPage />
+                </AppLayout>
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/portal/claims/:id"
+            element={
+              <RequireRole roles={["user"]}>
+                <AppLayout>
+                  <UserClaimDetailPage />
                 </AppLayout>
               </RequireRole>
             }

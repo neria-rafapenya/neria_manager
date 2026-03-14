@@ -1,0 +1,140 @@
+@use "variables" as *;
+
+.titular-login {
+  font-size: 24px;
+  text-transform: uppercase;
+  border-bottom: 1px solid $color-bg-white;
+  width: 100%;
+  padding-bottom: 14px;
+}
+
+.card {
+  border-radius: 8px !important;
+  transition: all 0.35s ease;
+}
+
+.btn {
+  border-radius: 50px !important;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: $color-btn;
+  color: $color-text-inverse !important;
+}
+
+.btn-primary:hover {
+  background-color: $color-btn-hover;
+  color: $color-text-inverse;
+}
+
+.small-text {
+  font-size: 13px;
+  color: $color-label;
+}
+
+.video-bg {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+
+  /* centrar contenido */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* capas base */
+
+.video-bg::before,
+.video-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.8; /* 👈 opacidad de los gifs */
+}
+
+/* gif 1 */
+
+.video-bg::before {
+  background-image: url("/gif1.gif");
+  animation: gif1Switch 10s infinite;
+}
+
+/* gif 2 */
+
+.video-bg::after {
+  background-image: url("/gif2.gif");
+  animation: gif2Switch 10s infinite;
+}
+
+/* overlay negro */
+
+.video-bg .overlay {
+  position: absolute;
+  inset: 0;
+  background: black;
+  opacity: 0.8;
+  z-index: 2;
+}
+
+/* contenido encima */
+.video-content {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.8;
+
+  position: relative;
+  z-index: 3;
+
+  /* ancho controlado */
+  width: 100%;
+  max-width: 500px;
+  min-width: 300px;
+
+  /* centrado visual */
+  text-align: center;
+  padding: 20px;
+
+  color: white;
+}
+/* animaciones */
+
+@keyframes gif1Switch {
+  0% {
+    opacity: 0.8;
+  }
+  45% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0;
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes gif2Switch {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
